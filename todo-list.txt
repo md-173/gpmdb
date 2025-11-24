@@ -1,0 +1,15 @@
+The queries that seems most appropriate are:
+Select data based on ages ranges (see the schematic drawings below). This should be available for both rock unit age and magnetisation ages.
+Quality factors, including:
+Q factors (RELIABILITY table)---We would like to have two options for the Q factors:
+Querying the QSUM ( the sum of Q factors). For QSUM, we only need to be able set a minimum value, I.e., all data have Q higher than desired number should be selected. Data that doesn’t have Q factors should not be included.
+Querying the individual Q factor. There are 7 Q factors (from Q1 to Q7). Different Q factors have difference significance. Is it possible to have seven check boxes where people can select the Q factors they want?
+R factors (RELIABILITY table)---Same two options as Q.
+B (PMAGRESULT) ---Number of sites. The higher the better. Being able to set a minimum value is fine,  but preferably being able to set a range.
+N (PMAGRESULT)--- Number of samples/specimens. Same as B.
+K (PMAGRESULT)---Usually the higher the better, but sometimes K being too high might also imply problems. So maybe a range is more reasonable. The column name is KD, but in the query table it should be displayed as a lowercase k. Data that doesn’t have KD factors should not be included.
+ɑ95 (PMAGRESULT) ---Similar to K except for the smaller the better. Also make it a range. The column name is ED95.
+Continents (ROCKUNIT) --- There are 14 unique values there. A drop-down menu would be nice.
+Place (ROCKUNIT) --- Just simple text search would be good. If it’s possible, please make it case-sensitive. If any part of the “Place” name matches the input query, it should be selected. For example, query “UK” should return results “London, UK” as well.
+Terrane (ROCKUNIT) --- Same as Place.
+Spatial extent. Basically we can specify a spatial extent by giving four coordinates (Lat_min, Lat_max, Lon_min, Lon_max), then the sampling location of all poles (SLAT, SLONG) fall into this extent should be selected.
