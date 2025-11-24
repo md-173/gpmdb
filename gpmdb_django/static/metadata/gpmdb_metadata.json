@@ -1,0 +1,39 @@
+{
+  "identifier": "",
+  "title": "Global Paleomagnetic Database (GPMDB)",
+  "version": "v1.1",
+  "creator": {
+    "name": "",
+    "affiliation": "Curtin University"
+  },
+  "publisher": "Curtin University",
+  "publicationYear": "2025",
+  "description": "CONTAINS PUBLISHED PALEOMAGNETIC POLES AND DIRECTIONS",
+  "subjects": [
+    "Paleomagnetism"
+  ],
+  "spatialCoverage": {
+    "geoBox": {
+      "westBoundLongitude": -180,
+      "eastBoundLongitude": 180,
+      "southBoundLatitude": -90,
+      "northBoundLatitude": 90
+    }
+  },
+  "temporalCoverage": {
+    "start": "1925",
+    "end": "2024"
+  },
+  "language": "en",
+  "license": "CC-BY-4.0",
+  "formats": [
+        "CSV"
+  ],
+  "accessURL": "https://www.gpmdb.net",
+  "relatedIdentifiers": [
+    {
+      "relatedIdentifier": "https://doi.org/10.1016/j.earscirev.2022.104258",
+      "relationType": "IsSupplementedBy"
+    }
+  ]
+}

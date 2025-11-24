@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+from django.urls import path 
 from django.conf.urls import url
 from django.contrib import admin
 from gpmdb import views
@@ -20,6 +21,7 @@ from gpmdb import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^get_data/?$', views.get_data, name='get_data'),
+    url(r'^submit_data/?$', views.submit_data, name='submit_data'),
     url(r'^get_query_data/?$', views.get_query_data, name='get_query_data'),
     url(r'^get_PMAGRESULT_data/?$', views.get_PMAGRESULT_data, name='get_PMAGRESULT_data'),
     url(r'^PMAGRESULT/?$', views.PMAGRESULT, name='PMAGRESULT'),
@@ -27,5 +29,10 @@ urlpatterns = [
     url(r'^get_table_data/?$', views.get_table_data, name='get_table_data'),
     url(r'^table/?$', views.table, name='table'),
     url(r'^get_query_data_for_map/?$', views.get_query_data_for_map, name='get_query_data_for_map'),
-#    url(r'^admin/', admin.site.urls),
+    url(r'^get_data_within_polygon/?$', views.get_data_within_polygon, name='get_data_within_polygon'),
+    url(r'^get_stats/?$', views.get_stats, name='get_stats'),
+    url(r'^get_map_within_polygon/?$', views.get_map_within_polygon, name='get_map_within_polygon'),
 ]
+        
+#    url(r'^admin/', admin.site.urls),
+
