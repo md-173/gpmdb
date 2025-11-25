@@ -6,7 +6,7 @@ https://gpmdb.net/
 
 **Step 1:** run the container `docker run -d -p 7777:80 --restart always edrg/gpmdb`
 
-**Step 2:** open http://127.0.0.1:7777 in a web browser
+**Step 2:** open http://127.0.0.1:7777 i n a web browser
 
 The container takes a few seconds to start, be patient.
 
@@ -43,13 +43,15 @@ In the root diretory, run `docker build -t edrg/gpmdb . -f docker/Dockerfile`
 #### Development
 * Step 1: go to source code folder "gpmdb/gpmdb_django"
 * Step 2: run ``docker run -it -v `pwd`:/my_dev -p 5555:5555 edrg/gpmdb /bin/bash``
-* Step 3: run `/etc/init.d/postgresql start`
+* Step 3: run `/etc/init.d/postgresql start`do
 * Step 4: **go to /my_dev** and change DEBUG to True in **gpmdb_django/settings.py**
 * Step 5: run `python3 manage.py runserver 0:5555`
 * Step 6: happy debugging
 *
 
 #### The deploy machine is instance i-033fb6009caa86875 (GPMDB) on AWS.
+
+
 
 run `docker run -d -p 80:80 -p 443:443 -p 5432:5432 --restart always edrg/gpmdb`
 

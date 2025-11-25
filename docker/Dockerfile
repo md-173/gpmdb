@@ -10,6 +10,39 @@ RUN apt-get install -y postgresql postgresql-contrib
 RUN apt-get install -y apache2 zip unzip
 RUN apt-get install -y python3-django libapache2-mod-wsgi-py3 python3-psycopg2
 
+RUN apt-get install -y gdal-bin libgdal-dev python3-gdal
+ENV GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
+
+RUN apt-get install -y python3-pip
+RUN pip3 install pmagpy
+RUN pip3 install pandas
+
+RUN apt-get install -y python3-pip python3-dev libfreetype6-dev libpng-dev pkg-config
+
+RUN pip3 install matplotlib
+
+RUN apt-get install -y python3-pip python3-dev \
+    build-essential \
+    gfortran \
+    libopenblas-dev \
+    liblapack-dev \
+    libatlas-base-dev
+
+RUN pip3 install scipy
+
+RUN pip3 install mplstereonet
+
+RUN pip3 install sphstat
+
+RUN apt-get update && apt-get install -y \
+    libproj-dev \
+    proj-data \
+    proj-bin \
+    libgeos-dev \
+    libgeos-c1v5
+
+RUN pip3 install cartopy
+
 RUN mkdir /work 
 
 WORKDIR /work
@@ -48,6 +81,5 @@ USER root
 
 RUN chmod 755 /work/run.sh
 
-RUN cd /work/ && python3 manage.py migrate
 
 CMD ["/work/run.sh"]

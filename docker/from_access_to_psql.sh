@@ -41,6 +41,7 @@ echo "listen_addresses = '*'" >> /etc/postgresql/12/main/postgresql.conf
 #done
 
 #ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;PMAGRESULT;REFERENCE;ROCKUNIT;TERRANE;TIMESCALE;
+psql -U postgres -c "DROP DATABASE IF EXISTS GD2021;"
 echo "importing database GD2021"
 #dropdb GD2021
 createdb GD2021
@@ -61,6 +62,11 @@ psql -U postgres -c "CREATE USER gpmdb WITH PASSWORD 'gpmdb';"
 psql -U postgres -c "GRANT CONNECT ON DATABASE \"GD2021\" TO gpmdb;"
 psql -U postgres -d GD2021 -c "GRANT USAGE ON SCHEMA public TO gpmdb;"
 psql -U postgres -d GD2021 -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO gpmdb;"
+psql -U postgres -c "CREATE USER gpmdbadmin WITH PASSWORD 'admin';"
+psql -U postgres -c "GRANT CONNECT ON DATABASE \"GD2021\" TO gpmdbadmin;"
+psql -U postgres -d GD2021 -c "GRANT USAGE ON SCHEMA public TO gpmdbadmin;"
+psql -U postgres -d GD2021 -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gpmdbadmin;"
+psql -U postgres -d GD2021 -c "ALTER SCHEMA public OWNER TO gpmdbadmin;"
 
 #Be aware, the Apache user name is www-data or apache or httpd... 
 #psql -U postgres -c "CREATE USER root;"
