@@ -7,6 +7,10 @@ RUN apt-get update
 RUN apt-get update && apt-get install -y mdbtools
 
 RUN apt-get install -y postgresql postgresql-contrib
+
+RUN apt-get install -y postgis postgresql-12-postgis-3 postgresql-12-postgis-3-scripts
+
+
 RUN apt-get install -y apache2 zip unzip
 RUN apt-get install -y python3-django libapache2-mod-wsgi-py3 python3-psycopg2
 

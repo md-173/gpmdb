@@ -8,6 +8,7 @@ from .models import MyModel  # Import your model
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt  # Only if you're not using CSRF protection during testing
 from pmagpy.ipmag import plot_net, plot_di
+from pmagpy.pmag import dia_vgp
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -554,6 +555,10 @@ def get_query_data(request):
     for row in cursor:
 
         data["data"].append(list(row))
+
+
+
+
         stats_data.append({
             "PLAT": row[16],  # Paleolatitude
             "PLONG": row[17],  # Paleolongitude
@@ -562,7 +567,7 @@ def get_query_data(request):
             "DP": row[18],     # Confidence radius in latitude
             "DM": row[19],
             "SLAT": row[14],
-            "SLONG": row[15]                 # Confidence radius in longitude
+            "SLONG": row[15],
             })
                     
         '''histogram_data.append({
@@ -728,6 +733,12 @@ def get_data_within_polygon(request):
                     }
                     
                     geojson["features"].append(feature)
+
+
+
+
+
+
                     
                     stats_data.append({
                         "PLAT": row[16],  # Paleolatitude
@@ -1000,7 +1011,6 @@ def plot_equal_area_plot(data):
     # Plot each directional mean
     for _, row in df.iterrows():
 
-        trend, plunge = mplstereonet.geographic2plunge_bearing(row['PLONG'].astype(float), row['PLAT'].astype(float))
         plot_di(row['PLONG'], row['PLAT'], color='blue')
  
     # Save to buffer for base64 encoding
