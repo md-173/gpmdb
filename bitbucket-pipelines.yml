@@ -1,0 +1,47 @@
+# This is an example Starter pipeline configuration
+# Use a skeleton to build, test and deploy using manual and parallel steps
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+
+image: atlassian/default-image:3
+
+pipelines:
+  default:
+      - step:
+          name: 'Build and deploy'
+          script:
+            - docker build -t gplates/gpmdb . -f docker/Dockerfile
+            - docker run -d -p 80:80 -p 443:443 -p 5432:5432 --restart always gplates/gpmdb
+          services:
+            - docker
+#      - step:
+#          name: 'Go to paleoweb01p.curtin.edu.au before pulling'
+#          trigger: manual
+#          script:
+#            - docker pull gplates/gpmdb
+#          services:
+#            - docker
+#      - step:
+#          name: 'Stop the running docker container'
+#          script:
+#            - docker ps
+#            - docker stop ${CONTAINER ID}
+#          services:
+#            - docker
+#      - step:
+#          name: 'run test on http://127.0.0.1:7777'
+#          script:
+#            - docker run -d -p 7777:80 --restart always gplates/gpmdb
+#          services:
+#            - docker
+   
+   # The following deployment steps will be executed for each pipeline run. To configure your steps and conditionally deploy see https://support.atlassian.com/bitbucket-cloud/docs/configure-bitbucket-pipelinesyml/
+    
+#      - step:
+#          name: 'Deployment to  http://paleoweb01p.curtin.edu.au'
+#          deployment: production
+#          trigger: 'manual'
+#          script:
+#            - docker run -d -p 80:80 -p 443:443 -p 5432:5432 --restart always gplates/gpmdb
+#          services:
+#          - docker

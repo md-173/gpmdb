@@ -1,0 +1,1764 @@
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/some_filenameheatmap" "b/C:\\Users\\PC\\Desktop\\kinga\\work/backup.sql"
+similarity index 100%
+rename from "C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/some_filenameheatmap"
+rename to "C:\\Users\\PC\\Desktop\\kinga\\work/backup.sql"
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/db.sqlite3" "b/C:\\Users\\PC\\Desktop\\kinga\\work/db.sqlite3"
+new file mode 100644
+index 0000000..761abaa
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/db.sqlite3" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/from_access_to_psql.sh" "b/C:\\Users\\PC\\Desktop\\kinga\\work/from_access_to_psql.sh"
+new file mode 100644
+index 0000000..d41cc8c
+--- /dev/null
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/from_access_to_psql.sh"
+@@ -0,0 +1,69 @@
++#!/bin/bash
++
++/etc/init.d/postgresql start
++
++#psql -U postgres -c "alter user postgres with password 'x';"
++
++#echo "localhost:5432:GD2021:postgres:x" > ~/.pgpass
++echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/12/main/pg_hba.conf
++echo "listen_addresses = '*'" >> /etc/postgresql/12/main/postgresql.conf
++#chmod 0600 ~/.pgpass
++
++#echo "importing database GD2005B"
++#dropdb  GD2005B
++#createdb GD2005B
++
++#mdb-schema GD2005B.MDB postgres | psql -d GD2005B -U postgres -h localhost -p 5432 > /dev/null
++
++#IFS=';' read -ra tables <<< $(mdb-tables -d \; GD2005B.MDB)
++#the order is important
++#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;Paste Errors;TERRANE;TIMESCALE;pr1;new-paleoz;new340-260poles_gondw;poles2009a;McElhinny;"
++#for i in "${tables[@]}"; do
++#    mdb-export -I postgres -q \' GD2005B.MDB "$i" | psql -d GD2005B -U postgres  -h localhost -p 5432 > /dev/null
++#    echo "importing $i"
++#done
++
++#mdb-export -I postgres -q \' GD2005B.MDB "PMAGRESULT" | psql -d GD2005B -U mchin -h localhost -p 5433
++
++#echo "importing database GD2020"
++#dropdb GD2020
++#createdb GD2020
++
++#mdb-schema GD2020.MDB postgres | psql -d GD2020 -U postgres -h localhost -p 5432 > /dev/null
++
++#IFS=';' read -ra tables <<< $(mdb-tables -d \; GD2020.MDB)
++#the order is important
++#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;Paste Errors;TERRANE;TIMESCALE;pr1;new-paleoz;new340-260poles_gondw;poles2009a;McElhinny;Character;lips_older180;Young_plumes;Yebo1;Yebo2;pallats2017;pallats2017-2;pallats2017-3;bad;pallats2017-4;pallat2017-fin;pallars2017-rocktype;sam-new;sam-new2;afr-new;ind-new;aus-new;asia-new;eur-new;ant-new;n-amer-new;gre-new;m-east-new;asia-new2;2000-1800;poles2017a;100-170;pallats2017b;pallats2017c;2016-17;poles2017b;"
++#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;"
++#for i in "${tables[@]}"; do
++#    mdb-export -I postgres -q \' GD2020.MDB "$i" | psql -d GD2020 -U postgres  -h localhost -p 5432 > /dev/null
++#    echo "importing $i"
++#done
++
++#ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;PMAGRESULT;REFERENCE;ROCKUNIT;TERRANE;TIMESCALE;
++echo "importing database GD2021"
++#dropdb GD2021
++createdb GD2021
++
++mdb-schema GD2021Clean.mdb postgres | psql -d GD2021 -U postgres > /dev/null
++
++IFS=';' read -ra tables <<< $(mdb-tables -d \; GD2021Clean.mdb)
++#the order is important
++#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;Paste Errors;TERRANE;TIMESCALE;pr1;new-paleoz;new340-260poles_gondw;poles2009a;McElhinny;Character;lips_older180;Young_plumes;Yebo1;Yebo2;pallats2017;pallats2017-2;pallats2017-3;bad;pallats2017-4;pallat2017-fin;pallars2017-rocktype;sam-new;sam-new2;afr-new;ind-new;aus-new;asia-new;eur-new;ant-new;n-amer-new;gre-new;m-east-new;asia-new2;2000-1800;poles2017a;100-170;pallats2017b;pallats2017c;2016-17;poles2017b;"
++#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;"
++for i in "${tables[@]}"; do
++    mdb-export -I postgres -q \' GD2021Clean.mdb "$i" | psql -d GD2021 -U postgres  > /dev/null
++    echo "importing $i"
++done
++
++#create read-only user, the password is supposed to be public.
++psql -U postgres -c "CREATE USER gpmdb WITH PASSWORD 'gpmdb';"
++psql -U postgres -c "GRANT CONNECT ON DATABASE \"GD2021\" TO gpmdb;"
++psql -U postgres -d GD2021 -c "GRANT USAGE ON SCHEMA public TO gpmdb;"
++psql -U postgres -d GD2021 -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO gpmdb;"
++
++#Be aware, the Apache user name is www-data or apache or httpd... 
++#psql -U postgres -c "CREATE USER root;"
++#psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE \"GD2021\" TO root;"
++#psql -U postgres -d GD2021 -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO root;"
++
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/__init__.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/__init__.cpython-38.pyc"
+new file mode 100644
+index 0000000..efdd487
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/__init__.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/admin.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/admin.cpython-38.pyc"
+new file mode 100644
+index 0000000..3da12a7
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/admin.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/models.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/models.cpython-38.pyc"
+new file mode 100644
+index 0000000..e21c8e4
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/models.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/views.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/views.cpython-38.pyc"
+new file mode 100644
+index 0000000..c816c46
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/__pycache__/views.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/migrations/__pycache__/__init__.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/migrations/__pycache__/__init__.cpython-38.pyc"
+new file mode 100644
+index 0000000..f3bff0f
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/migrations/__pycache__/__init__.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/models.py" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/models.py"
+index 1951261..0b0ec76 100644
+--- "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/models.py"
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/models.py"
+@@ -3,3 +3,8 @@
+ from django.db import models
+ 
+ # Create your models here.
++from django.contrib.gis.db import models
++
++class MyModel(models.Model):
++    name = models.CharField(max_length=100)
++    location = models.PolygonField()
+\ No newline at end of file
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/templates/gpmdb.html" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/templates/gpmdb.html"
+index 05f1c8a..2ef7c75 100644
+--- "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/templates/gpmdb.html"
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/templates/gpmdb.html"
+@@ -7,101 +7,107 @@
+     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+     <meta name="description" content="GPMDB">
+     <meta name="author" content="Michael Chin">
+-    <title>GPMDB</title>
++    <title>Under enhancement GPMDB</title>
+     <!-- Latest compiled and minified CSS -->
+     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+-
+     <!-- Optional theme -->
+     <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+-
+     <link rel="stylesheet" type="text/css" href="/static/css/jquery.dataTables.min.css"/>
+     <link rel="stylesheet" type="text/css" href="/static/css/leaflet.css"/>
++	<!-- Leaflet Draw CSS for the drawing functionality -->
++    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
++
++	<style>
++		body{
++			background-color:rgb(231,231,231); 
++		}
++		.navbar.nav-custom{
++			background-color: rgb(0,77,140);
++			margin:0;
++			min-height:20px;
++			border:none;
++		}
++		.navbar.nav-custom li a{
++			color:white;
++			font-size:12pt; 
++			font-family: Arial;
++			padding-top:5px;
++			padding-bottom:5px;
++		}
++		.nav-custom.navbar  li  a:hover,  
++		.nav-custom.navbar  li  a:focus{
++			color:yellow;
++			background-color:rgb(0,77,140); 
++		}
++
++		.left-menu-item{
++			background-color:rgb(0,77,140); 
++			color:white; 
++			padding:5px 0px 5px 0px; 
++			margin-bottom:2px;font-size: 11pt;
++			font-weight: bold; 
++			text-align:center;
++		}
++		.left-menu-item:hover,
++		.left-menu-item:focus{
++			color: yellow;
++			cursor: pointer;
++		}
++
++		#GPMDB-title{
++			font-size:44pt; 
++			font-family: Arial; 
++			font-weight:bold; 
++			color:rgb(0,77,140);
++			margin-left:70px;
++		}
++
++		@media screen and (max-width: 1023px){
++			#GPD-title{
++				display:none;
++			}
++		 #GPMDB-title{
++				padding-top:20px;
++			}
++		}
++
++		@media screen and (max-width: 767px){
++			#GPMDB-title{
++				padding-top:40px;
++				font-size:22pt;
++			}
++		}
++
++		@media screen and (max-width: 424px){
++			#three-icons{
++				display:none;
++			}
++		}
++
++		.navbar-toggle{
++			height:25px;
++			padding: 5px 5px;
++			background-color: #ddd;
++		}
++
++		td{
++			white-space: nowrap;
++		}
++		
++		.custom-star-marker {
++			color: gold;
++			font-size: 20px;
++			font-weight: bold;
++			text-shadow: 0 0 3px black;
++		}
++	</style>
+ </head>
+-<style>
+-body{
+-    background-color:rgb(231,231,231);
+-}
+-.navbar.nav-custom{
+-    background-color: rgb(0,77,140);
+-    margin:0;
+-    min-height:20px;
+-    border:none;
+-}
+-.navbar.nav-custom li a{
+-    color:white;
+-    font-size:12pt; 
+-    font-family: Arial;
+-    padding-top:5px;
+-    padding-bottom:5px;
+-}
+-.nav-custom.navbar  li  a:hover,  
+-.nav-custom.navbar  li  a:focus{
+-    color:yellow;
+-    background-color:rgb(77,131,175); 
+-}
+-
+-.left-menu-item{
+-    background-color:rgb(0,77,140); 
+-    color:white; 
+-    padding:5px 0px 5px 0px; 
+-    margin-bottom:2px;font-size: 11pt;
+-    font-weight: bold; 
+-    text-align:center;
+-}
+-.left-menu-item:hover,
+-.left-menu-item:focus{
+-    color: yellow;
+-    cursor: pointer;
+-}
+-
+-#GPMDB-title{
+-    font-size:44pt; 
+-    font-family: Arial; 
+-    font-weight:bold; 
+-    color:rgb(0,77,140);
+-    margin-left:70px;
+-}
+-
+-@media screen and (max-width: 1023px){
+-    #GPD-title{
+-        display:none;
+-    }
+- #GPMDB-title{
+-        padding-top:20px;
+-    }
+-}
+-
+-@media screen and (max-width: 767px){
+-    #GPMDB-title{
+-        padding-top:40px;
+-        font-size:22pt;
+-    }
+-}
+-
+-@media screen and (max-width: 424px){
+-    #three-icons{
+-        display:none;
+-    }
+-}
+-
+-.navbar-toggle{
+-    height:25px;
+-    padding: 5px 5px;
+-    background-color: #ddd;
+-}
+-
+-td{
+-    white-space: nowrap;
+-}
+-
+-</style>
+-</body>
+-   
++<body>  
+     <div style="position:fixed;top:-10px;height:100px;background-color:rgb(231,231,231);width:100%;z-index:1049;">
+     <div class="container">  
+         <div class="row"> 
+         <div class="col-md-12" id="logo">
+-            <div style="position:absolute;top:20px;"><img src="static/images/compass.png"></div>
++            <div style="position:absolute;top:0px;"><img src="static/images/compass.png"></div>
+             <div id="three-icons" style="float:right; margin-top:20px;">
+                 <img style="margin-right:-23px; margin-top:-5px;" src="static/images/ball.png">
+                 <img src="static/images/house.png">
+@@ -115,9 +121,9 @@ td{
+     </div>
+     </div>
+ 
+-        <div style="background-color:rgb(77,131,175); width:100%;position:fixed;top:90px;z-index:1049;">
+-        <div class="container" role="menu-container" style=" background-color: rgb(0,77,140);">
+-        <div class="row">
++    <div style="background-color:rgb(77,131,175); width:100%;position:fixed;top:90px;z-index:1049;">
++	<div class="container" role="menu-container" style=" background-color: rgb(0,77,140);">
++		<div class="row">
+         <nav class="navbar navbar-default nav-custom">
+             <div class="container-fluid" style=" background-color: rgb(0,77,140);">
+                 <div class="navbar-header">
+@@ -137,12 +143,12 @@ td{
+                         <li><a href="#about">Help</a></li>
+                         <li><a href="#contact">Contact Us</a></li>
+                     </ul>
+-                </div><!--/.nav-collapse -->
++                </div>
+             </div>
+         </nav>
+-        </div>
+-        </div>
+-        </div>
++        </div><!--/.nav-collapse -->
++	</div>
++	</div>
+ 
+     <div class="container" role="main" style="background-color:rgb(216,216,216);margin-top:130px;">
+             <div id="menu-and-map" class="row">
+@@ -158,14 +164,14 @@ td{
+                         <div class="left-menu-item" onclick="alert('Under Construction!')">File Format Conversion</div>
+                         <div class="left-menu-item" onclick="alert('Under Construction!')">Download Python Scripts</div>
+                         <div class="left-menu-item" onclick="alert('Under Construction!')">Software Tools</div>
+-                        <div class="left-menu-item" style="margin-top:20px;" onclick="alert('Under Construction!')">Contribute data</div>
+-                    </div>
++                        <div class="left-menu-item" style="margin-top:20px;" data-toggle="modal" data-target="#contribution">Contribute data</div>
++					</div>
+                 </div>
+         
+                 <div class="col-md-9" style="height:360px;padding:5px;">
+                    <div id="map" style="height:350px;"></div> 
+                 </div>
+-            </div><!--end of row-->
++            </div>
+ 
+             <div class="row" id="info" style="background:rgb(216,216,216);padding:5px;">
+                 <div id="welcome" class="col-md-7" style="min-height:380px;background:rgb(231,231,231);">
+@@ -208,14 +214,19 @@ td{
+             </div><!--end of row-->
+ 
+         <div class="row">
+-            <div id="footer" class="col-md-12" style="color:white;background-color:rgb(0,77,140);height:50px;">
+-                <span style="position: absolute;    bottom: 0;   right: 0;"> </span>
+-            </div>
+-        </div>
+-
+-
+-
++			<div id="footer" class="col-md-12" style="color:white; background-color:rgb(0,77,140); height:50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center;">
++
++				<span>
++					<a href="static/metadata/gpmdb_metadata.json" target="_blank" style="color: white; text-decoration: underline;">
++						View Metadata
++					</a>
++				</span>
++				
++				
++			</div>
++		</div>
+ 
++    </div>
+ 
+     <div class="modal fade" id="search-form" role="dialog">
+     <div class="modal-dialog modal-lg">
+@@ -375,12 +386,101 @@ td{
+       </div>
+       
+     </div>
+-  </div>
+-
+-
+-
+-
+-
++	</div>
++
++	<div class="modal fade" id="contribution" role="dialog">
++		<div class="modal-dialog modal-lg">
++			<!-- Modal content-->
++			<div class="modal-content">
++				<div class="modal-header">
++					<button type="button" class="close" data-dismiss="modal">&times;</button>
++					<h4 class="modal-title">contributions</h4>
++					Fill up the fields
++				</div>
++			<div class="modal-body">
++			<form>
++				<div class="form-group">
++					<!--<div style="width:49%;display:inline-block;">
++						<label for="DOI">DOI</label>
++						<input type="text" class="form-control" id="DOI" placeholder="10.1000/xyz123" required>
++						<small id="doiHelp" class="form-text text-muted">
++							Please enter a valid DOI (e.g., 10.1000/xyz123). 
++						</small>
++					</div>-->
++					<div style="width:49%; display:inline-block;">
++						<label for="DOI">DOI URL</label>
++						<input type="url" class="form-control" id="DOIurl" name="DOI"
++							   placeholder="https://doi.org/10.1000/xyz123" required>
++						<small id="doiHelp" class="form-text text-muted">
++							Please enter the full DOI URL (e.g., https://doi.org/10.1000/xyz123).
++						</small>
++					</div>
++				</div>
++				<!--<div class="form-group">
++					<div style="width:49%; display:inline-block;">
++						<label for="IGSN">IGSN (DOI URL)</label>
++						<input type="url" class="form-control" id="IGSN" name="IGSN"
++							   placeholder=" https://doi.org/10.21384/AU1234" required>
++						<small class="form-text text-muted">
++							Enter the full IGSN DOI URL (e.g.,  https://doi.org/10.21384/AU1234 or https://igsn.org/10.21384/AU5678).
++						</small>
++					</div>
++				</div>-->
++
++				<div class="form-group">
++					
++					<div style="width:24%; display:inline-block;">
++						<label for="R-LAT">Latitude (°) [WGS84]</label>
++						<input type="number" class="form-control" id="R-LAT" name="R-LAT" 
++							   placeholder="e.g., 27.50" step="any" min="-90" max="90" required>
++					</div>
++					<div style="width:24%; display:inline-block; margin-left:2%;">
++						<label for="R-LONG">Longitude (°) [WGS84]</label>
++						<input type="number" class="form-control" id="R-LONG" name="R-LONG" 
++							   placeholder="e.g., 89.63" step="any" min="-180" max="180" required>
++					</div>
++				</div>
++			
++				
++				<!-- Age -->
++				<div class="form-group">
++					<div style="width:24%;display:inline-block;">
++						<label for="age">Site Age (Ma)</label>
++						<input type="number" class="form-control" id="age" min="0">
++					</div>
++				</div>
++
++				<!-- Email -->
++				<div class="form-group">
++					<label for="email">Email <span style="color:red">*</span></label>
++					<input type="email" class="form-control" id="email" required>
++					<small class="form-text text-muted">
++						We'll use this email to contact you if needed.
++					</small>
++				</div>
++
++				<!-- Alternate Email -->
++				<div class="form-group">
++					<label for="alternate_email">Alternate Email</label>
++					<input type="email" class="form-control" id="alternate_email">
++				</div>
++
++				<!-- Comments -->
++				<div class="form-group">
++					<label for="comments">Comments</label>
++					<textarea class="form-control" id="comments" rows="3" placeholder="Add any remarks or notes here..."></textarea>
++				</div>
++			</form>
++			</div>
++			<div class="modal-footer">
++				<button id="reset-cform" type="button" class="btn btn-danger pull-left" >Reset Form</button>
++				<button id="submit-data" type="submit" class="btn btn-primary">Submit</button>
++				<button type="button" class="btn" data-dismiss="modal">Cancel</button>
++			</div>
++		  </div>
++		  
++		</div>
++	</div>
+ 
+     <div id="query-result" class="modal fade" role="dialog">
+         <div class="modal-dialog modal-lg">
+@@ -392,23 +492,22 @@ td{
+                 <h4 class="modal-title">Query Result</h4>
+             </div>
+     
+-            <div class="modal-body" style="overflow: scroll;">
++            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                 <div id="table-div"></div>
+-            </div>
+-        
+-            <div class="modal-footer">
++				<div id="stats-container"></div>
++				<div id="histogram"></div>
++			</div>
++			
++			<div class="modal-footer">
+                 <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
++				<button type="button" id="stats" class="btn btn-primary">Stats</button>
+                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                 <button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>
+-            </div>
++			</div>
+         </div>
+         </div><!--modal-dialog modal-lg-->
+     </div><!--query-result-->
+ 
+-
+-
+-
+-
+     <div id="progress-bar" class="modal fade" role="dialog">
+         <div class="modal-dialog">
+ 
+@@ -432,15 +531,15 @@ td{
+         </div><!--modal-dialog modal-lg-->
+     </div><!--query-result-->
+ 
+-
+-
+-    </div> <!--container div-->
++    <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+ 
+     <script src="/static/libs/jquery.min.js"></script>
+      <!-- Latest compiled and minified JavaScript -->
+     <script src="/static/libs/bootstrap.min.js" ></script>
+     <script src="/static/libs/jquery.dataTables.min.js"></script>
+     <script src="/static/libs/leaflet.js"></script>
++	<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
++	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <script>
+         var refno = NaN;
+         var resultno = NaN;
+@@ -458,7 +557,9 @@ td{
+         var k_max = NaN;
+         var a95_min = NaN;
+         var a95_max = NaN;
+-
++		var lat = NaN;
++		var lon = NaN;
++		
+         function validate(){
+             refno = parseInt($('#refno').val());
+             if($('#refno').val() && isNaN(refno)){
+@@ -676,18 +777,22 @@ td{
+                     $('#max-a95').focus();
+                     $('#max-a95').select();
+                     return false;
+-                } 
+-            }
+-
+-            return true;
++                }
++			}	
++			return true;
+         }
+-        
++		
+         var search_data;
++		var stats_data;
++		
++		const csrftoken = document.getElementById('csrf_token').value;
++
+         function show_data(){
+             $('#progress-bar').modal();
++			$('#stats-container').empty();
+             q_data={}
+-        
+-            var continent = $('#continent').find(":selected").val();
++			
++	        var continent = $('#continent').find(":selected").val();
+             if(continent){
+                 q_data['continent'] = continent;
+             }
+@@ -759,15 +864,17 @@ td{
+             if(!isNaN(a95_max)){
+                 q_data['a95-max'] = a95_max;
+             }
+-
++			console.log("qdata", q_data);
+ 
+             $.ajax({
+                 "url": '/get_query_data/',
+                 "data": q_data,
+                 "success": function(json) {
+-                    search_data = json;
+-                    var table_headers;
+-                    $.each(json.columns, function(i, val){
++                    
++					search_data = json.data;
++					stats_data=json.stats_data;         
++					var table_headers;
++                    $.each(json.data.columns, function(i, val){
+                         table_headers += "<th>" + val + "</th>";
+                     });
+ 
+@@ -777,7 +884,7 @@ td{
+ 
+                     $('#db-table').dataTable({
+                         "iDisplayLength": 10,
+-                        aaData:json.data,
++                        aaData:json.data.data,
+                         "order":[[3,"desc"]], 
+                         
+                     });
+@@ -790,7 +897,7 @@ td{
+                     $.getJSON('/get_query_data_for_map/', q_data, function(data){
+                         addDataToMap(data)
+                     });
+-                    
++					
+                 },
+                 "complete": function(){
+                     $('#progress-bar').modal('hide');
+@@ -799,6 +906,240 @@ td{
+             });
+         }
+ 
++		
++        function validate_submission() {
++			var doiurlValue = $('#DOIurl').val().trim();
++			var doiUrlPattern = /^https?:\/\/(dx\.)?doi\.org\/10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
++
++			if (!doiUrlPattern.test(doiurlValue)) {
++				alert("Please enter a valid DOI URL (e.g., https://doi.org/10.1234/abcd.5678)!");
++				$('#DOIurl').focus();
++				return false;
++			}
++			/*var igsnValue = $('#IGSN').val().trim();
++			var igsnUrlPattern = /^https:\/\/(doi\.org|igsn\.org)\/(10\.\d{4,9}|\d{4,9})\/[-._;()/:A-Z0-9]+$/i;
++ 
++			if (!igsnUrlPattern.test(igsnValue)) {
++				alert("Please enter a valid IGSN DOI URL (e.g., https://doi.org/10.21384/AU1234 or https://igsn.org/10.21384/AU5678)!");
++				$('#IGSN').focus();
++				return false;
++			}*/
++			
++			var email = $('#email').val().trim();
++			var emailpattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
++			if (!emailpattern.test(email)) {
++				alert("Please enter a valid email id!");
++				$('#email').focus();
++				return false;
++			}	
++			
++			var ageinput = $('#age').val().trim();
++			var age = Number(ageinput);   
++			if (ageinput === '') {
++					alert("Age cannot be empty.");
++					$('#age').focus();
++					$('#age').select();
++					return false;
++				}
++
++				if (isNaN(age)) {
++					console.log("Age must be a number.");
++					return false;
++				}
++
++				if (!Number.isInteger(age)) {
++					alert("Age must be an integer.");
++					$('#age').focus();
++					$('#age').select();
++					return false;
++				}
++
++				if (age < 0) {
++					alert("Age cannot be negative.");
++					$('#age').focus();
++					$('#age').select();
++					return false;
++				}
++
++										
++			lat = parseFloat($('#R-LAT').val());
++            if($('#R-LAT').val() && isNaN(lat)){
++                alert("The latitude must be a number!");
++                $('#R-LAT').focus();
++                $('#R-LAT').select();
++                return false;
++            }
++			
++			if (!lat) {
++				alert("RLAT field cannot be empty!");
++				$('#R-LAT').focus();
++				return false
++			}
++			
++			if(!isNaN(lat)){
++                if(lat>90 || lat<-90){
++                    alert("The latitude must be between -90 and 90!");
++                    $('#R-LAT').focus();
++                    $('#R-LAT').select();
++                    return false;
++                } 
++			}
++
++            lon = parseFloat($('#R-LONG').val());
++            if($('#R-LONG').val() && isNaN(lon)){
++                alert("The longitude must be a number!");
++                $('#R-LONG').focus();
++                $('#R-LONG').select();
++			    return false;
++			}
++			if (!lon) {
++				alert("RLONG field cannot be empty!");
++				$('#R-LONG').focus();
++				return false
++			}
++			if(!isNaN(lon)){
++                if(lon>180 || lon<-180){
++                    alert("The longitude must be between -180 and 180!");
++                    $('#R-LONG').focus();
++                    $('#R-LONG').select();
++                    return false;
++                } 
++            }
++			
++			return true;
++		}
++
++		function submit_data(){
++            $('#progress-bar').modal();
++            s_data={}
++			s_data['doi'] = $('#DOIurl').val().trim(); //ensures no leading and trailing white spaces
++			//s_data['igsn'] = $('#IGSN').val().trim(); 
++			s_data['email'] = $('#email').val().trim();
++			s_data['lat'] = lat;
++			s_data['lon'] = lon;
++			s_data['age'] = parseInt($('#age').val().trim(), 10);
++			s_data['alternate_email'] = $('#alternate_email').val().trim();
++			s_data['comments'] = $('#comments').val().trim();
++			url= '/submit_data/';
++						     
++            $.ajax({
++				url: url,
++				data: s_data,
++				dataType: "json",
++							
++				success: function(response) {
++					console.log(response);
++					if (response.success) {
++						alert("Success: " + response.message);
++						clearMap();
++						
++						$.getJSON('/get_data/', function(data){
++						addDataToMap(data);
++						});
++						showonMap(s_data);
++					} else {
++						alert("Error: " + response.error);
++					}
++				},
++				error: function(xhr, status, error) {
++					alert("AJAX Error: " + error);
++				},
++				complete: function() {
++					$('#progress-bar').modal('hide');
++				}
++			});
++		}
++		function show_stats() {
++			$('#progress-bar').modal();
++			url='/get_stats/';
++			
++			$.ajax({
++				type: "POST",
++				url:url,
++				contentType: "application/json",
++				data: JSON.stringify({
++					data: stats_data
++				}),
++				dataType: "json",
++				headers: {
++					"X-CSRFToken": csrftoken
++				},
++							
++				success: function(response) {
++					alert("Displaying stats from fetched data");
++					const plot_image = response.plot_image;
++					const histogram_image=response.histogram_image;
++					$("#stats-container").empty();
++					$("#stats-container").append(`
++						<h4>Equal-Area Stereonet Plot</h4>
++						<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
++						<h4>Histogram of Site Ages</h4>
++						<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
++					`);
++				
++				},
++				error: function(xhr, status, error) {
++					alert("AJAX Error: " + error);
++				},
++				complete: function() {
++					$('#progress-bar').modal('hide');
++				}
++			});
++		}
++		
++		/*if (!plot_image) {  
++				alert("No data");
++			} else {
++				alert("Displaying plot from fetched data...");
++				console.log(search_data);
++
++				$("#stats-container").empty();
++
++				$("#stats-container").append(`
++					<h4>Equal-Area Stereonet Plot</h4>
++					<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
++					<h4>Histogram of Site Ages</h4>
++					<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
++				`);
++			}
++		}*/
++
++		
++		
++		function fisherStatistic(data) {
++			let sumX = 0, sumY = 0, sumZ = 0;
++			let N = 0;
++
++			for (let i = 0; i < data.length; i++) {
++				let D = parseFloat(data[i][6]);  // Declination
++				let I = parseFloat(data[i][7]);  // Inclination
++
++				if (isNaN(D) || isNaN(I)) continue;
++
++				let D_rad = D * Math.PI / 180;
++				let I_rad = I * Math.PI / 180;
++
++				sumX += Math.cos(I_rad) * Math.cos(D_rad);
++				sumY += Math.cos(I_rad) * Math.sin(D_rad);
++				sumZ += Math.sin(I_rad);
++				N++;
++			}
++
++			if (N === 0) return null;
++
++			let meanX = sumX / N;
++			let meanY = sumY / N;
++			let meanZ = sumZ / N;
++
++			let k = N / (Math.pow(meanX, 2) + Math.pow(meanY, 2) + Math.pow(meanZ, 2));
++
++			return {
++				N: N,
++				meanDirection: { X: meanX, Y: meanY, Z: meanZ },
++				fisherK: k
++			};
++		}
++
+         function save_csv(){
+             let csvContent = "data:text/csv;charset=utf-8," 
+                 + search_data.columns.join(",") + ("\n")
+@@ -833,6 +1174,12 @@ td{
+             $('#search-form').modal("hide");
+             show_data();
+         });
++		
++		$('#submit-data').click(function(){
++            if(!validate_submission()){return;}
++            $('#contribution').modal("hide");
++            submit_data();
++        });
+ 
+         $('#save-csv').click(function(){
+             save_csv();
+@@ -841,6 +1188,11 @@ td{
+         $('#search-again').click(function(){
+             $('#search-form').modal('show');
+         });
++		
++		$('#stats').click(function(){
++            show_stats()
++        });
++		
+ 
+         $('#reset-form').click(function(){
+             $('#qsum-min').val("");
+@@ -868,15 +1220,31 @@ td{
+             $('#max-b').val("") ;
+             $('#min-n').val("") ;
+             $('#max-n').val("") ;
++			$('#DOI').val("");
++			$('#R-LAT').val("");
++			$('#R-LONG').val("");
+         });
+-
+-        var geojsonLayer=null;
++		
++		$('#reset-cform').click(function(){
++            $('#DOI').val("");
++			$('#DOIurl').val("");
++			$('#IGSN').val("");
++			$('#R-LAT').val("");
++			$('#R-LONG').val("");
++			$('#age').val("");
++			$('#email').val("");
++			$('#alternate_email').val("");
++			$('#comments').val("");
++			
++        });
++		
++		var geojsonLayer=null;
+ 
+         var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+ 
+         var map = L.map('map',{
+             center:[0, 0], 
+-            zoom: 1,
++            zoom: 2,
+             maxBounds: bounds,
+             maxBoundsViscosity: 0.25
+         });
+@@ -896,18 +1264,182 @@ td{
+                 minZoom: 0,
+                 maxZoom: 8,
+             }).addTo(map);
+-
+-            $.getJSON('/get_data/', function(data){
++			
++			//var drawnItems = new L.FeatureGroup();
++			//map.addLayer(drawnItems);
++			
++			//Initialize the Draw control
++			const drawControl = new L.Control.Draw({
++				draw: {
++					polygon: {
++					allowIntersection: false, // Prevent overlapping edges
++					showArea: true, // Show area measurement
++					shapeOptions: { color: '#3388ff' } // Polygon color
++					},
++					circlemarker: false,
++					circle: false, // Disable circle drawing
++					marker: false, // Disable marker drawing
++					polyline: false, // Disable polyline drawing
++					rectangle: false// Disable rectangle drawing
++				},
++				edit: false
++			});
++			map.addControl(drawControl);
++			
++			$.getJSON('/get_data/', function(data){
+                 addDataToMap(data);
+-            });
+-        });
+-        
++			map.setView([0,0],1);
++		
++			});
++			   // Handle polygon drawing events
++			map.on('draw:created', function (e) {
++				const layer = e.layer; // The drawn layer (polygon)
++				const polygon = layer.toGeoJSON(); // Convert the polygon to GeoJSON
++				const coordinates = polygon.geometry.coordinates[0]; // Get the polygon coordinates
++				// Print the coordinates to the browser console
++				console.log("Polygon Coordinates:", coordinates);
++				
++				
++				// Send the polygon coordinates to the backend
++				fetchDataWithinPolygon(coordinates);
++			});
++			
++            
++            
++			// Function to fetch data within the drawn polygon
++			function fetchDataWithinPolygon(polygon) {
++				// Correctly format the polygon as a JSON string
++				const polygonString = JSON.stringify(polygon); // Convert polygon object to JSON
++				console.log("polystring :",polygonString);
++				//Construct the URL with the properly formatted polygon
++				const url = `/get_data_within_polygon/?polygon=${encodeURIComponent(polygonString)}`; // URL-encode JSON string
++				//console.log(url)
++				$('#stats-container').empty();
++				$('#progress-bar').modal();
++				$.ajax({
++					type: 'GET',
++					url:url,
++					dataType: 'json',
++					data: polygonString,
++					success: function (data) {
++						// Handle successful response
++						console.log("Data fetched successfully:", data);
++						search_data = data.table_data;
++						stats_data=data.stats_data;
++						console.log("Search_data after polyselection", search_data);
++						var table_headers;
++						$.each(data.table_data.columns.slice(0,-1), function(i, val){
++							table_headers += "<th>" + val + "</th>";
++						});
++
++						$("#table-div").empty();
++						$("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
++						$("#table-div").find("table thead tr").append(table_headers);
++						
++						var filtered_data = data.table_data.data.map(function(row) {
++							return row.slice(0, -1);
++						})
++
++						$('#db-table').dataTable({
++							"iDisplayLength": 10,
++							"aaData":filtered_data,
++							"order":[[3,"desc"]], 
++							
++						});
++
++						$('#progress-bar').modal('hide');
++						$('#query-result').modal();
++                    
++						clearMap();
++						//const m_data = data.geojson_data;
++						//console.log("m_data:",m_data);
++						$.getJSON('/get_map_within_polygon/', {polygon: polygonString}, function(data) {
++							addDataToMap(data);
++						});
++                    	//$.getJSON('/get_query_data_for_map/', m_data, function(data){
++							//addDataToMap(data)});		
++						//addDataToMap(m_data);
++						/*//addDataToMap(m_data);
++						//clearMap();
++						//addDataToMap(data);
++						// Create an array to store the points
++						const points = [];
++
++						// Assuming data contains an array of points, loop through them and create LatLng objects
++						data.features.forEach(function (feature) {
++							const lat = feature.geometry.coordinates[1];  // Latitude
++							const lng = feature.geometry.coordinates[0];  // Longitude
++
++							if (lat && lng) {
++								points.push(L.latLng(lat, lng));  // Add the point to the array
++							}
++						});
++
++						// Check if there are valid points
++						if (points.length > 0) {
++							const bounds = L.latLngBounds(points);  // Create bounds from the points
++
++							// Log the bounds to ensure they are correct
++							console.log("Bounds: ", bounds);
++
++							// Set the map view to fit the bounds
++							map.fitBounds(bounds, {
++								padding: [50, 50],  // Optional: Add padding for better view
++								maxZoom: 12         // Optional: Limit the zoom to a maximum level
++							});
++
++							// Log the map's new center and zoom level after setting the bounds
++							console.log("Map center:", map.getCenter());
++							console.log("Map zoom level:", map.getZoom());
++						} else {
++							console.warn("No valid points available to center the map.");
++						}*/
++					},
++					error: function (error) {
++						// Handle error
++						console.error("Error fetching data:", error);
++						alert("An error occurred while fetching data. Please try again.");
++					},
++					beforeSend: function() {
++					// This callback runs before the request is sent, allowing you to inspect the request before it's sent out.
++					console.log("Request is being sent...");
++				  }
++				});
++			}
++            
++				
++			
++		});
++		
+         function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
+             return "ROCKUNITNO: " +ROCKUNITNO+"<br>"+
+                 "ROCKNAME: "+ROCKNAME+"<br>"+
+                 "<a href=\"\\PMAGRESULT\\?ROCKUNITNO="+ROCKUNITNO+"\" target=_blank>PMAGRESULT: "+PMAGRESULTCOUNT+"</a>";
+         }
+-
++		function isValidPolygon(coordinates) {
++				if (!coordinates || !Array.isArray(coordinates)){ 
++					return false;
++					}
++
++				// Check if the polygon is closed
++				const firstCoord = coordinates[0][0];
++				const lastCoord = coordinates[0][coordinates[0].length - 1];
++				if (firstCoord[0] !== lastCoord[0] || firstCoord[1] !== lastCoord[1]) {
++					return false;
++				}
++
++				// Check if coordinates are within valid bounds
++				for (const ring of coordinates) {
++					for (const coord of ring) {
++						const [lon, lat] = coord;
++						if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
++							return false;
++						}
++					}
++				}
++
++				return true;
++			}		
+         function clearMap(){
+             map.removeLayer(geojsonLayer);
+         }
+@@ -936,8 +1468,31 @@ td{
+                 }
+             );
+             geojsonLayer.addTo(map);
++			const bounds = geojsonLayer.getBounds();
++			if (bounds.isValid()) {
++				map.fitBounds(bounds, {
++					padding: [50, 50],
++					maxZoom: 12
++				});
++			} else {
++				console.warn("No valid bounds to center map.");
++			}
++        }
++		
++		function showonMap(data){
++			var lat = s_data['lat'];
++			var lon = s_data['lon'];
++            var starDivIcon = L.divIcon({
++				className: 'custom-star-marker',
++				html: '★',
++				iconSize: [20, 20],
++				iconAnchor: [10, 10]
++			});
++
++			L.marker([lat, lon], { icon: starDivIcon }).addTo(map);
++			
+         }
+-    </script>
++	</script>
+ 
+ </body>
+ </html>
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/views.py" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/views.py"
+index c32640e..0c26f9c 100644
+--- "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb/views.py"
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb/views.py"
+@@ -1,8 +1,19 @@
+ from django.shortcuts import render
+ from django.http import HttpResponse
+ from django.conf import settings
+-
++from django.http import JsonResponse
++from django.contrib.gis.geos import Polygon
++from .models import MyModel  # Import your model
++from django.db import connection
++from django.views.decorators.csrf import csrf_exempt  # Only if you're not using CSRF protection during testing
++from pmagpy.ipmag import plot_net, plot_di
++import matplotlib.pyplot as plt
++import mplstereonet
++import io
++import base64
+ import logging, json, psycopg2, csv
++import pandas as pd
++
+ 
+ #the password here is no secret, read-only user
+ #in the future, if you need more priviledge, use local peer auth. See /etc/postgresql/12/main/pg_hba.conf
+@@ -11,6 +22,64 @@ conn_string = "host='localhost' dbname='GD2021' user='gpmdb' password='gpmdb' po
+ #
+ # return the front page
+ #
++def select_points(request):
++    if request.method == 'POST' and request.is_ajax():
++        # Retrieve the GeoJSON data from the request
++        geo_data = request.POST.get('geo_data')
++
++        if not geo_data:
++            return JsonResponse({"error": "Geo data not provided"}, status=400)
++
++        # Query the database using ST_Within to find points inside the polygon
++        query = """
++            SELECT * FROM rockunit
++            WHERE ST_Within(geom, ST_GeomFromGeoJSON(%s));
++        """
++        
++        try:
++            with connection.cursor() as cursor:
++                cursor.execute(query, [geo_data])
++                rows = cursor.fetchall()
++
++            # Convert database results to a list of dicts
++            results = [{"id": row[0], "name": row[1], "coords": row[2]} for row in rows]
++            return JsonResponse(results, safe=False)
++
++        except Exception as e:
++            return JsonResponse({"error": f"Database query failed: {str(e)}"}, status=500)
++
++    return JsonResponse({"error": "Invalid request"}, status=400)
++def save_polygon(request):
++    if request.method == 'POST':
++        try:
++            # Get the polygon data from the request (assuming it's in GeoJSON format)
++            polygon_data = json.loads(request.body)  # Parse the GeoJSON string to a Python object
++            coordinates = polygon_data['polygon']['coordinates'][0]  # Extracting the first ring of coordinates (the exterior of the polygon)
++
++            # Convert the coordinates to a Polygon object
++            polygon = Polygon(coordinates)
++
++            # Save the polygon to the database using Django model (assuming you have a field 'polygon' in your model)
++            polygon_instance = MyModel(polygon=polygon)  # Assuming 'polygon' is a field in your model
++            polygon_instance.save()
++
++            # Optionally, if you want to make some database queries, you can use psycopg2 to connect to PostgreSQL
++            # Example query to check if the connection works
++            conn = psycopg2.connect(conn_string)
++            cursor = conn.cursor()
++            cursor.execute("SELECT NOW();")  # Example query to check if database connection works
++            result = cursor.fetchone()
++            logging.info(f"Database connection successful: {result[0]}")
++            cursor.close()
++            conn.close()
++
++            return JsonResponse({'status': 'success', 'message': 'Polygon saved successfully'}, status=200)
++        except Exception as e:
++            logging.error(f"Error saving polygon: {str(e)}")
++            return JsonResponse({'status': 'error', 'message': f'Error saving polygon: {str(e)}'}, status=500)
++    else:
++        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
++
+ def index(request):
+     conn = psycopg2.connect(conn_string)
+     cursor = conn.cursor()
+@@ -288,10 +357,10 @@ def get_query_data(request):
+ 
+     query_str = '''
+         Select r.\"REFNO\", pmr.\"RESULTNO\", ru.\"ROCKNAME\", r.\"YEAR\", r.\"AUTHORS\",
+-            r.\"JOURNAL\", r.\"VOLUME\", r.\"VPAGES\",
++            r.\"JOURNAL\", r.\"VOLUME\", r.\"VPAGES\", 
+             ru.\"CONTINENT\", ru.\"ROCKTYPE\", ru.\"LOWAGE\", ru.\"HIGHAGE\", 
+             pmr.\"LOMAGAGE\", pmr.\"HIMAGAGE\", pmr.\"SLAT\", pmr.\"SLONG\", pmr.\"PLAT\", pmr.\"PLONG\", 
+-            pmr.\"DP\", pmr.\"DM\", re.\"QSUM\", re.\"RSUM\"
++            pmr.\"DP\", pmr.\"DM\", re.\"QSUM\", re.\"RSUM\", r.\"DOI\"
+         FROM (((\"ROCKUNIT\" AS ru 
+             INNER JOIN \"REFERENCE\" AS r ON r.\"REFNO\" = ru.\"REFNO\")
+             INNER JOIN \"PMAGRESULT\" AS pmr ON ru.\"ROCKUNITNO\" = pmr.\"ROCKUNITNO\")
+@@ -308,12 +377,69 @@ def get_query_data(request):
+     data={}
+     data["columns"] = [[desc[0]] for desc in cursor.description]
+     data["data"] = []
++    stats_data=[]
++    #histogram_data=[]
++    
+     for row in cursor:
+         data["data"].append(list(row))
+-    ret = json.dumps(data)
++        stats_data.append({
++            "PLAT": row[16],  # Paleolatitude
++            "PLONG": row[17],  # Paleolongitude
++            "LOMAGAGE": row[12],
++            "HIMAGAGE": row[13],
++            "DP": row[18],     # Confidence radius in latitude
++            "DM": row[19]      # Confidence radius in longitude
++            })
++                    
++        '''histogram_data.append({
++            "LOMAGAGE": row[12],
++            "HIMAGAGE": row[13],
++            "DP": row[18],
++            "DM": row[19]
++            })'''
++                
++    # Prepare both the table data and geojson data
++    result = {
++        'data': data,
++        'stats_data': stats_data,
++         
++    }
++
++    # Return the result as a JSON string
++    #print("Backend Response:", result)
++    return JsonResponse(result)
++              
++    
++    
++#submit_data to database
+ 
+-    return HttpResponse(ret, content_type='application/json')
++def submit_data(request):
++    conn = psycopg2.connect(conn_string)
++    cursor = conn.cursor()
++    #if request.method != "POST":
++      #return JsonResponse({"success": False, "error": "Invalid request method. Use POST."})
++
++    try:
++        doi = request.GET.get("doi", "").strip()
++        lat = request.GET.get("lat", "").strip()
++        lon = request.GET.get("lon", "").strip()
++        email = request.GET.get("email", "").strip()
++        alternate_email = request.GET.get("alternate_email", "").strip()
++        age = request.GET.get("age", "").strip()
++        comments = request.GET.get("comments", "").strip()
++
++        # Insert into database using parameterized query
++        query_str = '''INSERT INTO "CONTRIBUTIONS" (doi, r_lat, r_long, email, alt_email, age, comments) 
++                        VALUES (%s, %s, %s, %s, %s, %s, %s);'''
++        cursor.execute(query_str, [doi, lat, lon, email, alternate_email, age, comments])
++
++        # Commit the transaction
++        conn.commit()
++
++        return JsonResponse({"success": True, "message": "Data inserted successfully."})
+ 
++    except psycopg2.DatabaseError as e:
++        return JsonResponse({"success": False, "error": f"Database error: {str(e)}"})
+ 
+ #
+ # update the map after query the data
+@@ -321,7 +447,7 @@ def get_query_data(request):
+ def get_query_data_for_map(request):
+     conn = psycopg2.connect(conn_string)
+     cursor = conn.cursor()
+-
++    
+     query_str = '''
+             SELECT ru.\"ROCKUNITNO\", ru.\"ROCKNAME\",ru.\"RLONG\", ru.\"RLAT\", array_agg(pmr.\"RESULTNO\") 
+             FROM (((\"ROCKUNIT\" AS ru 
+@@ -358,3 +484,262 @@ def get_query_data_for_map(request):
+     ret = json.dumps(data)
+ 
+     return HttpResponse(ret, content_type='application/json')
++
++
++def get_data_within_polygon(request):
++       
++    polygon_str = request.GET.get('polygon')
++    print("Received polygon string:", polygon_str)  # Log the polygon string for debugging
++
++    # Check if the polygon parameter exists
++    if not polygon_str:
++        return JsonResponse({'status': 'error', 'message': 'Polygon parameter is missing'}, status=400)
++    try:
++        # Parse the polygon data (JSON string) into a Python list
++        polygon = json.loads(polygon_str)
++        print("Parsed polygon:", polygon)  # Log the parsed polygon for debugging
++        
++        polygon_wkt = "POLYGON((" + ", ".join(f"{point[0]} {point[1]}" for point in polygon) + "))"
++        print("Polygon WKT:", polygon_wkt)  # Log the WKT for debugging
++        print(f"Length of polygon_wkt: {len(polygon_wkt)}")
++        # Database connection
++        conn = psycopg2.connect(conn_string)
++        
++        with conn:
++            with conn.cursor() as cursor:
++            
++                query_str = '''
++                    SELECT r."REFNO", pmr."RESULTNO", ru."ROCKNAME", r."YEAR", r."AUTHORS",
++                           r."JOURNAL", r."VOLUME", r."VPAGES",
++                           ru."CONTINENT", ru."ROCKTYPE", ru."LOWAGE", ru."HIGHAGE", 
++                           pmr."LOMAGAGE", pmr."HIMAGAGE", pmr."SLAT", pmr."SLONG", pmr."PLAT", pmr."PLONG", 
++                           pmr."DP", pmr."DM", re."QSUM", re."RSUM", r."DOI",
++                           ST_AsGeoJSON(ru."geom") AS geojson_geom
++                    FROM "ROCKUNIT" AS ru
++                    INNER JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO"
++                    INNER JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO"
++                    INNER JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO"
++                    WHERE ST_Within(ru."geom", ST_SetSRID(ST_GeomFromText(%s), 4326));
++                 '''
++               
++                # Execute the query with the polygon WKT as a parameter
++                cursor.execute(query_str, (polygon_wkt,))
++
++                # Fetch and format the data as GeoJSON
++                data={}
++                data["columns"] = [[desc[0]] for desc in cursor.description]
++                data["data"] = []
++                geojson = {"type": "FeatureCollection", "features": []}
++                stats_data=[]
++                
++                for row in cursor:
++                    data["data"].append(list(row))
++
++                    # Extract the GeoJSON geometry from the query result
++                    geojson_geom = json.loads(row[-1])  # The last column contains the GeoJSON geometry
++                    
++                    columns = [desc[0] for desc in cursor.description[:-1]]  # All except last column
++                    properties = {columns[i]: row[i] for i in range(len(columns))}
++                    
++                    # Create a GeoJSON feature for each result
++                    feature = {
++                        "type": "Feature",
++                        "geometry": geojson_geom,  # Use the GeoJSON geometry here
++                        "properties": properties
++                    }
++                    
++                    geojson["features"].append(feature)
++                    
++                    stats_data.append({
++                        "PLAT": row[16],  # Paleolatitude
++                        "PLONG": row[17],  # Paleolongitude
++                        "LOMAGAGE": row[12],
++                        "HIMAGAGE": row[13],
++                        "DP": row[18],     # Confidence radius in latitude
++                        "DM": row[19]      # Confidence radius in longitude
++                    })
++                    
++                                        
++                
++                # Prepare both the table data and geojson data
++                result = {
++                    'table_data': data,
++                    'geojson_data': geojson,
++                    'stats_data': stats_data,
++                    
++                }
++
++                # Return the result as a JSON string
++                #print("Backend Response:", result)
++                return JsonResponse(result)
++
++
++    except json.JSONDecodeError:
++        return HttpResponse(json.dumps({'status': 'error', 'message': 'Invalid polygon data'}), content_type="application/json", status=400)
++    except psycopg2.Error as e:
++        print(f"Database error: {e}")
++        return HttpResponse(json.dumps({'status': 'error', 'message': 'Database error'}), content_type="application/json", status=500)
++    except Exception as e:
++        return HttpResponse(json.dumps({'status': 'error', 'message': 'An unexpected error occurred'}), content_type="application/json", status=500)
++        
++def get_stats(request):
++    if request.method == "POST":
++        try:
++            # Parse the JSON data sent in the POST request
++            data = json.loads(request.body)
++            print("Received data:", data)  # Log the received data
++
++            stats_data = data.get("data",[])
++            if not isinstance(stats_data, list):
++                return JsonResponse({'error': 'Missing stats_data'}, status=400)
++
++            # Process data (e.g., generating plot and histogram)
++            plot_image = plot_equal_area_plot(stats_data) 
++            histogram_image = renderhistogram(stats_data)  
++
++            result = {
++                'plot_image': plot_image,
++                'histogram_image': histogram_image
++            }
++
++            return JsonResponse(result)
++        except Exception as e:
++            print("Error:", str(e))  # Log the error for debugging
++            return JsonResponse({'error': str(e)}, status=500)
++    else:
++        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
++
++
++def generate_equal_area_plot(data):
++    fig = plt.figure(figsize=(8, 8))
++    ax = fig.add_subplot(111, projection='stereonet')
++
++    for entry in data:
++        plat = entry["PLAT"]
++        plong = entry["PLONG"]
++        dp = entry["DP"]
++
++        try:
++            trend, plunge = mplstereonet.pole(plong, plat)
++            ax.pole(trend, plunge, 'o', markersize=8)
++            ax.cone(trend, plunge, dp, facecolor='none', edgecolor='blue')
++        except Exception as e:
++            print(f"Plotting error for point {entry}: {e}")
++
++    #plt.title("Equal-Area Plot with Fisher Confidence Circles")
++    
++    buf = io.BytesIO()
++    plt.savefig(buf, format='png', bbox_inches='tight')
++    plt.close(fig)
++    buf.seek(0)
++    encoded = base64.b64encode(buf.read()).decode('utf-8')
++    return encoded
++    
++
++def renderhistogram(data):# src: Dr. UWE
++    # Convert list of dictionaries to DataFrame
++    df = pd.DataFrame(data)
++    print(df.head(5))
++    
++    '''df['LOMAGAGE'] = df['LOMAGAGE'].fillna(0)  # Fill missing LOMAGAGE with 0 or any default value
++    df['HIMAGAGE'] = df['HIMAGAGE'].fillna(0)  # Fill missing HIMAGAGE with 0 or any default value
++    df['DP'] = df['DP'].fillna(0)  # Fill missing DP with 0 or any default value
++    df['DM'] = df['DM'].fillna(0)  '''
++    
++    # Calculate average site ages
++    df['AGE'] = (df['LOMAGAGE'] + df['HIMAGAGE']) / 2
++
++    # Calculate A95 (precision parameter)
++    #df['A95'] = (df['DP'] * df['DM'])**0.5
++
++    # Plot the histogram of ages with automatic binning and log-scaled y-axis
++    plt.figure(figsize=(8, 5))
++    plt.hist(df['AGE'], bins='auto', color='skyblue', edgecolor='black')
++    plt.yscale('log')  # Log scale on y-axis
++
++    plt.title('Histogram of Site Ages')
++    plt.xlabel('Age')
++    plt.ylabel('Frequency (log scale)')
++    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
++    plt.tight_layout()
++
++    # Save plot to a base64-encoded string to send to frontend
++    buf = io.BytesIO()
++    plt.savefig(buf, format='png', dpi=300)
++    buf.seek(0)
++    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
++    plt.close()
++
++    return image_base64
++    
++def plot_equal_area_plot(data):
++    # Convert input data to DataFrame if not already
++    df = pd.DataFrame(data)
++
++    # Create the plot
++    fig = plt.figure()
++    plot_net(1)
++
++    # Plot each directional mean
++    for _, row in df.iterrows():
++        plot_di(row['PLONG'], row['PLAT'], color='blue')
++
++    # Save to buffer for base64 encoding
++    buf = io.BytesIO()
++    plt.savefig(buf, format='png', bbox_inches='tight', dpi=300)
++    plt.close(fig)
++
++    buf.seek(0)
++    encoded = base64.b64encode(buf.read()).decode('utf-8')
++    return encoded
++    
++def get_map_within_polygon(request):
++    polygon_str = request.GET.get('polygon')
++    # Check if the polygon parameter exists
++    if not polygon_str:
++        return JsonResponse({'status': 'error', 'message': 'Polygon parameter is missing'}, status=400)
++    try:
++        # Parse the polygon data (JSON string) into a Python list
++        polygon = json.loads(polygon_str)
++                
++        polygon_wkt = "POLYGON((" + ", ".join(f"{point[0]} {point[1]}" for point in polygon) + "))"
++        
++        # Database connection
++        conn = psycopg2.connect(conn_string)
++    
++        with conn:
++            with conn.cursor() as cursor:
++                query_str = '''
++                    SELECT ru."ROCKUNITNO", ru."ROCKNAME", ru."RLONG", ru."RLAT", array_agg(pmr."RESULTNO")
++                    FROM "ROCKUNIT" AS ru
++                    INNER JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO"
++                    INNER JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO"
++                    INNER JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO"
++                    WHERE ST_Within(ru."geom", ST_SetSRID(ST_GeomFromText(%s), 4326))
++                    GROUP BY ru."ROCKUNITNO", ru."ROCKNAME", ru."RLONG", ru."RLAT"
++                '''
++                cursor.execute(query_str, (polygon_wkt,))
++                rows=cursor.fetchall()
++    except psycopg2.Error as e:
++        print(e.pgerror)
++        print(e.diag.message_detail)
++            
++
++    data=[]
++    for row in rows:
++        data.append({ 
++                    "type": "Feature",
++                    "properties": {
++                        "ROCKUNITNO": row[0],
++                        "ROCKNAME" : row[1],
++                        "PMAGRESULTCOUNT": row[4]
++                    },
++                    "geometry":{
++                        "type": "Point",
++                        "coordinates": [row[2],row[3]]
++                    }
++        })
++
++    ret = json.dumps(data)
++
++    return HttpResponse(ret, content_type='application/json')
+\ No newline at end of file
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb.wsgi" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb.wsgi"
+new file mode 100644
+index 0000000..fdde7fd
+--- /dev/null
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb.wsgi"
+@@ -0,0 +1,11 @@
++import os
++import sys
++
++path = '/work/'
++if path not in sys.path:
++    sys.path.insert(0, path)
++
++    os.environ['DJANGO_SETTINGS_MODULE'] = 'gpmdb_django.settings'
++
++    from django.core.wsgi import get_wsgi_application
++    application = get_wsgi_application()
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/__init__.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/__init__.cpython-38.pyc"
+new file mode 100644
+index 0000000..ca8fd1b
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/__init__.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/settings.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/settings.cpython-38.pyc"
+new file mode 100644
+index 0000000..e8b7952
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/settings.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/urls.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/urls.cpython-38.pyc"
+new file mode 100644
+index 0000000..7d94352
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/urls.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/wsgi.cpython-38.pyc" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/wsgi.cpython-38.pyc"
+new file mode 100644
+index 0000000..8ab71bb
+Binary files /dev/null and "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/__pycache__/wsgi.cpython-38.pyc" differ
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb_django/settings.py" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/settings.py"
+index 1480e27..5006072 100644
+--- "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb_django/settings.py"
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/settings.py"
+@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ SECRET_KEY = '2re8hc+v(&*=)1uw4n0l!=g&fyu2-)-p8v79xpmz7*#ld$=7bv'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+-DEBUG = False
++DEBUG = True
+ 
+ ALLOWED_HOSTS = ['*']
+ 
+@@ -38,6 +38,7 @@ INSTALLED_APPS = [
+     'django.contrib.messages',
+     'django.contrib.staticfiles',
+     'gpmdb',
++    'django.contrib.gis',
+ ]
+ 
+ MIDDLEWARE = [
+diff --git "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb_django/urls.py" "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/urls.py"
+index cb4bea8..dd3009d 100644
+--- "a/C:\\Users\\PC\\Desktop\\latesttracked\\gpmdb_django/gpmdb_django/urls.py"
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/gpmdb_django/urls.py"
+@@ -13,6 +13,7 @@ Including another URLconf
+     1. Import the include() function: from django.conf.urls import url, include
+     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
+ """
++from django.urls import path 
+ from django.conf.urls import url
+ from django.contrib import admin
+ from gpmdb import views
+@@ -20,6 +21,7 @@ from gpmdb import views
+ urlpatterns = [
+     url(r'^$', views.index, name='index'),
+     url(r'^get_data/?$', views.get_data, name='get_data'),
++    url(r'^submit_data/?$', views.submit_data, name='submit_data'),
+     url(r'^get_query_data/?$', views.get_query_data, name='get_query_data'),
+     url(r'^get_PMAGRESULT_data/?$', views.get_PMAGRESULT_data, name='get_PMAGRESULT_data'),
+     url(r'^PMAGRESULT/?$', views.PMAGRESULT, name='PMAGRESULT'),
+@@ -27,5 +29,10 @@ urlpatterns = [
+     url(r'^get_table_data/?$', views.get_table_data, name='get_table_data'),
+     url(r'^table/?$', views.table, name='table'),
+     url(r'^get_query_data_for_map/?$', views.get_query_data_for_map, name='get_query_data_for_map'),
+-#    url(r'^admin/', admin.site.urls),
++    url(r'^get_data_within_polygon/?$', views.get_data_within_polygon, name='get_data_within_polygon'),
++    url(r'^get_stats/?$', views.get_stats, name='get_stats'),
++    url(r'^get_map_within_polygon/?$', views.get_map_within_polygon, name='get_map_within_polygon'),
+ ]
++        
++#    url(r'^admin/', admin.site.urls),
++
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/run.sh" "b/C:\\Users\\PC\\Desktop\\kinga\\work/run.sh"
+new file mode 100644
+index 0000000..ab004c9
+--- /dev/null
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/run.sh"
+@@ -0,0 +1,11 @@
++#!/bin/bash
++
++/usr/sbin/a2enmod ssl
++/usr/sbin/a2enmod proxy_http
++
++/etc/init.d/postgresql start
++/etc/init.d/apache2 start
++
++tail -f /var/log/apache2/error.log 
++
++#/bin/bash
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/static/css/leaflet.draw.css" "b/C:\\Users\\PC\\Desktop\\kinga\\work/static/css/leaflet.draw.css"
+new file mode 100644
+index 0000000..a019410
+--- /dev/null
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/static/css/leaflet.draw.css"
+@@ -0,0 +1,10 @@
++.leaflet-draw-section{position:relative}.leaflet-draw-toolbar{margin-top:12px}.leaflet-draw-toolbar-top{margin-top:0}.leaflet-draw-toolbar-notop a:first-child{border-top-right-radius:0}.leaflet-draw-toolbar-nobottom a:last-child{border-bottom-right-radius:0}.leaflet-draw-toolbar a{background-image:url('images/spritesheet.png');background-image:linear-gradient(transparent,transparent),url('images/spritesheet.svg');background-repeat:no-repeat;background-size:300px 30px;background-clip:padding-box}.leaflet-retina .leaflet-draw-toolbar a{background-image:url('images/spritesheet-2x.png');background-image:linear-gradient(transparent,transparent),url('images/spritesheet.svg')}
++.leaflet-draw a{display:block;text-align:center;text-decoration:none}.leaflet-draw a .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.leaflet-draw-actions{display:none;list-style:none;margin:0;padding:0;position:absolute;left:26px;top:0;white-space:nowrap}.leaflet-touch .leaflet-draw-actions{left:32px}.leaflet-right .leaflet-draw-actions{right:26px;left:auto}.leaflet-touch .leaflet-right .leaflet-draw-actions{right:32px;left:auto}.leaflet-draw-actions li{display:inline-block}
++.leaflet-draw-actions li:first-child a{border-left:0}.leaflet-draw-actions li:last-child a{-webkit-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.leaflet-right .leaflet-draw-actions li:last-child a{-webkit-border-radius:0;border-radius:0}.leaflet-right .leaflet-draw-actions li:first-child a{-webkit-border-radius:4px 0 0 4px;border-radius:4px 0 0 4px}.leaflet-draw-actions a{background-color:#919187;border-left:1px solid #AAA;color:#FFF;font:11px/19px "Helvetica Neue",Arial,Helvetica,sans-serif;line-height:28px;text-decoration:none;padding-left:10px;padding-right:10px;height:28px}
++.leaflet-touch .leaflet-draw-actions a{font-size:12px;line-height:30px;height:30px}.leaflet-draw-actions-bottom{margin-top:0}.leaflet-draw-actions-top{margin-top:1px}.leaflet-draw-actions-top a,.leaflet-draw-actions-bottom a{height:27px;line-height:27px}.leaflet-draw-actions a:hover{background-color:#a0a098}.leaflet-draw-actions-top.leaflet-draw-actions-bottom a{height:26px;line-height:26px}.leaflet-draw-toolbar .leaflet-draw-draw-polyline{background-position:-2px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-polyline{background-position:0 -1px}
++.leaflet-draw-toolbar .leaflet-draw-draw-polygon{background-position:-31px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-polygon{background-position:-29px -1px}.leaflet-draw-toolbar .leaflet-draw-draw-rectangle{background-position:-62px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-rectangle{background-position:-60px -1px}.leaflet-draw-toolbar .leaflet-draw-draw-circle{background-position:-92px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-circle{background-position:-90px -1px}
++.leaflet-draw-toolbar .leaflet-draw-draw-marker{background-position:-122px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-marker{background-position:-120px -1px}.leaflet-draw-toolbar .leaflet-draw-draw-circlemarker{background-position:-273px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-circlemarker{background-position:-271px -1px}.leaflet-draw-toolbar .leaflet-draw-edit-edit{background-position:-152px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit{background-position:-150px -1px}
++.leaflet-draw-toolbar .leaflet-draw-edit-remove{background-position:-182px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove{background-position:-180px -1px}.leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled{background-position:-212px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled{background-position:-210px -1px}.leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled{background-position:-242px -2px}.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled{background-position:-240px -2px}
++.leaflet-mouse-marker{background-color:#fff;cursor:crosshair}.leaflet-draw-tooltip{background:#363636;background:rgba(0,0,0,0.5);border:1px solid transparent;-webkit-border-radius:4px;border-radius:4px;color:#fff;font:12px/18px "Helvetica Neue",Arial,Helvetica,sans-serif;margin-left:20px;margin-top:-21px;padding:4px 8px;position:absolute;visibility:hidden;white-space:nowrap;z-index:6}.leaflet-draw-tooltip:before{border-right:6px solid black;border-right-color:rgba(0,0,0,0.5);border-top:6px solid transparent;border-bottom:6px solid transparent;content:"";position:absolute;top:7px;left:-7px}
++.leaflet-error-draw-tooltip{background-color:#f2dede;border:1px solid #e6b6bd;color:#b94a48}.leaflet-error-draw-tooltip:before{border-right-color:#e6b6bd}.leaflet-draw-tooltip-single{margin-top:-12px}.leaflet-draw-tooltip-subtext{color:#f8d5e4}.leaflet-draw-guide-dash{font-size:1%;opacity:.6;position:absolute;width:5px;height:5px}.leaflet-edit-marker-selected{background-color:rgba(254,87,161,0.1);border:4px dashed rgba(254,87,161,0.6);-webkit-border-radius:4px;border-radius:4px;box-sizing:content-box}
++.leaflet-edit-move{cursor:move}.leaflet-edit-resize{cursor:pointer}.leaflet-oldie .leaflet-draw-toolbar{border:1px solid #999}
+\ No newline at end of file
+diff --git "a/C:\\Users\\PC\\Desktop\\kinga\\work/static/metadata/gpmdb_metadata.json" "b/C:\\Users\\PC\\Desktop\\kinga\\work/static/metadata/gpmdb_metadata.json"
+new file mode 100644
+index 0000000..117cfbe
+--- /dev/null
++++ "b/C:\\Users\\PC\\Desktop\\kinga\\work/static/metadata/gpmdb_metadata.json"
+@@ -0,0 +1,39 @@
++{
++  "identifier": "",
++  "title": "Global Paleomagnetic Database (GPMDB)",
++  "version": "v1.1",
++  "creator": {
++    "name": "",
++    "affiliation": "Curtin University"
++  },
++  "publisher": "Curtin University",
++  "publicationYear": "2025",
++  "description": "CONTAINS PUBLISHED PALEOMAGNETIC POLES AND DIRECTIONS",
++  "subjects": [
++    "Paleomagnetism"
++  ],
++  "spatialCoverage": {
++    "geoBox": {
++      "westBoundLongitude": -180,
++      "eastBoundLongitude": 180,
++      "southBoundLatitude": -90,
++      "northBoundLatitude": 90
++    }
++  },
++  "temporalCoverage": {
++    "start": "1925",
++    "end": "2024"
++  },
++  "language": "en",
++  "license": "CC-BY-4.0",
++  "formats": [
++        "CSV"
++  ],
++  "accessURL": "https://www.gpmdb.net",
++  "relatedIdentifiers": [
++    {
++      "relatedIdentifier": "https://doi.org/10.1016/j.earscirev.2022.104258",
++      "relationType": "IsSupplementedBy"
++    }
++  ]
++}

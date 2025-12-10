@@ -114,8 +114,8 @@
                 <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">            
             </div>
 
-            <div id="GPMDB-title">GPMDB</div>
-            <div id="GPD-title" style="font-size:24pt; font-family: Arial; font-weight:bold; color:black; margin-top: -24px; margin-left:70px;">GLOBAL PALEOMAGNETIC DATABASE</div>
+            <div id="GPMDB-title">GP</div>
+            <div id="GPD-title" style="font-size:24pt; font-family: Arial; font-weight:bold; color:black; margin-top: -24px; margin-left:70px;">GLOBlTest</div>
         </div>
         </div>
     </div>
@@ -138,10 +138,11 @@
                     <ul class="nav navbar-nav">
                         <li><a href="#">Home</a></li>
                         <li><a href="#about">About</a></li>
-                        <li><a href="#about">Resources</a></li>
-                        <li><a href="#about">IGCP 648</a></li>
-                        <li><a href="#about">Help</a></li>
+                        <li><a href="#resources">Resources</a></li>
+                        <li><a href="#igcp">IGCP 648</a></li>
+                        <li><a href="#help">Help</a></li>
                         <li><a href="#contact">Contact Us</a></li>
+                        <li><a href="additions/">Additions</a></li>
                     </ul>
                 </div>
             </div>
@@ -152,7 +153,7 @@
 
     <div class="container" role="main" style="background-color:rgb(216,216,216);margin-top:130px;">
             <div id="menu-and-map" class="row">
-                <div id="left-menu" class="col-md-3" style="height:360px;padding:5px;">
+                <div id="left-menu" class="col-md-3" style="height:400px;padding:5px;">
                     <div style="background-color:white; height:100%; padding:5px;">
                         <div  style="background-color:rgb(77,131,175); color:white; padding:5px 0px 5px 10px;">GPMDB Stats</div>
                         <table style="background-color:white; border-collapse: separate;border-spacing:10px 5px; width:100%; margin-bottom:15px;">
@@ -164,12 +165,17 @@
                         <div class="left-menu-item" onclick="alert('Under Construction!')">File Format Conversion</div>
                         <div class="left-menu-item" onclick="alert('Under Construction!')">Download Python Scripts</div>
                         <div class="left-menu-item" onclick="alert('Under Construction!')">Software Tools</div>
-                        <div class="left-menu-item" style="margin-top:20px;" data-toggle="modal" data-target="#contribution">Contribute data</div>
+                        <div class="left-menu-item" style="margin-top:20px;" data-toggle="modal" data-target="#addition-form">Contribute data</div>
 					</div>
                 </div>
         
-                <div class="col-md-9" style="height:360px;padding:5px;">
+                <div class="col-md-9" style="height:400px;padding:5px;">
                    <div id="map" style="height:350px;"></div> 
+                   <select id="projection-select">
+                <option value="EPSG3857">Web Mercator</option>
+                <option value="EPSG4326">Plate Carrée (WGS84)</option>
+                <option value="EPSG3031">Antarctic Polar</option>
+                </select>
                 </div>
             </div>
 
@@ -388,6 +394,97 @@
     </div>
 	</div>
 
+    <div class="modal fade" id="graphing" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Graphing</h4>
+                What data would you like to graph?
+
+                </div>
+
+        <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+        
+            <div> X Coordinates
+                <select multiple="multiple" id="x-axis" name="form-0-project">
+                 <option value="LOMAGAGE">LOMAGAGE</option>
+                <option value="HIGHAGE">HIGHAGE</option>
+                <option value="SLAT">SLAT</option>
+                <option value="PLAT">PLAT</option>
+                <option value="PLONG">PLONG</option>
+                <option value="DP">DP</option>
+                <option value="DM">DM</option>
+                <option value="ROCKNAME">ROCKNAME</option>
+                <option value="CONTINENT">CONTINENT</option>
+                <option value="ROCKTYPE">ROCKTYPE</option>
+                <option value="LOWAGE">LOWAGE</option>
+                <option value="HIGHAGE">HIGHAGE</option>
+                <option value="QSUM">QSUM</option>
+                <option value="RSUM">RSUM</option>
+            </select>
+
+
+            </div>
+            <div> Y Coordinates
+                <select multiple="multiple" id="y-axis" name="form-0-project">
+                <option value="LOMAGAGE">LOMAGAGE</option>
+                <option value="HIGHAGE">HIGHAGE</option>
+                <option value="SLAT">SLAT</option>
+                <option value="PLAT">PLAT</option>
+                <option value="PLONG">PLONG</option>
+                <option value="DP">DP</option>
+                <option value="DM">DM</option>
+                <option value="ROCKNAME">ROCKNAME</option>
+                <option value="CONTINENT">CONTINENT</option>
+                <option value="ROCKTYPE">ROCKTYPE</option>
+                <option value="LOWAGE">LOWAGE</option>
+                <option value="HIGHAGE">HIGHAGE</option>
+                <option value="QSUM">QSUM</option>
+                <option value="RSUM">RSUM</option>
+            </select>
+
+             <div> Graph
+            <select multiple="multiple" id="graph-type" name="form-0-project">
+                <option value="Histogram">Histogram</option>
+                <option value="Line Chart">Line Chart</option>
+            </select>
+             <div class="row"> </div>
+             
+             <div id="graphing-container"></div>
+
+             
+            <div id="chart"></div>
+            <style>
+                #chart {
+                    position: relative;
+                }
+
+                .tooltip {
+                    position: absolute;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                </style>
+            <div id="worldmap"></div>
+            </div>
+            <button id="graph-data" class="btn btn-primary">Graph</button>
+            <button id="stereonet" class="btn btn-primary">Stereonet</button>
+            <button id="world" class="btn btn-primary">World Map</button>
+            <button id="download-data" class="btn btn-primary">Download Data</button>
+            <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#search-form" class="btn btn-primary">Search Again</button>
+            </div>
+        </div>
+		</div>
+
+        <div class="modal-footer">
+        </div>
+      </div>
+      
+    </div>
+	</div>
+
 	<div class="modal fade" id="contribution" role="dialog">
 		<div class="modal-dialog modal-lg">
 			<!-- Modal content-->
@@ -500,6 +597,8 @@
 			
 			<div class="modal-footer">
                 <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
+                <button type="button" id="calculations" class="btn btn-primary">Calculations</button>
+                <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#graphing" class="btn btn-primary">Graphing</button>
 				<button type="button" id="stats" class="btn btn-primary">Stats</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>
@@ -531,6 +630,188 @@
         </div><!--modal-dialog modal-lg-->
     </div><!--query-result-->
 
+    <div class="modal fade" id="addition-form" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Data Addition</h4>
+                Add What Data Can be found in the Journal Artical
+            </div>
+        <div class="modal-body">
+        <form>
+            <h4>
+				General
+			</h4>
+            <div class="form-group">
+                <div>
+        	        <label for="doi">DOI</label>
+        	        <input type="text" class="form-control" id="doi" required>
+        	    </div>
+                <div>
+        	        <label for="email2">Email</label>
+        	        <input type="text" class="form-control" id="email2" required>
+        	    </div>
+                <div>
+        	        <label for="comments">Comments</label>
+        	        <input type="text" class="form-control" id="comments2" required>
+        	    </div>
+                <div>
+        	        <label for="age2">Age</label>
+        	        <input type="text" class="form-control" id="age2" required>
+        	    </div>
+            </div>
+			<h4>
+				Rockunit
+			</h4>
+			<div class="form-group">
+			 <div>
+        	        <label for="rockname2">Rockname</label>
+        	        <input type="text" class="form-control" id="rockname2" required>
+        	    </div>
+			 <div>
+        	        <label for="">Place</label>
+        	        <input type="text" class="form-control" id="place" required>
+			 </div>
+			  <div >
+        	        <label for="continent2">Continent</label>
+        	        <input type="text" class="form-control" id="continent2" required>
+        		</div>
+                <div >
+        	        <label for="terrane2">Terrane</label>
+        	        <input type="text" class="form-control" id="terrane2" required>
+        		</div>
+			<div>
+                    <label for="refno">Ref No.</label>
+                    <input type="text" class="form-control" id="refno" required>
+			<div>
+                    <label for="rlong">RLong</label> 
+                    <input type="number" class="form-control" id="rlong" step = "any" required>
+            </div>
+			<div>
+                    <label for="rlat">RLat</label>
+                    <input type="number" class="form-control" id="rlat" step = "any" required>
+            </div>
+			<div>
+                    <label for="rocktype">Rocktype</label>
+                    <input type="text" class="form-control" id="rocktype2" required>
+            </div>
+			<div>
+                    <label for="stratage">Stratage</label>
+                    <input type="text" class="form-control" id="stratage2" required>
+        	</div>
+			<div>
+                    <label for="lowage">Lowage</label>
+                    <input type="text" class="form-control" id="lowage2" required>
+            </div>
+			<div>
+                    <label for="highage">Highage</label>
+                    <input type="text" class="form-control" id="highage2" required>
+            </div>
+			<div >
+                <label for="method">Method</label>
+                <input type="text" class="form-control" id="method2" required>
+            </div>
+            </div>
+			</div>
+			<h4>
+				PMGAResult
+			</h4>
+			<div class="form-group">
+					 <div>
+        	        <label for="rockunitno">RockUnit No.</label>
+        	        <input type="text" class="form-control" id="rockunitno2" required>
+        	    </div>
+				<div>
+        	        <label for="resultno">Result No.</label>
+        	        <input type="text" class="form-control" id="rockunitno2" required>
+        	    </div>
+			 <div>
+        	        <label for="lomagage2">Lomagage</label>
+        	        <input type="number" class="form-control" id="lomagage2" step= "1" required>
+			 </div>
+			  <div>
+        	        <label for="himagage">Himagage</label>
+        	        <input type="number" class="form-control" id="himagage2" step = "1" required>
+        		</div>
+			<div >
+                    <label for="tests">Tests</label>
+                    <input type="text" class="form-control" id="tests2" required>
+			<div >
+                    <label for="tilt">Tilt</label>
+                    <input type="number" class="form-control" id="tilt2" step = "1" required>
+            </div>
+			<div>
+                    <label for="slat">SLAT</label>
+                    <input type="number" class="form-control" id="slat2" step = "any" required>
+            </div>
+			<div>
+                    <label for="slong">SLONG</label>
+                    <input type="text" class="form-control" id="slong2" required>
+            </div>
+			<div>
+                    <label for="ptype">P Type</label>
+                    <input type="text" class="form-control" id="ptype2" required>
+            </div>
+			<div>
+                    <label for="noreversed">No Reversed</label>
+                    <input type="text" class="form-control" id="noreversed2" required>
+            </div>
+			<div>
+                    <label for="demagcode">Demagcode</label>
+                    <input type="number" class="form-control" id="demagcode2" step = "1" required>
+            </div>
+			<div>
+                    <label for="treatment">Treatment</label>
+                    <input type="text" class="form-control" id="treatment2" required>
+            </div>
+
+			</div>
+			<h4>
+				Reference				
+			</h4>
+			<div class="form-group">
+			 <div>
+        	        <label for="authors">Authors</label>
+        	        <input type="text" class="form-control" id="authors2" required>
+        	    </div>
+			 <div>
+        	        <label for="year">Year</label>
+        	        <input type="number" class="form-control" id="year2" step= "any" required>
+			 </div>
+			  <div>
+        	        <label for="journal">Journal</label>
+        	        <input type="text" class="form-control" id="journal2" required>
+        		</div>
+			<div >
+                    <label for="vpages">VPages</label>
+                    <input type="text" class="form-control" id="vpages2" required>
+            </div>
+			<div>
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control" id="title2" required>
+            </div>
+			<div>
+                    <label for="remarks">Remarks</label>
+                    <input type="text" class="form-control" id="remarks2" required>
+            </div>
+            </div>
+			</div>
+			 <button id="add-data" type="submit" class="btn btn-primary">Submit Data</button>
+        </form>
+        </div>
+
+        <div class="modal-footer">
+            <button id="reset-form" type="button" class="btn btn-danger pull-left" >Reset Form</button>
+           
+            <button type="button" class="btn" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+      
+    </div>
+	</div>
+
     <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
 
     <script src="/static/libs/jquery.min.js"></script>
@@ -540,6 +821,11 @@
     <script src="/static/libs/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.1/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/johnwmillr/StereonetJS/dist/stereonet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
     <script>
         var refno = NaN;
         var resultno = NaN;
@@ -784,6 +1070,157 @@
 		
         var search_data;
 		var stats_data;
+        var download_data;
+
+        $('#add-data').click(function(){
+				console.log("Submitted");
+				a_data = {};
+				
+                var doi = $('#doi').val();
+				if(doi){
+					a_data['doi'] = doi;
+				}
+                var age = $('#age2').val();
+				if(age){
+					a_data['age'] = age;
+				}
+                var email = $('#email2').val();
+				if(email){
+					a_data['email2'] = email;
+				}
+                var comments = $('#comments2').val();
+				if(comments){
+					a_data['comments'] = comments;
+				}
+				var rockname = $('#rockname2').val();
+				if(rockname){
+					a_data['rockname'] = rockname;
+				}
+				var place = $('#place').val();
+				if(place){
+					a_data['place'] = place;
+				}
+				var continent = $('#continent2').val();
+				if(continent){
+					a_data['continent'] = continent;
+				}
+				var terrane = $('#terrane2').val();
+				if(terrane){
+					a_data['terrane'] = terrane;
+				}
+				var rlong = $('#rlong').val();
+				if(rlong){
+					a_data['rlong'] = rlong;
+				}
+				var rlat = $('#rlat').val();
+				if(rlat){
+					a_data['rlat'] = rlat;
+				}
+				var rocktype = $('#rocktype2').val();
+				if(rocktype){
+					a_data['rocktype'] = rocktype;
+				}
+				var strata = $('#stratage2').val();
+				if(strata){
+					a_data['stratage'] = strata;
+				}
+				var lowage = $('#lowage2').val();
+				if(lowage){
+					a_data['lowage'] = lowage;
+				}
+				var highage = $('#highage2').val();
+				if(highage){
+					a_data['highage'] = highage;
+				}
+				var method = $('#method2').val();
+				if(method){
+					a_data['method'] = method;
+				}
+				var rockunitno = $('#rockunitno2').val();
+				if(rockunitno){
+					a_data['rockunitno'] = rockunitno;
+				}
+				var lomagage = $('#lomagage2').val();
+				if(lomagage){
+					a_data['lomagage'] = lomagage;
+				}
+				var resultno = $('#resultno2').val();
+				if(resultno){
+					a_data['resultno'] = resultno;
+				}
+				var himagage = $('#himagage2').val();
+				if(himagage){
+					a_data['himagage'] = himagage;
+				}
+				var tilt = $('#tilt2').val();
+				if(tilt){
+					a_data['tilt'] = tilt;
+				}
+				var tests = $('#tests2').val();
+				if(tests){
+					a_data['tests'] = tests;
+				}
+				var slat = $('#slat2').val();
+				if(slat){
+					a_data['slat'] = slat;
+				}
+				var slong = $('#slong2').val();
+				if(slong){
+					a_data['slong'] = slong;
+				}
+				var ptype = $('#ptype2').val();
+				if(ptype){
+					a_data['ptype'] = ptype;
+				}
+				var noreversed = $('#noreversed2').val();
+				if(noreversed){
+					a_data['noreversed'] = noreversed;
+				}
+				var demagcode = $('#demagcode2').val();
+				if(demagcode){
+					a_data['demagcode'] = slong;
+				}
+				var treatment = $('#treatment2').val();
+				if(treatment){
+					a_data['treatment'] = slong;
+				}
+				var authors = $('#authors2').val();
+				if(authors){
+					a_data['authors'] = authors;
+				}
+				var year = $('#year2').val();
+				if(year){
+					a_data['year'] = year;
+				}
+				var journal = $('#journal2').val();
+				if(journal){
+					a_data['journal'] = journal;
+				}
+				var vpages = $('#vpages2').val();
+				if(vpages){
+					a_data['vpages'] = vpages;
+				}
+				var title = $('#title2').val();
+				if(title){
+					a_data['title'] = title;
+				}
+				var remarks = $('#remarks2').val();
+				if(remarks){
+					a_data['remarks'] = remarks;
+				}
+
+				console.log(a_data)
+				$.ajax({
+					"url": '/submit_data/',
+					"data": a_data,
+					"success": function(json) {
+						
+					}, 
+					"complete": function(){
+
+					},
+				});
+			});
 		
 		const csrftoken = document.getElementById('csrf_token').value;
 
@@ -898,7 +1335,7 @@
                         addDataToMap(data)
                     });
 					
-                },
+                }, 
                 "complete": function(){
                     $('#progress-bar').modal('hide');
                 },
@@ -1174,6 +1611,372 @@
             $('#search-form').modal("hide");
             show_data();
         });
+
+         $('#world').click(function(){
+
+            $("#worldmap").empty();
+            const width = 960;
+            const height = 500;
+
+            const svg = d3.select("#worldmap")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const g = svg.append("g");
+
+            const projection = d3.geoMercator()
+                .scale(100)
+                .translate([width / 2, height / 2]);
+
+            const path = d3.geoPath().projection(projection);
+
+
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 20])             // adjust zoom limits
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+
+            // Attach zoom to SVG
+            svg.call(zoom);
+
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+            .then(world => {
+                console.log("Loaded world:", world); // <--- DEBUG
+                const countries = topojson.feature(world, world.objects.countries);
+
+                g.selectAll("path")
+                    .data(countries.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("fill", "#ccc")
+                    .attr("stroke", "#000");
+
+                 for(var i =0;i<stats_data.length;i++){
+                     row = stats_data[i];
+
+                        latlong = projection([row['SLONG'], row['SLAT']])
+                            
+                        console.log(latlong)
+
+                            //latlong = projectPoint(row['PLAT'], row['PLONG'])
+
+                        g.append("circle")
+                            .attr("cx", latlong[0])
+                            .attr("cy", latlong[1])  
+                            .attr("r", 4)
+                            .attr("fill", "red");
+
+                 }
+
+            })
+            .catch(err => {
+                console.error("Map loading error:", err);
+            });
+
+         })
+
+
+
+        $('#stereonet').click(function(){
+
+
+            $("#chart").empty();
+
+            const width = 500, height = 500, radius = 240;
+
+            
+            const cx = width / 2;
+            const cy = height / 2;
+
+            const projection = d3.geoAzimuthalEqualArea()
+                .scale(170)  // e.g
+                .translate([width/2, height/2])
+                .rotate([0, 90,0])   // <-- force lower hemisphere
+                .clipAngle(180);  
+
+
+            const path = d3.geoPath().projection(projection);
+
+            const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+
+
+                svg.append("circle")
+                    .attr("cx", width/2)
+                    .attr("cy", height/2)
+                    .attr("r", radius)
+                    .attr("fill", "none")
+                    .attr("stroke", "black");
+
+            // Tooltip div
+            const tooltip = d3.select("#chart")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px")
+
+
+            const angles = d3.range(0, 360, 15); // every 30 degrees
+
+            svg.selectAll("line.ticks")
+                .data(angles)
+                .enter()
+                .append("line")
+                .attr("class", "ticks")
+                .attr("x1", d => width / 2 + (radius - 10) * Math.cos(d * Math.PI / 180))
+                .attr("y1", d => height / 2 + (radius - 10) * Math.sin(d * Math.PI / 180))
+                .attr("x2", d => width / 2 + radius * Math.cos(d * Math.PI / 180))
+                .attr("y2", d => height / 2 + radius * Math.sin(d * Math.PI / 180))
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+
+            // Draw center +
+            const crossSize = 10;
+            svg.append("line")
+                .attr("x1", cx - crossSize)
+                .attr("y1", cy)
+                .attr("x2", cx + crossSize)
+                .attr("y2", cy)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+            svg.append("line")
+                .attr("x1", cx)
+                .attr("y1", cy - crossSize)
+                .attr("x2", cx)
+                .attr("y2", cy + crossSize)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+
+                    const xDashes = d3.range(-radius, radius, 20); // every 20px
+                xDashes.forEach(x => {
+                    if (x === 0) return; // skip center
+                    svg.append("line")
+                        .attr("x1", cx + x)
+                        .attr("y1", cy - 5)
+                        .attr("x2", cx + x)
+                        .attr("y2", cy + 5)
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 1);
+                });
+
+                const yDashes = d3.range(-radius, radius, 20);
+                yDashes.forEach(y => {
+                    if (y === 0) return; // skip center
+                    svg.append("line")
+                        .attr("x1", cx - 5)
+                        .attr("y1", cy + y)
+                        .attr("x2", cx + 5)
+                        .attr("y2", cy + y)
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 1);
+                });
+
+
+            for(var i =0;i<stats_data.length;i++){
+                const row = stats_data[i];
+                
+                const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
+
+    //            const latlong = projection([new_long, -row['PLAT']])
+                let newlat = []
+
+                if(row['PLAT'] <= 0){
+                    console.log(row['PLAT'])
+                    newlat = projection([new_long, row['PLAT']])
+                    colour = "blue"
+                }else{
+                    newlat = projection([new_long, -row['PLAT']])
+                    colour = "red"
+                }
+
+                //latlong = projectPoint(row['PLAT'], row['PLONG'])
+
+                const circle = svg.append("circle")
+                .attr("cx", newlat[0])
+                .attr("cy", newlat[1])  
+                .attr("r", 4)
+                .attr("fill", colour);
+
+
+                circle.on("mouseover", function(event, d) {
+                
+                      tooltip.style("opacity", 1)
+                        d3.select(this)
+                        .style("stroke", "black")
+                        .style("opacity", 1)
+  
+                    
+                    })
+                     .on("mousemove", function(event, d) {
+                        const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                        tooltip
+                        .html(`Lat: ${row.PLAT}<br>Lon: ${row.PLONG}`)
+                        .style("left", (x + 10) + "px")
+                        .style("top", (y + 10) + "px");
+                        
+                    })
+                    .on("mouseout", function(event, d) {
+                          tooltip
+                            .style("opacity", 0)
+                            d3.select(this)
+                            .style("stroke", "none")
+                            .style("opacity", 0.8)
+                        
+                    })
+                    .on("click", function(event, d) {
+                        console.log("Clicked:", row);
+                    });
+
+            }
+
+
+            /*
+            svg.append("circle")
+                .attr("cx", [85, 317])
+                .attr("cy", [85, 317])  
+                .attr("r", 4)
+                .attr("fill", "red");
+                
+            /*
+                svg.selectAll(".point")
+                    .data(poles)
+                    .enter()
+                    .append("circle")
+                    .attr("class", "point")
+                    .attr("r", 4)
+                    .attr("fill", "red")
+                    .attr("cx", d => projectPoint(d.PLONG, d.PLAT)[0])
+                    .attr("cy", d => projectPoint(d.PLONG, d.PLAT)[1]);
+                    */
+            
+/*
+            stats_data.forEach(p=>{
+                let lon = p.SLONG;     // 0–360° OK
+                let lat = p.SLAT;     // degrees
+
+    // === STEP 1 — Convert to 3D unit vector ===
+                const rad = Math.PI / 180;
+                let x = Math.cos(lat*rad) * Math.cos(lon*rad);
+                let y = Math.cos(lat*rad) * Math.sin(lon*rad);
+                let z = Math.sin(lat*rad);
+
+                // === STEP 2 — Force direction into LOWER hemisphere ===
+                if (z > 0) {
+                    // reflect vector through origin
+                    x = -x;
+                    y = -y;
+                    z = -z;
+                }
+
+                // === STEP 3 — Convert BACK to lat/lon (for D3.geo) ===
+                let lat2 = Math.asin(z) / rad;
+                let lon2 = (Math.atan2(y, x) / rad + 360) % 360;
+
+                let pole = {
+                    type: "Point",
+                    coordinates: [lon2, lat2]
+                };
+
+                
+            svg.append("path")
+                .datum(pole)
+                .attr("d", path.pointRadius(6))
+                .attr("fill", "red");
+            });
+    */
+        })
+
+        $('#graph-data').click(function(){
+         //  if(!validate()){return;}
+            console.log("test");
+            var xaxis = $('#x-axis').find(":selected").val();
+            var yaxis = $('#y-axis').find(":selected").val();
+            var graphtype = $('#graph-type').find(":selected").val();
+            console.log(xaxis)
+            console.log(yaxis)
+            console.log(graphtype)
+
+            url= '/graph_data/';
+
+            graph_data = {}
+            graph_data['xaxis'] = xaxis
+            graph_data['yaxis'] = yaxis
+            graph_data['graphtype'] = graphtype
+
+            count = 0
+            count2 = 0
+
+
+            graph_data['graphingdata'] = search_data
+
+
+            console.log(search_data)
+
+            $('#progress-bar').modal();
+            $.ajax({
+				type: "POST",
+				url:url,
+				contentType: "application/json",
+				data: JSON.stringify({
+					data: graph_data
+				}),
+				dataType: "json",
+				headers: {
+					"X-CSRFToken": csrftoken
+				},		
+				success: function(response) {
+                    const test = response.graph;
+                    $("#graphing-container").empty();
+					$("#graphing-container").append(`
+						Equal-Area Stereonet Plot
+                                  <img src="data:image/png;base64,${test}" alt="Equal Area Plot" style="max-width: 100%;" />
+						Histogram of Site Ages
+	
+					`);
+
+                    download_data = response.graphdata
+
+				},
+				error: function(xhr, status, error) {
+                    console.log(error);
+				},
+				complete: function() {
+                    $('#progress-bar').modal('hide');
+				}
+			});
+        
+
+        });
+
+        $('#download-data').click(function(){
+
+            console.log(download_data)
+            let csvContent = "data:text/csv;charset=utf-8," 
+            for (const[key, value] of Object.entries(download_data)){
+                csvContent = csvContent + key + ',' + value.join(",")
+            }
+            var downloadLink = document.createElement("a");
+            downloadLink.href = csvContent;
+            downloadLink.download = "gpmdb-search-data.csv";
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+        });
 		
 		$('#submit-data').click(function(){
             if(!validate_submission()){return;}
@@ -1183,6 +1986,10 @@
 
         $('#save-csv').click(function(){
             save_csv();
+        });
+
+        $('#save-pdf').click(function(){
+            save_pdf();
         });
 
         $('#search-again').click(function(){
@@ -1238,15 +2045,20 @@
 			
         });
 		
+
+        
 		var geojsonLayer=null;
 
-        var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+       var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
 
         var map = L.map('map',{
+
             center:[0, 0], 
             zoom: 2,
             maxBounds: bounds,
-            maxBoundsViscosity: 0.25
+            maxBoundsViscosity: 0.25,
+            
+            
         });
 
         var geojsonMarkerOptions = {
@@ -1264,7 +2076,7 @@
                 minZoom: 0,
                 maxZoom: 8,
             }).addTo(map);
-			
+
 			//var drawnItems = new L.FeatureGroup();
 			//map.addLayer(drawnItems);
 			
@@ -1287,6 +2099,7 @@
 			map.addControl(drawControl);
 			
 			$.getJSON('/get_data/', function(data){
+                
                 addDataToMap(data);
 			map.setView([0,0],1);
 		
@@ -1370,7 +2183,7 @@
 							const lat = feature.geometry.coordinates[1];  // Latitude
 							const lng = feature.geometry.coordinates[0];  // Longitude
 
-							if (lat && lng) {
+							if (lat && lng) {f
 								points.push(L.latLng(lat, lng));  // Add the point to the array
 							}
 						});
@@ -1445,6 +2258,8 @@
         }
 
         function addDataToMap(data){
+           
+        //    const reprojected = reprojectGeoJSON(data, 'EPSG:4326', '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +datum=ETRS89 +units=m +no_defs');
             geojsonLayer = L.geoJSON(
                 data,
                 { 
@@ -1463,6 +2278,12 @@
                         }
                     },
                     pointToLayer: function (feature, latlng) {
+                    //    console.log(latlng)
+                    //    var newcoord= proj4('+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', [latlng.lat, latlng.lng])
+                    //    console.log(newcoord)
+                    //    latlng['lat'] = newcoord[0]
+                    //    latlng['lng'] = newcoord[1]
+                    //    console.log(latlng)
                         return L.circleMarker(latlng, geojsonMarkerOptions);
                     }
                 }
@@ -1492,6 +2313,9 @@
 			L.marker([lat, lon], { icon: starDivIcon }).addTo(map);
 			
         }
+        
+
+
 	</script>
 
 </body>

@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
 from django.http import JsonResponse
@@ -7,17 +8,27 @@ from .models import MyModel  # Import your model
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt  # Only if you're not using CSRF protection during testing
 from pmagpy.ipmag import plot_net, plot_di
+from pmagpy.pmag import dia_vgp
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import mplstereonet
 import io
 import base64
 import logging, json, psycopg2, csv
 import pandas as pd
+import time
+import math
+from sphstat.utils import readsample, convert, polartocart, sph2cart, prettyprintdict
+from sphstat.descriptives import resultants, mediandir
+from sphstat.singlesample import isfisher
+import numpy as np
 
 
 #the password here is no secret, read-only user
 #in the future, if you need more priviledge, use local peer auth. See /etc/postgresql/12/main/pg_hba.conf
 conn_string = "host='localhost' dbname='GD2021' user='gpmdb' password='gpmdb' port=5432"
+conn_string_admin = "host='localhost' dbname='GD2021' user='gpmdbadmin' password='admin' port=5432"
 
 #
 # return the front page
@@ -79,6 +90,53 @@ def save_polygon(request):
             return JsonResponse({'status': 'error', 'message': f'Error saving polygon: {str(e)}'}, status=500)
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+    
+# @login_required()
+def addition(request):
+
+    print("test")
+    conn = psycopg2.connect(conn_string)
+    cursor = conn.cursor()
+    cursor.execute("Select * FROM \"CONTRIBUTIONS\"")
+    data = []
+    for row in cursor:
+        print(row)
+        data.append({
+            "doi": row[0],
+            "r_lat": row[1],
+            "r_long": row[2],
+            "email": row[3],
+            "rockname": row[4],
+            "age": row[5],
+            "place": row[6],
+            "continent": row[7],
+            "terrane": row[8],
+            "rocktype": row[8],
+            "stratage": row[10],
+            "lowage": row[11],
+            "highage": row[12],
+            "method": row[13],
+            "lomagage": row[14],
+            "himagage": row[15],
+            "tilt": row[16],
+            "tests": row[17],
+            "slat": row[18],
+            "slong": row[19],
+            "ptype": row[20],
+            "demagcode": row[21],
+            "treatment": row[22],
+            "noreversed": row[23],
+            "authors": row[24],
+            "years": row[26],
+            "journal": row[27],
+            "vpages": row[28],
+            "title": row[29],
+            "remarks": row[30],
+        })
+        
+    print(data)
+
+    return render(request, 'gpmdb2.html', {'rows': data})
 
 def index(request):
     conn = psycopg2.connect(conn_string)
@@ -134,7 +192,7 @@ def get_data(request):
                         "type": "Point",
                         "coordinates": [row[2],row[3]]
                     }
-        });
+        })
 
     ret = json.dumps(data)
 
@@ -348,6 +406,120 @@ def build_query_string(request):
         where_or_and = 'and'
     return query_str
 
+def graph_data(request):
+    print("this is a test")
+    
+
+      # Parse the JSON data sent in the POST request
+    test = json.loads(request.body)
+    test2 = test.get("data", [])
+    #print("Received data:", test)  # Log the received data
+    #print("This is hte x axis", test.data("xaxis", []))
+    # stats_data = data.get("data",[])
+
+    data = test2.get("graphingdata", [])
+    xaxis = test2.get("xaxis", [])
+    yaxis = test2.get("yaxis", [])
+    columns = data.get("columns", [])
+    graphingdata = data.get("data", [])
+    datatograph = {}
+    xdata = []
+    ydata = []
+    count = 0
+    count2 = 0
+    graphdata = {}
+    for value in columns:
+        if value[0] == xaxis:
+            break
+        else:
+            count = count+1
+
+    for value in columns:
+        if value[0] == yaxis:
+            break
+        else:
+            count2 = count2+1
+    
+    for value in graphingdata:
+        xdata.append(value[count])
+    
+    for value in graphingdata:
+        ydata.append(value[count2])
+
+    xaxisdata = {'values': xdata}
+    yaxisdata = {'values': ydata}
+        
+    if test2.get("graphtype", []) == "Line Chart":
+        print("This will print a line chart")
+        graph = graphlinechart(xaxisdata, yaxisdata, xaxis, yaxis)
+    elif test2.get("graphtype", []) == "Histogram":
+        print("This will print a Histogram chart")
+        graph = graphhistogram(xaxisdata, xaxis)
+        graphdata = {xaxis: xaxisdata['values']}
+        #graphhistogram(xdata)
+
+    result = {
+                'graph': graph,
+                'graphdata': graphdata,
+    }
+
+    return JsonResponse(result)
+
+def graphlinechart(xaxis, yaxis, xaxislabel, yaxislabel):# src: Dr. UWE
+    # Convert list of dictionaries to DataFrame
+
+    data = {
+        'xaxis': xaxis['values'], 
+        'yaxis': yaxis['values']
+    }
+
+    df = pd.DataFrame(data)
+    print(df)
+    # Plot the histogram of ages with automatic binning and log-scaled y-axis
+    plt.figure(figsize=(8, 5))
+    df.plot(x = 'xaxis', y = 'yaxis', kind = 'line', marker = 'o')
+
+
+    plt.title(xaxislabel + ' vs ' + yaxislabel)
+    plt.xlabel(xaxislabel)
+    plt.ylabel(yaxislabel)
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+    plt.tight_layout()
+
+    # Save plot to a base64-encoded string to send to frontend
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=300)
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close()
+    print("Graph is complete")
+    
+    return image_base64
+
+def graphhistogram(xaxis, xaxislabel):# src: Dr. UWE
+    # Convert list of dictionaries to DataFrame
+    df = pd.DataFrame(xaxis)
+
+    # Plot the histogram of ages with automatic binning and log-scaled y-axis
+    plt.figure(figsize=(8, 5))
+    plt.hist(df['values'], bins='auto', color='skyblue', edgecolor='black')
+
+
+    plt.title('Histogram of ' + xaxislabel)
+    plt.xlabel(xaxislabel)
+    plt.ylabel('Frequency')
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+    plt.tight_layout()
+
+    # Save plot to a base64-encoded string to send to frontend
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=300)
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close()
+    print("Graph is complete")
+    
+    return image_base64
 #
 # handle the main query 
 #
@@ -360,7 +532,7 @@ def get_query_data(request):
             r.\"JOURNAL\", r.\"VOLUME\", r.\"VPAGES\", 
             ru.\"CONTINENT\", ru.\"ROCKTYPE\", ru.\"LOWAGE\", ru.\"HIGHAGE\", 
             pmr.\"LOMAGAGE\", pmr.\"HIMAGAGE\", pmr.\"SLAT\", pmr.\"SLONG\", pmr.\"PLAT\", pmr.\"PLONG\", 
-            pmr.\"DP\", pmr.\"DM\", re.\"QSUM\", re.\"RSUM\", r.\"DOI\"
+            pmr.\"DP\", pmr.\"DM\", re.\"QSUM\", re.\"RSUM\"
         FROM (((\"ROCKUNIT\" AS ru 
             INNER JOIN \"REFERENCE\" AS r ON r.\"REFNO\" = ru.\"REFNO\")
             INNER JOIN \"PMAGRESULT\" AS pmr ON ru.\"ROCKUNITNO\" = pmr.\"ROCKUNITNO\")
@@ -379,16 +551,23 @@ def get_query_data(request):
     data["data"] = []
     stats_data=[]
     #histogram_data=[]
-    
+    print(data["columns"])    
     for row in cursor:
+
         data["data"].append(list(row))
+
+
+
+
         stats_data.append({
             "PLAT": row[16],  # Paleolatitude
             "PLONG": row[17],  # Paleolongitude
             "LOMAGAGE": row[12],
             "HIMAGAGE": row[13],
             "DP": row[18],     # Confidence radius in latitude
-            "DM": row[19]      # Confidence radius in longitude
+            "DM": row[19],
+            "SLAT": row[14],
+            "SLONG": row[15],
             })
                     
         '''histogram_data.append({
@@ -414,25 +593,30 @@ def get_query_data(request):
 #submit_data to database
 
 def submit_data(request):
-    conn = psycopg2.connect(conn_string)
+    conn = psycopg2.connect(conn_string_admin)
     cursor = conn.cursor()
     #if request.method != "POST":
       #return JsonResponse({"success": False, "error": "Invalid request method. Use POST."})
-
+    print('this is a test2')
+    data = request.GET.dict()
+    print(data)
     try:
-        doi = request.GET.get("doi", "").strip()
-        lat = request.GET.get("lat", "").strip()
-        lon = request.GET.get("lon", "").strip()
-        email = request.GET.get("email", "").strip()
-        alternate_email = request.GET.get("alternate_email", "").strip()
-        age = request.GET.get("age", "").strip()
-        comments = request.GET.get("comments", "").strip()
-
-        # Insert into database using parameterized query
-        query_str = '''INSERT INTO "CONTRIBUTIONS" (doi, r_lat, r_long, email, alt_email, age, comments) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s);'''
-        cursor.execute(query_str, [doi, lat, lon, email, alternate_email, age, comments])
-
+#        doi = request.GET.get("doi", "").strip()
+#        lat = request.GET.get("lat", "").strip()
+#        lon = request.GET.get("lon", "").strip()
+#        email = request.GET.get("email", "").strip()
+#        alternate_email = request.GET.get("alternate_email", "").strip()
+#        age = request.GET.get("age", "").strip()
+#        comments = request.GET.get("comments", "").strip()
+#
+#        # Insert into database using parameterized query
+        query_str = '''INSERT INTO "CONTRIBUTIONS" (doi, rlat, rlong, email, rockname, age, comments, place, continent, terrane, rocktype, stratage, lowage, highage, method, lomagage, himagage, tilt, tests, 
+        slat, slong, ptype, demagcode, treatment, noreversed, authors, years, journal, vpages, title, remarks) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);'''
+        cursor.execute(query_str, (data['doi'], data['rlat'], data['rlong'], data['email2'], data['rockname'], data['age'], data['comments'], data['place'], data['continent'], data['terrane'], 
+                       data['rocktype'], data['stratage'], data['lowage'], data['highage'], data['method'], data['lomagage'], data['himagage'],data['tilt'], data['tests'],  data['slat'], data['slong'], 
+                       data['ptype'], data['demagcode'], data['treatment'], data['noreversed'], data['authors'], data['year'], data['journal'], data['vpages'], data['title'], data['remarks'],) )
+#
         # Commit the transaction
         conn.commit()
 
@@ -513,13 +697,13 @@ def get_data_within_polygon(request):
                            r."JOURNAL", r."VOLUME", r."VPAGES",
                            ru."CONTINENT", ru."ROCKTYPE", ru."LOWAGE", ru."HIGHAGE", 
                            pmr."LOMAGAGE", pmr."HIMAGAGE", pmr."SLAT", pmr."SLONG", pmr."PLAT", pmr."PLONG", 
-                           pmr."DP", pmr."DM", re."QSUM", re."RSUM", r."DOI",
+                           pmr."DP", pmr."DM", re."QSUM", re."RSUM",
                            ST_AsGeoJSON(ru."geom") AS geojson_geom
                     FROM "ROCKUNIT" AS ru
                     INNER JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO"
                     INNER JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO"
                     INNER JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO"
-                    WHERE ST_Within(ru."geom", ST_SetSRID(ST_GeomFromText(%s), 4326));
+                    WHERE ST_Within(ru.geom, ST_SetSRID(ST_GeomFromText(%s), 4326));
                  '''
                
                 # Execute the query with the polygon WKT as a parameter
@@ -549,6 +733,12 @@ def get_data_within_polygon(request):
                     }
                     
                     geojson["features"].append(feature)
+
+
+
+
+
+
                     
                     stats_data.append({
                         "PLAT": row[16],  # Paleolatitude
@@ -597,6 +787,57 @@ def get_stats(request):
             plot_image = plot_equal_area_plot(stats_data) 
             histogram_image = renderhistogram(stats_data)  
 
+            theta = np.radians(-7.3)
+            phi = np.radians(90-36.2)
+            sample2 = {}
+            thetas = []
+            phis = []
+
+            sample = {
+                "tetas": [theta],
+                "phis":   [phi],
+                "type": "rad",
+                "n": 1
+            }
+
+            print(sample)
+
+            cart = sph2cart(theta, phi)
+
+            cart2 = polartocart(sample)
+
+            print(cart)
+            print(cart2)
+
+            for value in data.values():
+                for row in value:
+                    theta = np.radians(row['PLONG'])
+                    phi = np.radians(90 - row['PLAT'])
+                    
+                    thetas.append(theta)
+                    phis.append(phi)
+        
+            sample2['tetas'] = thetas
+            sample2['phis'] = phis
+            sample2['n'] = len(thetas)
+            sample2['type'] = "rad"
+
+
+            #print(sample2)
+
+            cart3 = polartocart(sample2)
+            #print(cart3)
+
+            r = resultants(cart3)
+            print(prettyprintdict(r))
+            medi, ccone, success, W = mediandir(cart3, ciflag=True, alpha=0.01)
+            print(medi)
+            print(ccone)
+            print(success)
+            res = isfisher(cart3, alpha=0.05)
+            print(prettyprintdict(res))
+
+
             result = {
                 'plot_image': plot_image,
                 'histogram_image': histogram_image
@@ -608,6 +849,88 @@ def get_stats(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+def add_item(request):
+
+
+    print('this is a test')
+    #data = request.GET.dict()
+    #print(data)
+    data = request.GET.dict()
+    print(data['id'])
+
+    conn = psycopg2.connect(conn_string_admin)
+    cursor = conn.cursor()
+
+    query_string = """SELECT * FROM "CONTRIBUTIONS" WHERE "doi" = %s;"""
+
+    cursor.execute(query_string, (data['id'],))
+
+    row = cursor.fetchone()
+
+    print(row)
+
+    query_string = """SELECT MAX("REFNO") FROM "REFERENCE";"""
+
+    cursor.execute(query_string)
+
+    result = cursor.fetchone()
+
+    id_ref = result[0]
+
+    id_ref = id_ref+1
+
+    print(id_ref)
+
+    query_string = """INSERT INTO "REFERENCE" ("REFNO", "AUTHORS", "YEAR", "JOURNAL", "VPAGES", "TITLE", "REMARKS")
+                                            VALUES (%s,%s,%s,%s,%s,%s,%s)"""
+    
+    cursor.execute(query_string, (id_ref, row[25], row[26], row[27], row[28], row[29], row[30],))
+
+    query_string = """SELECT MAX("ROCKUNITNO") FROM "ROCKUNIT";"""
+
+    cursor.execute(query_string)
+
+    result = cursor.fetchone()
+
+    id = result[0]
+
+    id = id+1
+    print(data)
+    query_string = """INSERT INTO "ROCKUNIT" ("ROCKUNITNO", "REFNO", "PLACE", "CONTINENT", "METHOD", "STRATAGE", "LOWAGE", "HIGHAGE", "ROCKTYPE", "RLAT", "RLONG", "ROCKNAME")
+                                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+    
+    cursor.execute(query_string, (id, id_ref, row[7], row[8], row[14], row[11], row[12], row[13], row[10], row[1], row[2],row[4],))
+
+    query_string = """SELECT MAX("RESULTNO") FROM "PMAGRESULT";"""
+
+    cursor.execute(query_string)
+
+    result = cursor.fetchone()
+
+    id_pma = result[0]
+
+    id_pma = id_pma+1
+
+    query_string = """INSERT INTO "PMAGRESULT" ("ROCKUNITNO", "RESULTNO", "LOMAGAGE", "HIMAGAGE", "TESTS", "TILT", "SLAT", "SLONG", "PTYPE", "NOREVERSED", "DEMAGCODE", "TREATMENT")
+                                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+    
+    cursor.execute(query_string, (id, id_pma, row[15], row[16], row[18], row[17], row[19], row[20], row[21], row[24], row[21], row[22],))
+
+    query_string = """DELETE FROM \"CONTRIBUTIONS\" WHERE doi =%s;"""
+
+
+    cursor.execute(query_string, (data['id'],))
+    conn.commit()
+    '''
+
+    print(id)    
+    #id = request.GET.get("id", "").strip()
+    #print(id)
+    #print(id == "https://doi.org/10.1234/abcd.567555")
+    
+    '''
+    return render(request, 'gpmdb2.html')
 
 
 def generate_equal_area_plot(data):
@@ -679,11 +1002,17 @@ def plot_equal_area_plot(data):
     # Create the plot
     fig = plt.figure()
     plot_net(1)
-
+    print("test")
+    latradian = math.radians(78.9)
+    longradian = math.radians(212.4)
+    trend, plunge = mplstereonet.geographic2plunge_bearing(latradian, longradian)
+    print(trend)
+    print(plunge)
     # Plot each directional mean
     for _, row in df.iterrows():
-        plot_di(row['PLONG'], row['PLAT'], color='blue')
 
+        plot_di(row['PLONG'], row['PLAT'], color='blue')
+ 
     # Save to buffer for base64 encoding
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', dpi=300)
