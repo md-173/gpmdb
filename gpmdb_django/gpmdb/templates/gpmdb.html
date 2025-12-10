@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="GPMDB">
+    <meta name="author" content="Michael Chin">
+    <title>Under enhancement GPMDB</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/leaflet.css"/>
+	<!-- Leaflet Draw CSS for the drawing functionality -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
+
+	<style>
+		body{
+			background-color:rgb(231,231,231); 
+		}
+		.navbar.nav-custom{
+			background-color: rgb(0,77,140);
+			margin:0;
+			min-height:20px;
+			border:none;
+		}
+		.navbar.nav-custom li a{
+			color:white;
+			font-size:12pt; 
+			font-family: Arial;
+			padding-top:5px;
+			padding-bottom:5px;
+		}
+		.nav-custom.navbar  li  a:hover,  
+		.nav-custom.navbar  li  a:focus{
+			color:yellow;
+			background-color:rgb(0,77,140); 
+		}
+
+		.left-menu-item{
+			background-color:rgb(0,77,140); 
+			color:white; 
+			padding:5px 0px 5px 0px; 
+			margin-bottom:2px;font-size: 11pt;
+			font-weight: bold; 
+			text-align:center;
+		}
+		.left-menu-item:hover,
+		.left-menu-item:focus{
+			color: yellow;
+			cursor: pointer;
+		}
+
+		#GPMDB-title{
+			font-size:44pt; 
+			font-family: Arial; 
+			font-weight:bold; 
+			color:rgb(0,77,140);
+			margin-left:70px;
+		}
+
+		@media screen and (max-width: 1023px){
+			#GPD-title{
+				display:none;
+			}
+		 #GPMDB-title{
+				padding-top:20px;
+			}
+		}
+
+		@media screen and (max-width: 767px){
+			#GPMDB-title{
+				padding-top:40px;
+				font-size:22pt;
+			}
+		}
+
+		@media screen and (max-width: 424px){
+			#three-icons{
+				display:none;
+			}
+		}
+
+		.navbar-toggle{
+			height:25px;
+			padding: 5px 5px;
+			background-color: #ddd;
+		}
+
+		td{
+			white-space: nowrap;
+		}
+		
+		.custom-star-marker {
+			color: gold;
+			font-size: 20px;
+			font-weight: bold;
+			text-shadow: 0 0 3px black;
+		}
+	</style>
+</head>
+<body>  
+    <div style="position:fixed;top:-10px;height:100px;background-color:rgb(231,231,231);width:100%;z-index:1049;">
+    <div class="container">  
+        <div class="row"> 
+        <div class="col-md-12" id="logo">
+            <div style="position:absolute;top:0px;"><img src="static/images/compass.png"></div>
+            <div id="three-icons" style="float:right; margin-top:20px;">
+                <img style="margin-right:-23px; margin-top:-5px;" src="static/images/ball.png">
+                <img src="static/images/house.png">
+                <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">            
+            </div>
+
+            <div id="GPMDB-title">GPMDB</div>
+            <div id="GPD-title" style="font-size:24pt; font-family: Arial; font-weight:bold; color:black; margin-top: -24px; margin-left:70px;">GLOBAL PALEOMAGNETIC DATABASE</div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <div style="background-color:rgb(77,131,175); width:100%;position:fixed;top:90px;z-index:1049;">
+	<div class="container" role="menu-container" style=" background-color: rgb(0,77,140);">
+		<div class="row">
+        <nav class="navbar navbar-default nav-custom">
+            <div class="container-fluid" style=" background-color: rgb(0,77,140);">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#about">Resources</a></li>
+                        <li><a href="#about">IGCP 648</a></li>
+                        <li><a href="#about">Help</a></li>
+                        <li><a href="#contact">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        </div><!--/.nav-collapse -->
+	</div>
+	</div>
+
+    <div class="container" role="main" style="background-color:rgb(216,216,216);margin-top:130px;">
+            <div id="menu-and-map" class="row">
+                <div id="left-menu" class="col-md-3" style="height:360px;padding:5px;">
+                    <div style="background-color:white; height:100%; padding:5px;">
+                        <div  style="background-color:rgb(77,131,175); color:white; padding:5px 0px 5px 10px;">GPMDB Stats</div>
+                        <table style="background-color:white; border-collapse: separate;border-spacing:10px 5px; width:100%; margin-bottom:15px;">
+                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">Palaeomagnetic Poles: <span>{{poles}}</span></td></tr>
+                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">Rock Units: <span>{{sites}}</span></td></tr>
+                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">References: <span>{{studies}}</span></td></tr>
+                        </table>
+                        <div class="left-menu-item" data-toggle="modal" data-target="#search-form">Search GPMDB</div>
+                        <div class="left-menu-item" onclick="alert('Under Construction!')">File Format Conversion</div>
+                        <div class="left-menu-item" onclick="alert('Under Construction!')">Download Python Scripts</div>
+                        <div class="left-menu-item" onclick="alert('Under Construction!')">Software Tools</div>
+                        <div class="left-menu-item" style="margin-top:20px;" data-toggle="modal" data-target="#contribution">Contribute data</div>
+					</div>
+                </div>
+        
+                <div class="col-md-9" style="height:360px;padding:5px;">
+                   <div id="map" style="height:350px;"></div> 
+                </div>
+            </div>
+
+            <div class="row" id="info" style="background:rgb(216,216,216);padding:5px;">
+                <div id="welcome" class="col-md-7" style="min-height:380px;background:rgb(231,231,231);">
+                    <h3 style="color:rgb(0,77,140);">Welcome to the Global Paleomagnetic Database</h3>
+                    <p>
+                        The Global Paleomagnetic Database (GPMDB) contains published paleomagnetic poles
+                         and directions. The database was originally created by Mike McElhinny and Jo Lock, 
+                         later maintained by Sergei Pisarevsky. This is the second online implementation of 
+                         the database as part of the IGCP 648: Supercontinent Cycles & Global Geodynamics project, 
+                         and funded by Professor Zheng-Xiang Li's research grants.
+                        </p>
+                        <p>
+                        This web site provides online access to the contents of the database. Several methods of 
+                        querying the database are provided. Selected data can be exported to csv format.
+                    </p>
+                </div>
+                <div id="news" class="col-md-5" style="background:rgb(231,231,231); min-height:380px;border-left:solid 2px rgb(216,216,216);">
+                    <h3 style="background-color:rgb(77,131,175); color:white;font-size:12pt;padding:5px;">Latest News</h3>
+      
+                    <p>
+                    <strong>New data available</strong> - 
+                    This database is still under construction and new data will be added frequently. If you have data that you would like added to this database please contact us via the "Feedback" option below.  
+                    </p>
+                    <p>
+                    <strong>GPMDB in the news!</strong> - 
+                    Under construction! 
+                    </p> 
+
+                    <h3 style="background-color:rgb(77,131,175); color:white;font-size:12pt;padding:5px;">Useful Information</h3>
+
+                    <p>
+                    <strong>Feedback</strong> - 
+                    If you notice any issues or would like to make suggestions please <a href="mailto:Earth.Dynamics@curtin.edu.au">contact us</a>. <br>A feedback form will be added in subsequent updates.
+                    </p>
+                    <p> 
+                    <strong>To cite this database</strong> - 
+                    If you use the GPMDB, please cite our article: Pisarevsky, S.A., Li, Z.X., Tetley, M.G., Liu, Y., and Beardmore, J., 2022. An updated internet-based Global Paleomagnetic Database. <i>Earth Science Reviews</i>, <b>235</b>, 104258. DOI:<a href="https://doi.org/10.1016/j.earscirev.2022.104258">10.1016/j.earscirev.2022.104258</a>
+                    </p>
+                </div>
+            </div><!--end of row-->
+
+        <div class="row">
+			<div id="footer" class="col-md-12" style="color:white; background-color:rgb(0,77,140); height:50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center;">
+
+				<span>
+					<a href="static/metadata/gpmdb_metadata.json" target="_blank" style="color: white; text-decoration: underline;">
+						View Metadata
+					</a>
+				</span>
+				
+				
+			</div>
+		</div>
+
+    </div>
+
+    <div class="modal fade" id="search-form" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search GPMDB</h4>
+                Combine any search parameters to find paleomagnetic data
+            </div>
+        <div class="modal-body">
+        <form>
+            <div class="form-group">
+                <div style="width:49%;display:inline-block;">
+                    <label for="continent">Continent</label>
+                    <select  class="form-control" id="continent">
+                        <option selected value="">All continents</option>
+                        <option value="Africa">Africa</option>
+                        <option value="Antarctica">Antarctica</option>
+                        <option value="Asia">Asia</option>
+                        <option value="Atlantic Ocean">Atlantic Ocean</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Europe">Europe</option>
+                        <option value="Greenland">Greenland</option>
+                        <option value="Indian Ocean">Indian Ocean</option>
+                        <option value="Middle East">Middle East</option>
+                        <option value="North America">North America</option>
+                        <option value="Pacific Ocean">Pacific Ocean</option>
+                        <option value="South America">South America</option>
+                    </select>
+                </div>
+
+                <div style="width:49%;display:inline-block;">
+                    <label for="rocktype">Geological Unit Type</label>
+                    <select class="form-control"id="rocktype">
+                        <option selected="" value="">All Rock Types</option>
+                        <option value="extrusives">extrusives</option>
+                        <option value="intrusives">intrusives</option>
+                        <option value="sediments">sediments</option>
+                        <option value="limestones">limestones</option>
+                        <option value="metamorphics">metamorphics</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="width:24%;display:inline-block;">
+                    <label for="rockage-min">Min Rock Unit Age</label>
+                    <input type="text" class="form-control" id="rockage-min">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="rockage-max">Max Rock Unit Age</label>
+                    <input type="text" class="form-control" id="rockage-max">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="magage-min">Min Magnetisation Age</label>
+                    <input type="text" class="form-control" id="magage-min">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="magage-max">Max Magnetisation Age</label>
+                    <input type="text" class="form-control" id="magage-max">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="width:32%;display:inline-block;">
+                    <label for="rockname">Rock Unit Name</label>
+                    <input type="text" class="form-control" id="rockname">
+                </div>
+                <div style="width:32%;display:inline-block;">
+                    <label for="refno">Reference No.</label>
+                    <input type="text" class="form-control" id="refno">
+                </div>
+                <div style="width:32%;display:inline-block;">
+                    <label for="resultno">Result No.</label>
+                    <input type="text" class="form-control" id="resultno">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-lat">Min Latitude</label>
+                    <input type="text" class="form-control" id="min-lat">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="max-lat">Max Latitude</label>
+                    <input type="text" class="form-control" id="max-lat">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-lon">Min Longitude</label>
+                    <input type="text" class="form-control" id="min-lon">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="max-lon">Max Longitude</label>
+                    <input type="text" class="form-control" id="max-lon">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-qsum">MIN QSUM</label>
+                    <input type="text" class="form-control" id="min-qsum">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-rsum">MIN RSUM</label>
+                    <input type="text" class="form-control" id="min-rsum">
+                </div>
+                
+            </div>
+
+            <div class="form-group">
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-b">Min B</label>
+                    <input type="text" class="form-control" id="min-b">
+                </div>
+                <!--<div style="width:24%;display:inline-block;">
+                    <label for="max-b">Max B</label>
+                    <input type="text" class="form-control" id="max-b">
+                </div>-->
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-n">Min N</label>
+                    <input type="text" class="form-control" id="min-n">
+                </div>
+                <!--<div style="width:24%;display:inline-block;">
+                    <label for="max-n">Max N</label>
+                    <input type="text" class="form-control" id="max-n">
+                </div>-->   
+            </div>
+
+            <div class="form-group">
+                <div style="width:24%;display:inline-block;">
+                    <label for="min-k">Min K</label>
+                    <input type="text" class="form-control" id="min-k">
+                </div>
+                <div style="width:24%;display:inline-block;">
+                    <label for="max-k">Max K</label>
+                    <input type="text" class="form-control" id="max-k">
+                </div>
+                <!--<div style="width:24%;display:inline-block;">
+                    <label for="min-a95">Min A95</label>
+                    <input type="text" class="form-control" id="min-a95">
+                </div>-->
+                <div style="width:24%;display:inline-block;">
+                    <label for="max-a95">Max A95</label>
+                    <input type="text" class="form-control" id="max-a95">
+                </div>
+            </div>
+
+        </form>
+        </div>
+
+        <div class="modal-footer">
+            <button id="reset-form" type="button" class="btn btn-danger pull-left" >Reset Form</button>
+            <button id="query-data" type="submit" class="btn btn-primary">Search</button>
+            <button type="button" class="btn" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+      
+    </div>
+	</div>
+
+	<div class="modal fade" id="contribution" role="dialog">
+		<div class="modal-dialog modal-lg">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">contributions</h4>
+					Fill up the fields
+				</div>
+			<div class="modal-body">
+			<form>
+				<div class="form-group">
+					<!--<div style="width:49%;display:inline-block;">
+						<label for="DOI">DOI</label>
+						<input type="text" class="form-control" id="DOI" placeholder="10.1000/xyz123" required>
+						<small id="doiHelp" class="form-text text-muted">
+							Please enter a valid DOI (e.g., 10.1000/xyz123). 
+						</small>
+					</div>-->
+					<div style="width:49%; display:inline-block;">
+						<label for="DOI">DOI URL</label>
+						<input type="url" class="form-control" id="DOIurl" name="DOI"
+							   placeholder="https://doi.org/10.1000/xyz123" required>
+						<small id="doiHelp" class="form-text text-muted">
+							Please enter the full DOI URL (e.g., https://doi.org/10.1000/xyz123).
+						</small>
+					</div>
+				</div>
+				<!--<div class="form-group">
+					<div style="width:49%; display:inline-block;">
+						<label for="IGSN">IGSN (DOI URL)</label>
+						<input type="url" class="form-control" id="IGSN" name="IGSN"
+							   placeholder=" https://doi.org/10.21384/AU1234" required>
+						<small class="form-text text-muted">
+							Enter the full IGSN DOI URL (e.g.,  https://doi.org/10.21384/AU1234 or https://igsn.org/10.21384/AU5678).
+						</small>
+					</div>
+				</div>-->
+
+				<div class="form-group">
+					
+					<div style="width:24%; display:inline-block;">
+						<label for="R-LAT">Latitude (°) [WGS84]</label>
+						<input type="number" class="form-control" id="R-LAT" name="R-LAT" 
+							   placeholder="e.g., 27.50" step="any" min="-90" max="90" required>
+					</div>
+					<div style="width:24%; display:inline-block; margin-left:2%;">
+						<label for="R-LONG">Longitude (°) [WGS84]</label>
+						<input type="number" class="form-control" id="R-LONG" name="R-LONG" 
+							   placeholder="e.g., 89.63" step="any" min="-180" max="180" required>
+					</div>
+				</div>
+			
+				
+				<!-- Age -->
+				<div class="form-group">
+					<div style="width:24%;display:inline-block;">
+						<label for="age">Site Age (Ma)</label>
+						<input type="number" class="form-control" id="age" min="0">
+					</div>
+				</div>
+
+				<!-- Email -->
+				<div class="form-group">
+					<label for="email">Email <span style="color:red">*</span></label>
+					<input type="email" class="form-control" id="email" required>
+					<small class="form-text text-muted">
+						We'll use this email to contact you if needed.
+					</small>
+				</div>
+
+				<!-- Alternate Email -->
+				<div class="form-group">
+					<label for="alternate_email">Alternate Email</label>
+					<input type="email" class="form-control" id="alternate_email">
+				</div>
+
+				<!-- Comments -->
+				<div class="form-group">
+					<label for="comments">Comments</label>
+					<textarea class="form-control" id="comments" rows="3" placeholder="Add any remarks or notes here..."></textarea>
+				</div>
+			</form>
+			</div>
+			<div class="modal-footer">
+				<button id="reset-cform" type="button" class="btn btn-danger pull-left" >Reset Form</button>
+				<button id="submit-data" type="submit" class="btn btn-primary">Submit</button>
+				<button type="button" class="btn" data-dismiss="modal">Cancel</button>
+			</div>
+		  </div>
+		  
+		</div>
+	</div>
+
+    <div id="query-result" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Query Result</h4>
+            </div>
+    
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                <div id="table-div"></div>
+				<div id="stats-container"></div>
+				<div id="histogram"></div>
+			</div>
+			
+			<div class="modal-footer">
+                <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
+				<button type="button" id="stats" class="btn btn-primary">Stats</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>
+			</div>
+        </div>
+        </div><!--modal-dialog modal-lg-->
+    </div><!--query-result-->
+
+    <div id="progress-bar" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Loading...</h4>
+            </div>
+
+            <div class="modal-body"> 
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:100%">
+      
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+            </div>
+        </div>
+        </div><!--modal-dialog modal-lg-->
+    </div><!--query-result-->
+
+    <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+    <script src="/static/libs/jquery.min.js"></script>
+     <!-- Latest compiled and minified JavaScript -->
+    <script src="/static/libs/bootstrap.min.js" ></script>
+    <script src="/static/libs/jquery.dataTables.min.js"></script>
+    <script src="/static/libs/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var refno = NaN;
+        var resultno = NaN;
+        var rockage_min = NaN;
+        var magage_min = NaN;
+        var rockage_max = NaN;
+        var magage_max = NaN;
+        var lon_max = NaN;
+        var lon_min = NaN;
+        var lat_max = NaN;
+        var lat_max = NaN;
+        var qsum_min = NaN;
+        var rsum_min = NaN;
+        var k_min = NaN;
+        var k_max = NaN;
+        var a95_min = NaN;
+        var a95_max = NaN;
+		var lat = NaN;
+		var lon = NaN;
+		
+        function validate(){
+            refno = parseInt($('#refno').val());
+            if($('#refno').val() && isNaN(refno)){
+                alert("The reference number must be a number!");
+                $('#refno').focus();
+                $('#refno').select();
+                return false;
+            }
+
+            resultno = parseInt($('#resultno').val());
+            if($('#resultno').val() && isNaN(resultno)){
+                alert("The result number must be a number!");
+                $('#resultno').focus();
+                $('#resultno').select();
+                return false;
+            }
+
+            rockage_min = parseFloat($('#rockage-min').val());
+            if($('#rockage-min').val() && isNaN(rockage_min)){
+                alert("The min rock unit age must be a number!");
+                $('#rockage-min').focus();
+                $('#rockage-min').select();
+                return false;
+            }
+
+            magage_min = parseFloat($('#magage-min').val());
+            if($('#magage-min').val() && isNaN(magage_min)){
+                alert("The min magnetisation age must be a number!");
+                $('#magage-min').focus();
+                $('#magage-min').select();
+                return false;
+            }
+
+            rockage_max = parseFloat($('#rockage-max').val());
+            if($('#rockage-max').val() && isNaN(rockage_max)){
+                alert("The max rock unit age must be a number!");
+                $('#rockage-max').focus();
+                $('#rockage-max').select();
+                return false;
+            }
+
+            magage_max = parseFloat($('#magage-max').val());
+            if($('#magage-max').val() && isNaN(magage_max)){
+                alert("The max magnetisation age must be a number!");
+                $('#magage-max').focus();
+                $('#magage-max').select();
+                return false;
+            }
+
+            if(!isNaN(rockage_min) && !isNaN(rockage_max)){
+                if(rockage_min>rockage_max){
+                    alert("The max rock unit age must be greater than min rock unit age!");
+                    $('#rockage-max').focus();
+                    $('#rockage-max').select();
+                    return false;
+                }
+            }
+
+            if(!isNaN(magage_min) && !isNaN(magage_max)){
+                if(magage_min>magage_max){
+                    alert("The max magnetisation age must be greater than min magnetisation age!");
+                    $('#magage-max').focus();
+                    $('#magage-max').select();
+                    return false;
+                } 
+            }
+
+
+            lat_max = parseFloat($('#max-lat').val());
+            if($('#max-lat').val() && isNaN(lat_max)){
+                alert("The max latitude must be a number!");
+                $('#max-lat').focus();
+                $('#max-lat').select();
+                return false;
+            }
+
+            lat_min = parseFloat($('#min-lat').val());
+            if($('#min-lat').val() && isNaN(lat_min)){
+                alert("The min latitude must be a number!");
+                $('#min-lat').focus();
+                $('#min-lat').select();
+                return false;
+            }
+
+            lon_min = parseFloat($('#min-lon').val());
+            if($('#min-lon').val() && isNaN(lon_min)){
+                alert("The min longitude must be a number!");
+                $('#min-lon').focus();
+                $('#min-lon').select();
+                return false;
+            }
+
+            lon_max = parseFloat($('#max-lon').val());
+            if($('#max-lon').val() && isNaN(lon_max)){
+                alert("The max longitude must be a number!");
+                $('#max-lon').focus();
+                $('#max-lon').select();
+                return false;
+            }
+
+            if(!isNaN(lat_min) && !isNaN(lat_max)){
+                if(lat_min>lat_max){
+                    alert("The max latitude must be greater than min latitude!");
+                    $('#max-lat').focus();
+                    $('#max-lat').select();
+                    return false;
+                } 
+            }
+
+            if(!isNaN(lon_min) && !isNaN(lon_max)){
+                if(lon_min>lon_max){
+                    alert("The max longitude must be greater than min longitude!");
+                    $('#max-lon').focus();
+                    $('#max-lon').select();
+                    return false;
+                } 
+            }
+
+            if(!isNaN(lat_min)){
+                if(lat_min>90 || lat_min<-90){
+                    alert("The min latitude must be between -90 and 90!");
+                    $('#min-lat').focus();
+                    $('#min-lat').select();
+                    return false;
+                } 
+            }
+
+            if(!isNaN(lat_max)){
+                if(lat_max>90 || lat_max<-90){
+                    alert("The max latitude must be between -90 and 90!");
+                    $('#max-lat').focus();
+                    $('#max-lat').select();
+                    return false;
+                } 
+            }
+
+            if(!isNaN(lon_min)){
+                if(lon_min>180 || lon_min<-180){
+                    alert("The min longitude must be between -180 and 180!");
+                    $('#min-lon').focus();
+                    $('#min-lon').select();
+                    return false;
+                } 
+            }
+
+            if(!isNaN(lon_max)){
+                if(lon_max>180 || lon_max<-180){
+                    alert("The max longitude must be between -180 and 180!");
+                    $('#max-lon').focus();
+                    $('#max-lon').select();
+                    return false;
+                } 
+            }
+
+            qsum_min = parseInt($('#min-qsum').val());
+            if($('#min-qsum').val() && isNaN(qsum_min)){
+                alert("The qsum must be an integer number!");
+                $('#min-qsum').focus();
+                $('#min-qsum').select();
+                return false;
+            }
+
+            rsum_min = parseInt($('#min-rsum').val());
+            if($('#min-rsum').val() && isNaN(rsum_min)){
+                alert("The rsum  must be an integer number!");
+                $('#min-rsum').focus();
+                $('#min-rsum').select();
+                return false;
+            }
+
+            k_max = parseFloat($('#max-k').val());
+            if($('#max-k').val() && isNaN(k_max)){
+                alert("The max K must be a number!");
+                $('#max-k').focus();
+                $('#max-k').select();
+                return false;
+            }
+
+            k_min = parseFloat($('#min-k').val());
+            if($('#min-k').val() && isNaN(k_min)){
+                alert("The min K must be a number!");
+                $('#min-k').focus();
+                $('#min-k').select();
+                return false;
+            }
+
+            if(!isNaN(k_max) && !isNaN(k_min)){
+                if(k_min>k_max){
+                    alert("The max K must be greater than min K!");
+                    $('#max-k').focus();
+                    $('#max-k').select();
+                    return false;
+                } 
+            }
+
+            a95_max = parseFloat($('#max-a95').val());
+            if($('#max-a95').val() && isNaN(a95_max)){
+                alert("The max A95 must be a number!");
+                $('#max-a95').focus();
+                $('#max-a95').select();
+                return false;
+            }
+
+            a95_min = parseFloat($('#min-a95').val());
+            if($('#min-a95').val() && isNaN(a95_min)){
+                alert("The min A95 must be a number!");
+                $('#min-a95').focus();
+                $('#min-a95').select();
+                return false;
+            }
+
+            if(!isNaN(a95_max) && !isNaN(a95_min)){
+                if(a95_min>a95_max){
+                    alert("The max A95 must be greater than min A95!");
+                    $('#max-a95').focus();
+                    $('#max-a95').select();
+                    return false;
+                }
+			}	
+			return true;
+        }
+		
+        var search_data;
+		var stats_data;
+		
+		const csrftoken = document.getElementById('csrf_token').value;
+
+        function show_data(){
+            $('#progress-bar').modal();
+			$('#stats-container').empty();
+            q_data={}
+			
+	        var continent = $('#continent').find(":selected").val();
+            if(continent){
+                q_data['continent'] = continent;
+            }
+            var rocktype = $('#rocktype').find(":selected").val();
+            if(rocktype){
+                q_data['rocktype'] = rocktype;
+            }
+            
+            if(!isNaN(rockage_min)){
+                q_data['rockage-min'] = rockage_min;
+            }
+            if(!isNaN(magage_min)){
+                q_data['magage-min'] = magage_min;
+            }
+            if(!isNaN(rockage_max)){
+                q_data['rockage-max'] = rockage_max;
+            }
+            if(!isNaN(magage_max)){
+                q_data['magage-max'] = magage_max;
+            }
+
+            var rockname = $('#rockname').val();
+            if(rockname){
+                q_data['rockname'] = rockname;
+            }
+            if(!isNaN(refno)){
+                q_data['refno'] = refno;
+            }
+            if(!isNaN(resultno)){
+                q_data['resultno'] = resultno;
+            }
+
+            if(!isNaN(lon_max)){
+                q_data['lon-max'] = lon_max;
+            }
+
+            if(!isNaN(lon_min)){
+                q_data['lon-min'] = lon_min;
+            }
+
+            if(!isNaN(lat_max)){
+                q_data['lat-max'] = lat_max;
+            }
+
+            if(!isNaN(lat_min)){
+                q_data['lat-min'] = lat_min;
+            }
+
+            if(!isNaN(qsum_min)){
+                q_data['qsum-min'] = qsum_min;
+            }
+
+            if(!isNaN(rsum_min)){
+                q_data['rsum-min'] = rsum_min;
+            }
+
+            if(!isNaN(k_min)){
+                q_data['k-min'] = k_min;
+            }
+
+            if(!isNaN(k_max)){
+                q_data['k-max'] = k_max;
+            }
+
+            if(!isNaN(a95_min)){
+                q_data['a95-min'] = a95_min;
+            }
+
+            if(!isNaN(a95_max)){
+                q_data['a95-max'] = a95_max;
+            }
+			console.log("qdata", q_data);
+
+            $.ajax({
+                "url": '/get_query_data/',
+                "data": q_data,
+                "success": function(json) {
+                    
+					search_data = json.data;
+					stats_data=json.stats_data;         
+					var table_headers;
+                    $.each(json.data.columns, function(i, val){
+                        table_headers += "<th>" + val + "</th>";
+                    });
+
+                    $("#table-div").empty();
+                    $("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
+                    $("#table-div").find("table thead tr").append(table_headers);
+
+                    $('#db-table').dataTable({
+                        "iDisplayLength": 10,
+                        aaData:json.data.data,
+                        "order":[[3,"desc"]], 
+                        
+                    });
+
+                    $('#progress-bar').modal('hide');
+                    $('#query-result').modal();
+                    
+                    clearMap();
+                    
+                    $.getJSON('/get_query_data_for_map/', q_data, function(data){
+                        addDataToMap(data)
+                    });
+					
+                },
+                "complete": function(){
+                    $('#progress-bar').modal('hide');
+                },
+                "dataType": "json"
+            });
+        }
+
+		
+        function validate_submission() {
+			var doiurlValue = $('#DOIurl').val().trim();
+			var doiUrlPattern = /^https?:\/\/(dx\.)?doi\.org\/10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
+
+			if (!doiUrlPattern.test(doiurlValue)) {
+				alert("Please enter a valid DOI URL (e.g., https://doi.org/10.1234/abcd.5678)!");
+				$('#DOIurl').focus();
+				return false;
+			}
+			/*var igsnValue = $('#IGSN').val().trim();
+			var igsnUrlPattern = /^https:\/\/(doi\.org|igsn\.org)\/(10\.\d{4,9}|\d{4,9})\/[-._;()/:A-Z0-9]+$/i;
+ 
+			if (!igsnUrlPattern.test(igsnValue)) {
+				alert("Please enter a valid IGSN DOI URL (e.g., https://doi.org/10.21384/AU1234 or https://igsn.org/10.21384/AU5678)!");
+				$('#IGSN').focus();
+				return false;
+			}*/
+			
+			var email = $('#email').val().trim();
+			var emailpattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailpattern.test(email)) {
+				alert("Please enter a valid email id!");
+				$('#email').focus();
+				return false;
+			}	
+			
+			var ageinput = $('#age').val().trim();
+			var age = Number(ageinput);   
+			if (ageinput === '') {
+					alert("Age cannot be empty.");
+					$('#age').focus();
+					$('#age').select();
+					return false;
+				}
+
+				if (isNaN(age)) {
+					console.log("Age must be a number.");
+					return false;
+				}
+
+				if (!Number.isInteger(age)) {
+					alert("Age must be an integer.");
+					$('#age').focus();
+					$('#age').select();
+					return false;
+				}
+
+				if (age < 0) {
+					alert("Age cannot be negative.");
+					$('#age').focus();
+					$('#age').select();
+					return false;
+				}
+
+										
+			lat = parseFloat($('#R-LAT').val());
+            if($('#R-LAT').val() && isNaN(lat)){
+                alert("The latitude must be a number!");
+                $('#R-LAT').focus();
+                $('#R-LAT').select();
+                return false;
+            }
+			
+			if (!lat) {
+				alert("RLAT field cannot be empty!");
+				$('#R-LAT').focus();
+				return false
+			}
+			
+			if(!isNaN(lat)){
+                if(lat>90 || lat<-90){
+                    alert("The latitude must be between -90 and 90!");
+                    $('#R-LAT').focus();
+                    $('#R-LAT').select();
+                    return false;
+                } 
+			}
+
+            lon = parseFloat($('#R-LONG').val());
+            if($('#R-LONG').val() && isNaN(lon)){
+                alert("The longitude must be a number!");
+                $('#R-LONG').focus();
+                $('#R-LONG').select();
+			    return false;
+			}
+			if (!lon) {
+				alert("RLONG field cannot be empty!");
+				$('#R-LONG').focus();
+				return false
+			}
+			if(!isNaN(lon)){
+                if(lon>180 || lon<-180){
+                    alert("The longitude must be between -180 and 180!");
+                    $('#R-LONG').focus();
+                    $('#R-LONG').select();
+                    return false;
+                } 
+            }
+			
+			return true;
+		}
+
+		function submit_data(){
+            $('#progress-bar').modal();
+            s_data={}
+			s_data['doi'] = $('#DOIurl').val().trim(); //ensures no leading and trailing white spaces
+			//s_data['igsn'] = $('#IGSN').val().trim(); 
+			s_data['email'] = $('#email').val().trim();
+			s_data['lat'] = lat;
+			s_data['lon'] = lon;
+			s_data['age'] = parseInt($('#age').val().trim(), 10);
+			s_data['alternate_email'] = $('#alternate_email').val().trim();
+			s_data['comments'] = $('#comments').val().trim();
+			url= '/submit_data/';
+						     
+            $.ajax({
+				url: url,
+				data: s_data,
+				dataType: "json",
+							
+				success: function(response) {
+					console.log(response);
+					if (response.success) {
+						alert("Success: " + response.message);
+						clearMap();
+						
+						$.getJSON('/get_data/', function(data){
+						addDataToMap(data);
+						});
+						showonMap(s_data);
+					} else {
+						alert("Error: " + response.error);
+					}
+				},
+				error: function(xhr, status, error) {
+					alert("AJAX Error: " + error);
+				},
+				complete: function() {
+					$('#progress-bar').modal('hide');
+				}
+			});
+		}
+		function show_stats() {
+			$('#progress-bar').modal();
+			url='/get_stats/';
+			
+			$.ajax({
+				type: "POST",
+				url:url,
+				contentType: "application/json",
+				data: JSON.stringify({
+					data: stats_data
+				}),
+				dataType: "json",
+				headers: {
+					"X-CSRFToken": csrftoken
+				},
+							
+				success: function(response) {
+					alert("Displaying stats from fetched data");
+					const plot_image = response.plot_image;
+					const histogram_image=response.histogram_image;
+					$("#stats-container").empty();
+					$("#stats-container").append(`
+						<h4>Equal-Area Stereonet Plot</h4>
+						<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
+						<h4>Histogram of Site Ages</h4>
+						<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
+					`);
+				
+				},
+				error: function(xhr, status, error) {
+					alert("AJAX Error: " + error);
+				},
+				complete: function() {
+					$('#progress-bar').modal('hide');
+				}
+			});
+		}
+		
+		/*if (!plot_image) {  
+				alert("No data");
+			} else {
+				alert("Displaying plot from fetched data...");
+				console.log(search_data);
+
+				$("#stats-container").empty();
+
+				$("#stats-container").append(`
+					<h4>Equal-Area Stereonet Plot</h4>
+					<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
+					<h4>Histogram of Site Ages</h4>
+					<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
+				`);
+			}
+		}*/
+
+		
+		
+		function fisherStatistic(data) {
+			let sumX = 0, sumY = 0, sumZ = 0;
+			let N = 0;
+
+			for (let i = 0; i < data.length; i++) {
+				let D = parseFloat(data[i][6]);  // Declination
+				let I = parseFloat(data[i][7]);  // Inclination
+
+				if (isNaN(D) || isNaN(I)) continue;
+
+				let D_rad = D * Math.PI / 180;
+				let I_rad = I * Math.PI / 180;
+
+				sumX += Math.cos(I_rad) * Math.cos(D_rad);
+				sumY += Math.cos(I_rad) * Math.sin(D_rad);
+				sumZ += Math.sin(I_rad);
+				N++;
+			}
+
+			if (N === 0) return null;
+
+			let meanX = sumX / N;
+			let meanY = sumY / N;
+			let meanZ = sumZ / N;
+
+			let k = N / (Math.pow(meanX, 2) + Math.pow(meanY, 2) + Math.pow(meanZ, 2));
+
+			return {
+				N: N,
+				meanDirection: { X: meanX, Y: meanY, Z: meanZ },
+				fisherK: k
+			};
+		}
+
+        function save_csv(){
+            let csvContent = "data:text/csv;charset=utf-8," 
+                + search_data.columns.join(",") + ("\n")
+                + search_data.data.map(row => {
+                    return row.map(e => {
+                        if (typeof e === 'string' || e instanceof String){
+                            e=e.replace("\"", "\"\"");
+                            if(e.includes(",")){
+                                return "\"" +e+"\"";
+                            }
+                        }
+                        return e;
+                        
+                    }).join(",");
+            
+                }).join("\n");
+                
+            var downloadLink = document.createElement("a");
+            downloadLink.href = csvContent;
+            downloadLink.download = "gpmdb-search-data.csv";
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            //window.open(encodeURI(csvContent));
+        }
+
+        
+        $('#query-data').click(function(){
+            if(!validate()){return;}
+            $('#search-form').modal("hide");
+            show_data();
+        });
+		
+		$('#submit-data').click(function(){
+            if(!validate_submission()){return;}
+            $('#contribution').modal("hide");
+            submit_data();
+        });
+
+        $('#save-csv').click(function(){
+            save_csv();
+        });
+
+        $('#search-again').click(function(){
+            $('#search-form').modal('show');
+        });
+		
+		$('#stats').click(function(){
+            show_stats()
+        });
+		
+
+        $('#reset-form').click(function(){
+            $('#qsum-min').val("");
+            $('#rsum-min').val("")  ;
+            $('#continent').val("") ;
+            $('#rocktype').val("") ;
+            $('#rockage-min').val("") ;
+            $('#rockage-max').val("") ;
+            $('#magage-min').val("") ;
+            $('#magage-max').val("") ;
+            $('#rockname').val("") ;
+            $('#refno').val("") ;
+            $('#resultno').val("") ;
+            $('#max-lon').val("") ;
+            $('#min-lon').val("") ;
+            $('#max-lat').val("") ;
+            $('#min-lat').val("") ;
+            $('#min-qsum').val("") ;
+            $('#min-rsum').val("") ;
+            $('#min-k').val("") ;
+            $('#max-k').val("") ;
+            $('#min-a95').val("") ;
+            $('#max-a95').val("") ;
+            $('#min-b').val("") ;
+            $('#max-b').val("") ;
+            $('#min-n').val("") ;
+            $('#max-n').val("") ;
+			$('#DOI').val("");
+			$('#R-LAT').val("");
+			$('#R-LONG').val("");
+        });
+		
+		$('#reset-cform').click(function(){
+            $('#DOI').val("");
+			$('#DOIurl').val("");
+			$('#IGSN').val("");
+			$('#R-LAT').val("");
+			$('#R-LONG').val("");
+			$('#age').val("");
+			$('#email').val("");
+			$('#alternate_email').val("");
+			$('#comments').val("");
+			
+        });
+		
+		var geojsonLayer=null;
+
+        var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+
+        var map = L.map('map',{
+            center:[0, 0], 
+            zoom: 2,
+            maxBounds: bounds,
+            maxBoundsViscosity: 0.25
+        });
+
+        var geojsonMarkerOptions = {
+                radius: 3,
+                fillColor: "#ff7800",
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            };
+
+        $(function() {
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '',
+                minZoom: 0,
+                maxZoom: 8,
+            }).addTo(map);
+			
+			//var drawnItems = new L.FeatureGroup();
+			//map.addLayer(drawnItems);
+			
+			//Initialize the Draw control
+			const drawControl = new L.Control.Draw({
+				draw: {
+					polygon: {
+					allowIntersection: false, // Prevent overlapping edges
+					showArea: true, // Show area measurement
+					shapeOptions: { color: '#3388ff' } // Polygon color
+					},
+					circlemarker: false,
+					circle: false, // Disable circle drawing
+					marker: false, // Disable marker drawing
+					polyline: false, // Disable polyline drawing
+					rectangle: false// Disable rectangle drawing
+				},
+				edit: false
+			});
+			map.addControl(drawControl);
+			
+			$.getJSON('/get_data/', function(data){
+                addDataToMap(data);
+			map.setView([0,0],1);
+		
+			});
+			   // Handle polygon drawing events
+			map.on('draw:created', function (e) {
+				const layer = e.layer; // The drawn layer (polygon)
+				const polygon = layer.toGeoJSON(); // Convert the polygon to GeoJSON
+				const coordinates = polygon.geometry.coordinates[0]; // Get the polygon coordinates
+				// Print the coordinates to the browser console
+				console.log("Polygon Coordinates:", coordinates);
+				
+				
+				// Send the polygon coordinates to the backend
+				fetchDataWithinPolygon(coordinates);
+			});
+			
+            
+            
+			// Function to fetch data within the drawn polygon
+			function fetchDataWithinPolygon(polygon) {
+				// Correctly format the polygon as a JSON string
+				const polygonString = JSON.stringify(polygon); // Convert polygon object to JSON
+				console.log("polystring :",polygonString);
+				//Construct the URL with the properly formatted polygon
+				const url = `/get_data_within_polygon/?polygon=${encodeURIComponent(polygonString)}`; // URL-encode JSON string
+				//console.log(url)
+				$('#stats-container').empty();
+				$('#progress-bar').modal();
+				$.ajax({
+					type: 'GET',
+					url:url,
+					dataType: 'json',
+					data: polygonString,
+					success: function (data) {
+						// Handle successful response
+						console.log("Data fetched successfully:", data);
+						search_data = data.table_data;
+						stats_data=data.stats_data;
+						console.log("Search_data after polyselection", search_data);
+						var table_headers;
+						$.each(data.table_data.columns.slice(0,-1), function(i, val){
+							table_headers += "<th>" + val + "</th>";
+						});
+
+						$("#table-div").empty();
+						$("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
+						$("#table-div").find("table thead tr").append(table_headers);
+						
+						var filtered_data = data.table_data.data.map(function(row) {
+							return row.slice(0, -1);
+						})
+
+						$('#db-table').dataTable({
+							"iDisplayLength": 10,
+							"aaData":filtered_data,
+							"order":[[3,"desc"]], 
+							
+						});
+
+						$('#progress-bar').modal('hide');
+						$('#query-result').modal();
+                    
+						clearMap();
+						//const m_data = data.geojson_data;
+						//console.log("m_data:",m_data);
+						$.getJSON('/get_map_within_polygon/', {polygon: polygonString}, function(data) {
+							addDataToMap(data);
+						});
+                    	//$.getJSON('/get_query_data_for_map/', m_data, function(data){
+							//addDataToMap(data)});		
+						//addDataToMap(m_data);
+						/*//addDataToMap(m_data);
+						//clearMap();
+						//addDataToMap(data);
+						// Create an array to store the points
+						const points = [];
+
+						// Assuming data contains an array of points, loop through them and create LatLng objects
+						data.features.forEach(function (feature) {
+							const lat = feature.geometry.coordinates[1];  // Latitude
+							const lng = feature.geometry.coordinates[0];  // Longitude
+
+							if (lat && lng) {
+								points.push(L.latLng(lat, lng));  // Add the point to the array
+							}
+						});
+
+						// Check if there are valid points
+						if (points.length > 0) {
+							const bounds = L.latLngBounds(points);  // Create bounds from the points
+
+							// Log the bounds to ensure they are correct
+							console.log("Bounds: ", bounds);
+
+							// Set the map view to fit the bounds
+							map.fitBounds(bounds, {
+								padding: [50, 50],  // Optional: Add padding for better view
+								maxZoom: 12         // Optional: Limit the zoom to a maximum level
+							});
+
+							// Log the map's new center and zoom level after setting the bounds
+							console.log("Map center:", map.getCenter());
+							console.log("Map zoom level:", map.getZoom());
+						} else {
+							console.warn("No valid points available to center the map.");
+						}*/
+					},
+					error: function (error) {
+						// Handle error
+						console.error("Error fetching data:", error);
+						alert("An error occurred while fetching data. Please try again.");
+					},
+					beforeSend: function() {
+					// This callback runs before the request is sent, allowing you to inspect the request before it's sent out.
+					console.log("Request is being sent...");
+				  }
+				});
+			}
+            
+				
+			
+		});
+		
+        function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
+            return "ROCKUNITNO: " +ROCKUNITNO+"<br>"+
+                "ROCKNAME: "+ROCKNAME+"<br>"+
+                "<a href=\"\\PMAGRESULT\\?ROCKUNITNO="+ROCKUNITNO+"\" target=_blank>PMAGRESULT: "+PMAGRESULTCOUNT+"</a>";
+        }
+		function isValidPolygon(coordinates) {
+				if (!coordinates || !Array.isArray(coordinates)){ 
+					return false;
+					}
+
+				// Check if the polygon is closed
+				const firstCoord = coordinates[0][0];
+				const lastCoord = coordinates[0][coordinates[0].length - 1];
+				if (firstCoord[0] !== lastCoord[0] || firstCoord[1] !== lastCoord[1]) {
+					return false;
+				}
+
+				// Check if coordinates are within valid bounds
+				for (const ring of coordinates) {
+					for (const coord of ring) {
+						const [lon, lat] = coord;
+						if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+							return false;
+						}
+					}
+				}
+
+				return true;
+			}		
+        function clearMap(){
+            map.removeLayer(geojsonLayer);
+        }
+
+        function addDataToMap(data){
+            geojsonLayer = L.geoJSON(
+                data,
+                { 
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties && 
+                            feature.properties.ROCKNAME && 
+                            feature.properties.ROCKUNITNO && 
+                            feature.properties.PMAGRESULTCOUNT) {
+                            
+                            layer.bindPopup(
+                                getPopupText(
+                                    feature.properties.ROCKUNITNO, 
+                                    feature.properties.ROCKNAME, 
+                                    feature.properties.PMAGRESULTCOUNT), 
+                                {closeButton: false});
+                        }
+                    },
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, geojsonMarkerOptions);
+                    }
+                }
+            );
+            geojsonLayer.addTo(map);
+			const bounds = geojsonLayer.getBounds();
+			if (bounds.isValid()) {
+				map.fitBounds(bounds, {
+					padding: [50, 50],
+					maxZoom: 12
+				});
+			} else {
+				console.warn("No valid bounds to center map.");
+			}
+        }
+		
+		function showonMap(data){
+			var lat = s_data['lat'];
+			var lon = s_data['lon'];
+            var starDivIcon = L.divIcon({
+				className: 'custom-star-marker',
+				html: '★',
+				iconSize: [20, 20],
+				iconAnchor: [10, 10]
+			});
+
+			L.marker([lat, lon], { icon: starDivIcon }).addTo(map);
+			
+        }
+	</script>
+
+</body>
+</html>
+
