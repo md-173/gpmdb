@@ -100,6 +100,16 @@
 			font-weight: bold;
 			text-shadow: 0 0 3px black;
 		}
+
+        .leaflet-div-icon.leaflet-editing-icon {
+        width: 6px !important;   
+        height: 6px !important;  
+        margin-left: -3px !important;  
+        margin-top: -3px !important;   
+        background-color: #3388ff;     
+        border: 1px solid #000;        
+        border-radius: 50%;            
+    }
 	</style>
 </head>
 <body>  
@@ -171,11 +181,6 @@
         
                 <div class="col-md-9" style="height:400px;padding:5px;">
                    <div id="map" style="height:350px;"></div> 
-                   <select id="projection-select">
-                <option value="EPSG3857">Web Mercator</option>
-                <option value="EPSG4326">Plate Carrée (WGS84)</option>
-                <option value="EPSG3031">Antarctic Polar</option>
-                </select>
                 </div>
             </div>
 
@@ -468,6 +473,18 @@
                 }
                 </style>
             <div id="worldmap"></div>
+            <style>
+                    #worldmap {
+                        position: relative;
+                    }
+
+                    .tooltip {
+                        position: absolute;
+                        pointer-events: none;
+                        z-index: 10;
+                    }
+                </style>
+            <div id = "projectionmenu"></div>
             </div>
             <button id="graph-data" class="btn btn-primary">Graph</button>
             <button id="stereonet" class="btn btn-primary">Stereonet</button>
@@ -592,12 +609,24 @@
             <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
                 <div id="table-div"></div>
 				<div id="stats-container"></div>
+                <div id="chart2" style="display:inline-block; width:600px; vertical-align:top;"></div>
+                <div id="stereo" style="display:inline-block; width:100px; vertical-align:top;"></div>
+                <style>
+                    #chart2 {
+                        position: relative;
+                    }
+
+                    .tooltip {
+                        position: absolute;
+                        pointer-events: none;
+                        z-index: 10;
+                    }
+                </style>
 				<div id="histogram"></div>
 			</div>
 			
 			<div class="modal-footer">
                 <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
-                <button type="button" id="calculations" class="btn btn-primary">Calculations</button>
                 <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#graphing" class="btn btn-primary">Graphing</button>
 				<button type="button" id="stats" class="btn btn-primary">Stats</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -1486,6 +1515,7 @@
 				}
 			});
 		}
+
 		function show_stats() {
 			$('#progress-bar').modal();
 			url='/get_stats/';
@@ -1504,78 +1534,394 @@
 							
 				success: function(response) {
 					alert("Displaying stats from fetched data");
-					const plot_image = response.plot_image;
-					const histogram_image=response.histogram_image;
+					const mean = response.calculations;
 					$("#stats-container").empty();
 					$("#stats-container").append(`
-						<h4>Equal-Area Stereonet Plot</h4>
-						<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
-						<h4>Histogram of Site Ages</h4>
-						<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
+                        <div>Dec: ${mean.dec}</div>
+                        <div>Inc: ${mean.inc}</div>
+                        <div>Number: ${mean.n}</div>
+                        <div>R: ${mean.r}</div>
+                        <div>95: ${mean.alpha95}</div>
+                        <div>CSD: ${mean.csd}</div>
 					`);
-				
-				},
-				error: function(xhr, status, error) {
-					alert("AJAX Error: " + error);
-				},
-				complete: function() {
-					$('#progress-bar').modal('hide');
-				}
-			});
-		}
-		
-		/*if (!plot_image) {  
-				alert("No data");
-			} else {
-				alert("Displaying plot from fetched data...");
-				console.log(search_data);
 
-				$("#stats-container").empty();
+                    $("#chart2").empty();
 
-				$("#stats-container").append(`
-					<h4>Equal-Area Stereonet Plot</h4>
-					<img src="data:image/png;base64,${plot_image}" alt="Equal Area Plot" style="max-width: 100%;" />
-					<h4>Histogram of Site Ages</h4>
-					<img src="data:image/png;base64,${histogram_image}" alt="Histogram of Site Ages" style="max-width: 100%;" />
-				`);
-			}
-		}*/
+                    const width = 500, height = 500, radius = 240;
 
-		
-		
-		function fisherStatistic(data) {
-			let sumX = 0, sumY = 0, sumZ = 0;
-			let N = 0;
+                    const cx = width / 2;
+                    const cy = height / 2;
 
-			for (let i = 0; i < data.length; i++) {
-				let D = parseFloat(data[i][6]);  // Declination
-				let I = parseFloat(data[i][7]);  // Inclination
+                    const projection = d3.geoAzimuthalEqualArea()
+                        .scale(170)  // e.g
+                        .translate([width/2, height/2])
+                        .rotate([0, 90,0])   // <-- force lower hemisphere
+                        .clipAngle(180);  
 
-				if (isNaN(D) || isNaN(I)) continue;
 
-				let D_rad = D * Math.PI / 180;
-				let I_rad = I * Math.PI / 180;
+                    const path = d3.geoPath().projection(projection);
 
-				sumX += Math.cos(I_rad) * Math.cos(D_rad);
-				sumY += Math.cos(I_rad) * Math.sin(D_rad);
-				sumZ += Math.sin(I_rad);
-				N++;
-			}
+                    const svg = d3.select("#chart2")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
 
-			if (N === 0) return null;
 
-			let meanX = sumX / N;
-			let meanY = sumY / N;
-			let meanZ = sumZ / N;
+                    const label = svg.append("text")
+                        .attr("x", width - 10)
+                        .attr("y", 20)
+                        .attr("text-anchor", "end")
+                        .style("font-size", "14px");
 
-			let k = N / (Math.pow(meanX, 2) + Math.pow(meanY, 2) + Math.pow(meanZ, 2));
+                    label.append("tspan")
+                        .attr("x", width - 10)
+                        .attr("dy", 0)
+                        .text("Mean Dec: " + mean.dec.toFixed(2));
 
-			return {
-				N: N,
-				meanDirection: { X: meanX, Y: meanY, Z: meanZ },
-				fisherK: k
-			};
-		}
+                    label.append("tspan")
+                        .attr("x", width - 10)
+                        .attr("dy", 18)
+                        .text("Mean Inc: " + mean.inc.toFixed(2));
+
+                        label.append("tspan")
+                        .attr("x", width - 10)
+                        .attr("dy", 18)
+                        .text("95%: " + mean.alpha95.toFixed(2));
+
+                        svg.append("circle")
+                            .attr("cx", width/2)
+                            .attr("cy", height/2)
+                            .attr("r", radius)
+                            .attr("fill", "none")
+                            .attr("stroke", "black");
+
+                    // Tooltip div
+                    const tooltip = d3.select("#chart2")
+                    .append("div")
+                    .style("opacity", 0)
+                    .attr("class", "tooltip")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "2px")
+                    .style("border-radius", "5px")
+                    .style("padding", "5px")
+
+
+                    const angles = d3.range(0, 360, 15); // every 30 degrees
+
+                    svg.selectAll("line.ticks")
+                        .data(angles)
+                        .enter()
+                        .append("line")
+                        .attr("class", "ticks")
+                        .attr("x1", d => width / 2 + (radius - 10) * Math.cos(d * Math.PI / 180))
+                        .attr("y1", d => height / 2 + (radius - 10) * Math.sin(d * Math.PI / 180))
+                        .attr("x2", d => width / 2 + radius * Math.cos(d * Math.PI / 180))
+                        .attr("y2", d => height / 2 + radius * Math.sin(d * Math.PI / 180))
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 2);
+
+
+                    // Draw center +
+                    const crossSize = 10;
+                    svg.append("line")
+                        .attr("x1", cx - crossSize)
+                        .attr("y1", cy)
+                        .attr("x2", cx + crossSize)
+                        .attr("y2", cy)
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 2);
+
+                    svg.append("line")
+                        .attr("x1", cx)
+                        .attr("y1", cy - crossSize)
+                        .attr("x2", cx)
+                        .attr("y2", cy + crossSize)
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 2);
+
+
+                    const xDashes = d3.range(-radius, radius, 20); // every 20px
+                    xDashes.forEach(x => {
+                        if (x === 0) return; // skip center
+                        svg.append("line")
+                            .attr("x1", cx + x)
+                            .attr("y1", cy - 5)
+                            .attr("x2", cx + x)
+                            .attr("y2", cy + 5)
+                            .attr("stroke", "black")
+                            .attr("stroke-width", 1);
+                    });
+
+                    const yDashes = d3.range(-radius, radius, 20);
+                    yDashes.forEach(y => {
+                        if (y === 0) return; // skip center
+                        svg.append("line")
+                            .attr("x1", cx - 5)
+                            .attr("y1", cy + y)
+                            .attr("x2", cx + 5)
+                            .attr("y2", cy + y)
+                            .attr("stroke", "black")
+                            .attr("stroke-width", 1);
+                    });
+                    selectedcircles = [];
+                    removedcircles = [];
+
+                    function plotpoint(row) {
+
+                        const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
+                        let newlat = []
+
+                        if(row['PLAT'] <= 0){
+                            console.log(row['PLAT'])
+                            newlat = projection([new_long, row['PLAT']])
+                            colour = "blue"
+                        }else{
+                            newlat = projection([new_long, -row['PLAT']])
+                            colour = "red"
+                        }
+
+                    
+                        const circle = svg.append("circle")
+                        .attr("cx", newlat[0])
+                        .attr("cy", newlat[1])  
+                        .attr("r", 4)
+                        .attr("data-id", i) 
+                        .attr("fill", colour);
+
+
+                        circle.on("mouseover", function(event, d) {
+                    
+                        tooltip.style("opacity", 1)
+    
+                        
+                        })
+                        .on("mousemove", function(event, d) {
+                            const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                            tooltip
+                            .html(`Lat: ${row.PLAT}<br>Lon: ${row.PLONG}<br>`)
+                            .style("left", (x + 10) + "px")
+                            .style("top", (y + 10) + "px");
+                            
+                        })
+                        .on("mouseout", function(event, d) {
+                            tooltip
+                                .style("opacity", 0)
+                            
+                        })
+                        .on("click", function(event, d) {
+
+                            if (selectedcircles.includes(this)){
+                                d3.select(this)
+                                .style("stroke", "none")
+                                id = d3.select(this).attr("data-id");
+                                $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", false);
+                                let index = selectedcircles.indexOf(this);
+                                selectedcircles.splice(index, 1)
+
+
+
+
+                            } else{
+                                d3.select(this)
+                                .style("stroke", "black")
+                                .style("stroke-width", 2);
+                                selectedcircles.push(this)
+                                id = d3.select(this).attr("data-id");
+                                $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
+                            }
+                        });
+                        }
+
+                        for(var i =0;i<stats_data.length;i++){
+                            const row = stats_data[i];
+                            plotpoint(row);
+                        }
+
+                        $("#stereo").append(`
+                            <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                            <table id ="stereotable" border="1">
+                            <tr>
+                                <th>Select</th>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Remove</th>
+                            </tr>
+                            </table>
+                            </div>
+                            <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
+                        `);
+
+                        $("#stereo").append(`
+                            <div> Removed Points:  </div>
+                            <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                            <table id ="removedstereotable" border="1">
+                            <tr>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Add Back</th>
+                            </tr>
+                            </table>
+                            </div>
+                        `);
+
+
+                        x = 0
+                        stats_data.forEach( (row, i)=> {
+
+                                $("#stereotable").append(`
+                                    <tr data-id="${i}">
+                                        <td><input type="checkbox" class="row-select"></td>
+                                        <td>${row.PLAT}</td>
+                                        <td>${row.PLONG}</td>
+                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
+                                    </tr>
+                                `);
+                                x = x+1;
+                            });
+
+                        removedcircles.forEach( (row, i)=> {
+
+                                $("#removedstereotable").append(`
+                                    <tr data-id="${i}">
+                                        <td><input type="checkbox" class="row-select"></td>
+                                        <td>${row.PLAT}</td>
+                                        <td>${row.PLONG}</td>
+                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
+                                    </tr>
+                                `);
+                                x = x+1;
+                            });
+                            
+                            $("#stereotable").on("click", ".remove-btn", function() {
+                                const id = $(this).data("id");
+
+                                console.log(id);
+                                
+                                $(`#stereotable tr[data-id='${id}']`).remove();
+
+                                d3.select(`circle[data-id='${id}']`).remove();
+
+                                removedcircles.push(stats_data[id]);
+
+                                row = stats_data[id]
+                                
+                                $("#removedstereotable").append(`
+                                    <tr data-id="${id}">
+                                        <td>${row.PLAT}</td>
+                                        <td>${row.PLONG}</td>
+                                        <td><button class="add-btn" data-id="${id}">Add Back</button></td>
+                                    </tr>
+                                `);
+
+                            });	
+
+
+                            $("#removedstereotable").on("click", ".add-btn", function() {
+                                const id = $(this).data("id");
+
+                                console.log(id);
+                                
+                                $(`#removedstereotable tr[data-id='${id}']`).remove();
+
+                                removedcircles.splice(id,1)
+
+                                row = stats_data[id]
+                                
+                                $("#stereotable").append(`
+                                    <tr data-id="${i}">
+                                        <td><input type="checkbox" class="row-select"></td>
+                                        <td>${row.PLAT}</td>
+                                        <td>${row.PLONG}</td>
+                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
+                                    </tr>
+                                `);
+                                
+                                plotpoint(row)
+
+
+                            });	
+                            
+                            $("#stereotable").on("change", ".row-select", function() {
+
+                                const id = $(this).closest("tr").data("id");
+                                console.log(id);
+
+                                const circle = d3.select(`circle[data-id='${id}']`);
+                                const el = circle.node();
+                    
+                                    if(selectedcircles.includes(el)){
+
+                                        console.log('i work')
+
+                                        circle.style("stroke", "none");
+                                        
+                                        let index = selectedcircles.indexOf(el);
+
+                                        selectedcircles.splice(index, 1)
+
+                                    } else{
+                                        circle.style("stroke", "black")
+                                        .style("stroke-width", 2)
+
+                                        selectedcircles.push(el)
+
+                                        console.log(selectedcircles);
+                                    }
+
+
+
+                            });
+
+
+                            $("#download-selected").on("click", function () {
+
+                                const selectedRows = [];
+
+                                $("#stereotable .row-select:checked").each(function () {
+                                    const row = $(this).closest("tr");
+                                    const id = row.data("id");
+
+                                    const lat = row.find("td:nth-child(2)").text();
+                                    const lon = row.find("td:nth-child(3)").text();
+
+                                    selectedRows.push({ id, lat, lon });
+                                });
+
+                                console.log(selectedRows);
+
+                                let csvContent = "data:text/csv;charset=utf-8," 
+                                selectedRows.forEach(row => {
+                                    csvContent += `${row.lat},${row.lon}\n`;
+                                });
+
+                                var downloadLink = document.createElement("a");
+                                downloadLink.href = csvContent;
+                                downloadLink.download = "gpmdb-selected-data.csv";
+
+                                document.body.appendChild(downloadLink);
+                                downloadLink.click();
+                                document.body.removeChild(downloadLink);
+
+
+                            });
+
+
+
+
+
+
+
+                    },
+                    error: function(xhr, status, error) {
+                        alert("AJAX Error: " + error);
+                    },
+                    complete: function() {
+                        $('#progress-bar').modal('hide');
+                    }
+
+                });
+		    }
 
         function save_csv(){
             let csvContent = "data:text/csv;charset=utf-8," 
@@ -1615,288 +1961,142 @@
          $('#world').click(function(){
 
             $("#worldmap").empty();
+
+
+            $("#projectionmenu").append(`
+                <select id="projection-select">
+                    <option value="EPSG3857">Web Mercator</option>
+                    <option value="EPSG4326">Plate Carrée (WGS84)</option>
+                    <option value="EPSG3031">Antarctic Polar</option>
+                    </select>
+				`);
             const width = 960;
             const height = 500;
 
-            const svg = d3.select("#worldmap")
+            changemap('EPSG3857')
+
+            $("#projection-select").on("change", function(){
+
+                const selected = $(this).val();
+                changemap(selected)
+                
+            })
+
+            function changemap(selection){
+
+                $("#worldmap").empty();
+
+                let projection = d3.geoMercator()
+                .scale(100)
+                .translate([width / 2, height / 2]);
+
+
+                switch (selection){
+                    case 'EPSG4326':
+                        projection = d3.geoEquirectangular()
+                            .scale(150)
+                            .translate([width / 2, height / 2]);
+                        break;
+                    case 'EPSG3031':
+                        projection = d3.geoAzimuthalEquidistant()
+                            .rotate([0, 90])          // center on South Pole
+                            .scale(250)
+                            .translate([width / 2, height / 2]);
+                        break;
+                    case 'EPSG3857':
+                        projection = d3.geoMercator()
+                            .scale(100)
+                            .translate([width / 2, height / 2]);
+                        break;
+                }
+
+                const svg = d3.select("#worldmap")
                 .append("svg")
                 .attr("width", width)
                 .attr("height", height);
 
-            const g = svg.append("g");
+                    const g = svg.append("g");
 
-            const projection = d3.geoMercator()
-                .scale(100)
-                .translate([width / 2, height / 2]);
-
-            const path = d3.geoPath().projection(projection);
+                    let path = d3.geoPath().projection(projection);
 
 
-            const zoom = d3.zoom()
-                .scaleExtent([0.5, 20])             // adjust zoom limits
-                .on("zoom", (event) => {
-                    g.attr("transform", event.transform);
-                });
+                    const zoom = d3.zoom()
+                        .scaleExtent([0.5, 20])             // adjust zoom limits
+                        .on("zoom", (event) => {
+                            g.attr("transform", event.transform);
+                        });
 
-            // Attach zoom to SVG
-            svg.call(zoom);
+                    // Attach zoom to SVG
+                    svg.call(zoom);
 
-            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
-            .then(world => {
-                console.log("Loaded world:", world); // <--- DEBUG
-                const countries = topojson.feature(world, world.objects.countries);
-
-                g.selectAll("path")
-                    .data(countries.features)
-                    .enter()
-                    .append("path")
-                    .attr("d", path)
-                    .attr("fill", "#ccc")
-                    .attr("stroke", "#000");
-
-                 for(var i =0;i<stats_data.length;i++){
-                     row = stats_data[i];
-
-                        latlong = projection([row['SLONG'], row['SLAT']])
-                            
-                        console.log(latlong)
-
-                            //latlong = projectPoint(row['PLAT'], row['PLONG'])
-
-                        g.append("circle")
-                            .attr("cx", latlong[0])
-                            .attr("cy", latlong[1])  
-                            .attr("r", 4)
-                            .attr("fill", "red");
-
-                 }
-
-            })
-            .catch(err => {
-                console.error("Map loading error:", err);
-            });
-
-         })
+                    const tooltip = d3.select("#worldmap")
+                    .append("div")
+                    .style("opacity", 0)
+                    .attr("class", "tooltip")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "2px")
+                    .style("border-radius", "5px")
+                    .style("padding", "5px")
 
 
+                    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+                    .then(world => {
+                        console.log("Loaded world:", world); // <--- DEBUG
+                        const countries = topojson.feature(world, world.objects.countries);
 
-        $('#stereonet').click(function(){
+                        g.selectAll("path")
+                            .data(countries.features)
+                            .enter()
+                            .append("path")
+                            .attr("d", path)
+                            .attr("fill", "#ccc")
+                            .attr("stroke", "#000");
 
+                        for(var i =0;i<stats_data.length;i++){
+                            let row = stats_data[i];
 
-            $("#chart").empty();
+                                latlong = projection([row['SLONG'], row['SLAT']])
+                                    
+                                console.log(latlong)
 
-            const width = 500, height = 500, radius = 240;
+                                    //latlong = projectPoint(row['PLAT'], row['PLONG'])
 
-            
-            const cx = width / 2;
-            const cy = height / 2;
-
-            const projection = d3.geoAzimuthalEqualArea()
-                .scale(170)  // e.g
-                .translate([width/2, height/2])
-                .rotate([0, 90,0])   // <-- force lower hemisphere
-                .clipAngle(180);  
-
-
-            const path = d3.geoPath().projection(projection);
-
-            const svg = d3.select("#chart")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
-
-
-                svg.append("circle")
-                    .attr("cx", width/2)
-                    .attr("cy", height/2)
-                    .attr("r", radius)
-                    .attr("fill", "none")
-                    .attr("stroke", "black");
-
-            // Tooltip div
-            const tooltip = d3.select("#chart")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "tooltip")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "2px")
-            .style("border-radius", "5px")
-            .style("padding", "5px")
+                                g.append("circle")
+                                    .attr("cx", latlong[0])
+                                    .attr("cy", latlong[1])  
+                                    .attr("r", 4)
+                                    .attr("fill", "red")
+                                    .on("mousemove", function(event, d) {
 
 
-            const angles = d3.range(0, 360, 15); // every 30 degrees
+                                        const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                                        tooltip
+                                        .style("opacity", 1)     
+                                        .html(`Lat: ${row.PLAT} <br> Long: ${row.PLONG}`)
+                                        .style("left", (x + 10) + "px")
+                                        .style("top", (y + 10) + "px");
+                                        
+                                    })
+                                    .on("mouseout", function(event, d) {
+                                        tooltip
+                                            .style("opacity", 0)
+                                        
+                                    })
+                                    .on("click", function(event, d) {
 
-            svg.selectAll("line.ticks")
-                .data(angles)
-                .enter()
-                .append("line")
-                .attr("class", "ticks")
-                .attr("x1", d => width / 2 + (radius - 10) * Math.cos(d * Math.PI / 180))
-                .attr("y1", d => height / 2 + (radius - 10) * Math.sin(d * Math.PI / 180))
-                .attr("x2", d => width / 2 + radius * Math.cos(d * Math.PI / 180))
-                .attr("y2", d => height / 2 + radius * Math.sin(d * Math.PI / 180))
-                .attr("stroke", "black")
-                .attr("stroke-width", 2);
-
-
-            // Draw center +
-            const crossSize = 10;
-            svg.append("line")
-                .attr("x1", cx - crossSize)
-                .attr("y1", cy)
-                .attr("x2", cx + crossSize)
-                .attr("y2", cy)
-                .attr("stroke", "black")
-                .attr("stroke-width", 2);
-
-            svg.append("line")
-                .attr("x1", cx)
-                .attr("y1", cy - crossSize)
-                .attr("x2", cx)
-                .attr("y2", cy + crossSize)
-                .attr("stroke", "black")
-                .attr("stroke-width", 2);
+                                        console.log('testing')
 
 
-                    const xDashes = d3.range(-radius, radius, 20); // every 20px
-                xDashes.forEach(x => {
-                    if (x === 0) return; // skip center
-                    svg.append("line")
-                        .attr("x1", cx + x)
-                        .attr("y1", cy - 5)
-                        .attr("x2", cx + x)
-                        .attr("y2", cy + 5)
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 1);
-                });
+                                    });;
 
-                const yDashes = d3.range(-radius, radius, 20);
-                yDashes.forEach(y => {
-                    if (y === 0) return; // skip center
-                    svg.append("line")
-                        .attr("x1", cx - 5)
-                        .attr("y1", cy + y)
-                        .attr("x2", cx + 5)
-                        .attr("y2", cy + y)
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 1);
-                });
+                        }
 
-
-            for(var i =0;i<stats_data.length;i++){
-                const row = stats_data[i];
-                
-                const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
-
-    //            const latlong = projection([new_long, -row['PLAT']])
-                let newlat = []
-
-                if(row['PLAT'] <= 0){
-                    console.log(row['PLAT'])
-                    newlat = projection([new_long, row['PLAT']])
-                    colour = "blue"
-                }else{
-                    newlat = projection([new_long, -row['PLAT']])
-                    colour = "red"
-                }
-
-                //latlong = projectPoint(row['PLAT'], row['PLONG'])
-
-                const circle = svg.append("circle")
-                .attr("cx", newlat[0])
-                .attr("cy", newlat[1])  
-                .attr("r", 4)
-                .attr("fill", colour);
-
-
-                circle.on("mouseover", function(event, d) {
-                
-                      tooltip.style("opacity", 1)
-                        d3.select(this)
-                        .style("stroke", "black")
-                        .style("opacity", 1)
-  
-                    
                     })
-                     .on("mousemove", function(event, d) {
-                        const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
-                        tooltip
-                        .html(`Lat: ${row.PLAT}<br>Lon: ${row.PLONG}`)
-                        .style("left", (x + 10) + "px")
-                        .style("top", (y + 10) + "px");
-                        
-                    })
-                    .on("mouseout", function(event, d) {
-                          tooltip
-                            .style("opacity", 0)
-                            d3.select(this)
-                            .style("stroke", "none")
-                            .style("opacity", 0.8)
-                        
-                    })
-                    .on("click", function(event, d) {
-                        console.log("Clicked:", row);
+                    .catch(err => {
+                        console.error("Map loading error:", err);
                     });
-
             }
-
-
-            /*
-            svg.append("circle")
-                .attr("cx", [85, 317])
-                .attr("cy", [85, 317])  
-                .attr("r", 4)
-                .attr("fill", "red");
-                
-            /*
-                svg.selectAll(".point")
-                    .data(poles)
-                    .enter()
-                    .append("circle")
-                    .attr("class", "point")
-                    .attr("r", 4)
-                    .attr("fill", "red")
-                    .attr("cx", d => projectPoint(d.PLONG, d.PLAT)[0])
-                    .attr("cy", d => projectPoint(d.PLONG, d.PLAT)[1]);
-                    */
-            
-/*
-            stats_data.forEach(p=>{
-                let lon = p.SLONG;     // 0–360° OK
-                let lat = p.SLAT;     // degrees
-
-    // === STEP 1 — Convert to 3D unit vector ===
-                const rad = Math.PI / 180;
-                let x = Math.cos(lat*rad) * Math.cos(lon*rad);
-                let y = Math.cos(lat*rad) * Math.sin(lon*rad);
-                let z = Math.sin(lat*rad);
-
-                // === STEP 2 — Force direction into LOWER hemisphere ===
-                if (z > 0) {
-                    // reflect vector through origin
-                    x = -x;
-                    y = -y;
-                    z = -z;
-                }
-
-                // === STEP 3 — Convert BACK to lat/lon (for D3.geo) ===
-                let lat2 = Math.asin(z) / rad;
-                let lon2 = (Math.atan2(y, x) / rad + 360) % 360;
-
-                let pole = {
-                    type: "Point",
-                    coordinates: [lon2, lat2]
-                };
-
-                
-            svg.append("path")
-                .datum(pole)
-                .attr("d", path.pointRadius(6))
-                .attr("fill", "red");
-            });
-    */
         })
 
         $('#graph-data').click(function(){
@@ -1957,8 +2157,6 @@
                     $('#progress-bar').modal('hide');
 				}
 			});
-        
-
         });
 
         $('#download-data').click(function(){
@@ -2047,9 +2245,9 @@
 		
 
         
-		var geojsonLayer=null;
+	    var geojsonLayer=null;
 
-       var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+        var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
 
         var map = L.map('map',{
 

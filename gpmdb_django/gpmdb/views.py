@@ -23,6 +23,7 @@ from sphstat.utils import readsample, convert, polartocart, sph2cart, prettyprin
 from sphstat.descriptives import resultants, mediandir
 from sphstat.singlesample import isfisher
 import numpy as np
+from pmagpy.pmag import fisher_mean
 
 
 #the password here is no secret, read-only user
@@ -783,65 +784,20 @@ def get_stats(request):
             if not isinstance(stats_data, list):
                 return JsonResponse({'error': 'Missing stats_data'}, status=400)
 
-            # Process data (e.g., generating plot and histogram)
-            plot_image = plot_equal_area_plot(stats_data) 
-            histogram_image = renderhistogram(stats_data)  
+            print("new fishcer now")
 
-            theta = np.radians(-7.3)
-            phi = np.radians(90-36.2)
-            sample2 = {}
-            thetas = []
-            phis = []
+            calc = []
+            for row in stats_data:
+                calc.append([row['PLONG'], row['PLAT']])
 
-            sample = {
-                "tetas": [theta],
-                "phis":   [phi],
-                "type": "rad",
-                "n": 1
-            }
-
-            print(sample)
-
-            cart = sph2cart(theta, phi)
-
-            cart2 = polartocart(sample)
-
-            print(cart)
-            print(cart2)
-
-            for value in data.values():
-                for row in value:
-                    theta = np.radians(row['PLONG'])
-                    phi = np.radians(90 - row['PLAT'])
-                    
-                    thetas.append(theta)
-                    phis.append(phi)
-        
-            sample2['tetas'] = thetas
-            sample2['phis'] = phis
-            sample2['n'] = len(thetas)
-            sample2['type'] = "rad"
-
-
-            #print(sample2)
-
-            cart3 = polartocart(sample2)
-            #print(cart3)
-
-            r = resultants(cart3)
-            print(prettyprintdict(r))
-            medi, ccone, success, W = mediandir(cart3, ciflag=True, alpha=0.01)
-            print(medi)
-            print(ccone)
-            print(success)
-            res = isfisher(cart3, alpha=0.05)
-            print(prettyprintdict(res))
-
+            mean = fisher_mean(calc)
 
             result = {
-                'plot_image': plot_image,
-                'histogram_image': histogram_image
+                'calculations': mean
             }
+
+
+
 
             return JsonResponse(result)
         except Exception as e:
@@ -931,96 +887,6 @@ def add_item(request):
     
     '''
     return render(request, 'gpmdb2.html')
-
-
-def generate_equal_area_plot(data):
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111, projection='stereonet')
-
-    for entry in data:
-        plat = entry["PLAT"]
-        plong = entry["PLONG"]
-        dp = entry["DP"]
-
-        try:
-            trend, plunge = mplstereonet.pole(plong, plat)
-            ax.pole(trend, plunge, 'o', markersize=8)
-            ax.cone(trend, plunge, dp, facecolor='none', edgecolor='blue')
-        except Exception as e:
-            print(f"Plotting error for point {entry}: {e}")
-
-    #plt.title("Equal-Area Plot with Fisher Confidence Circles")
-    
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight')
-    plt.close(fig)
-    buf.seek(0)
-    encoded = base64.b64encode(buf.read()).decode('utf-8')
-    return encoded
-    
-
-def renderhistogram(data):# src: Dr. UWE
-    # Convert list of dictionaries to DataFrame
-    df = pd.DataFrame(data)
-    print(df.head(5))
-    
-    '''df['LOMAGAGE'] = df['LOMAGAGE'].fillna(0)  # Fill missing LOMAGAGE with 0 or any default value
-    df['HIMAGAGE'] = df['HIMAGAGE'].fillna(0)  # Fill missing HIMAGAGE with 0 or any default value
-    df['DP'] = df['DP'].fillna(0)  # Fill missing DP with 0 or any default value
-    df['DM'] = df['DM'].fillna(0)  '''
-    
-    # Calculate average site ages
-    df['AGE'] = (df['LOMAGAGE'] + df['HIMAGAGE']) / 2
-
-    # Calculate A95 (precision parameter)
-    #df['A95'] = (df['DP'] * df['DM'])**0.5
-
-    # Plot the histogram of ages with automatic binning and log-scaled y-axis
-    plt.figure(figsize=(8, 5))
-    plt.hist(df['AGE'], bins='auto', color='skyblue', edgecolor='black')
-    plt.yscale('log')  # Log scale on y-axis
-
-    plt.title('Histogram of Site Ages')
-    plt.xlabel('Age')
-    plt.ylabel('Frequency (log scale)')
-    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-    plt.tight_layout()
-
-    # Save plot to a base64-encoded string to send to frontend
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=300)
-    buf.seek(0)
-    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    plt.close()
-
-    return image_base64
-    
-def plot_equal_area_plot(data):
-    # Convert input data to DataFrame if not already
-    df = pd.DataFrame(data)
-
-    # Create the plot
-    fig = plt.figure()
-    plot_net(1)
-    print("test")
-    latradian = math.radians(78.9)
-    longradian = math.radians(212.4)
-    trend, plunge = mplstereonet.geographic2plunge_bearing(latradian, longradian)
-    print(trend)
-    print(plunge)
-    # Plot each directional mean
-    for _, row in df.iterrows():
-
-        plot_di(row['PLONG'], row['PLAT'], color='blue')
- 
-    # Save to buffer for base64 encoding
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=300)
-    plt.close(fig)
-
-    buf.seek(0)
-    encoded = base64.b64encode(buf.read()).decode('utf-8')
-    return encoded
     
 def get_map_within_polygon(request):
     polygon_str = request.GET.get('polygon')
