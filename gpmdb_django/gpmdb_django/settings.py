@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gpmdb',
+    'api',
     'django.contrib.gis',
 ]
 
