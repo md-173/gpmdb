@@ -36,6 +36,8 @@ urlpatterns = [
     url(r'^get_data_within_polygon/?$', views.get_data_within_polygon, name='get_data_within_polygon'),
     url(r'^get_stats/?$', views.get_stats, name='get_stats'),
     url(r'^get_map_within_polygon/?$', views.get_map_within_polygon, name='get_map_within_polygon'),
+    url(r'^api/v1/', include('api.urls')),
+
 ]
         
 #    url(r'^admin/', admin.site.urls),
