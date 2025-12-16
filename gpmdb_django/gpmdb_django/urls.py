@@ -23,7 +23,6 @@ urlpatterns = [
     url(r'^accounts/', include("django.contrib.auth.urls")),
     url(r'^additions/?$', views.addition, name='addition'),
     url(r'^add_item/?$', views.add_item, name='added'),
-    url(r'^graph_data/?$', views.graph_data, name='graph_data'),
     url(r'^get_data/?$', views.get_data, name='get_data'),
     url(r'^submit_data/?$', views.submit_data, name='submit_data'),
     url(r'^get_query_data/?$', views.get_query_data, name='get_query_data'),
