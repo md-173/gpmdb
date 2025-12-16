@@ -1,7 +1,7 @@
 """
 API views for GPMDB.
  
-Provides JSON endpoints for python access to the paleomagnetic database.
+Provides JSON endpoints for python package access to the paleomagnetic database.
 """
  
 from django.http import JsonResponse
@@ -42,11 +42,10 @@ def metadata(request):
     """
     GET /api/v1/metadata/
     
-    Returns database metadata and version information.
+    Returns database name and api version
     """
     return api_response(data={
         "name": "Global Paleomagnetic Database",
-        "version": "2021",
         "api_version": "1.0",
     })
  
@@ -151,9 +150,9 @@ def query(request):
             re."QSUM", 
             re."RSUM"
         FROM "ROCKUNIT" AS ru 
-        INNER JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO"
-        INNER JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO"
-        INNER JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO"
+        LEFT JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO"
+        LEFT JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO"
+        LEFT JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO"
     '''
     
     # Build WHERE clauses with parameterized queries
