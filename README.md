@@ -4,7 +4,7 @@ https://gpmdb.net/
 
 #### How to use this container:
 
-**Step 1a:** run the container `docker run -d -p 7777:80 --restart always edrg/gpmdb`
+**Step 1:** run the container `docker run -d -p 7777:80 --restart always edrg/gpmdb`
 
 **Step 2:** open http://127.0.0.1:7777 i n a web browser
 

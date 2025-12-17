@@ -180,7 +180,15 @@
                 </div>
         
                 <div class="col-md-9" style="height:400px;padding:5px;">
-                   <div id="map" style="height:350px;"></div> 
+                   <div id="map" style="height:350px;"></div>
+                   <div id="map-projection-menu" style="height:350px;">
+                        <select id="projection-select2">
+                        <option value="Leaflet">Leaflet</option>
+                        <option value="EPSG3857">Web Mercator</option>
+                        <option value="EPSG4326">Plate Carrée (WGS84)</option>
+                        <option value="EPSG3031">Antarctic Polar</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -399,109 +407,6 @@
     </div>
 	</div>
 
-    <div class="modal fade" id="graphing" role="dialog">
-    <div class="modal-dialog modal-lg">
-        <!-- Modal content-->
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Graphing</h4>
-                What data would you like to graph?
-
-                </div>
-
-        <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-        
-            <div> X Coordinates
-                <select multiple="multiple" id="x-axis" name="form-0-project">
-                 <option value="LOMAGAGE">LOMAGAGE</option>
-                <option value="HIGHAGE">HIGHAGE</option>
-                <option value="SLAT">SLAT</option>
-                <option value="PLAT">PLAT</option>
-                <option value="PLONG">PLONG</option>
-                <option value="DP">DP</option>
-                <option value="DM">DM</option>
-                <option value="ROCKNAME">ROCKNAME</option>
-                <option value="CONTINENT">CONTINENT</option>
-                <option value="ROCKTYPE">ROCKTYPE</option>
-                <option value="LOWAGE">LOWAGE</option>
-                <option value="HIGHAGE">HIGHAGE</option>
-                <option value="QSUM">QSUM</option>
-                <option value="RSUM">RSUM</option>
-            </select>
-
-
-            </div>
-            <div> Y Coordinates
-                <select multiple="multiple" id="y-axis" name="form-0-project">
-                <option value="LOMAGAGE">LOMAGAGE</option>
-                <option value="HIGHAGE">HIGHAGE</option>
-                <option value="SLAT">SLAT</option>
-                <option value="PLAT">PLAT</option>
-                <option value="PLONG">PLONG</option>
-                <option value="DP">DP</option>
-                <option value="DM">DM</option>
-                <option value="ROCKNAME">ROCKNAME</option>
-                <option value="CONTINENT">CONTINENT</option>
-                <option value="ROCKTYPE">ROCKTYPE</option>
-                <option value="LOWAGE">LOWAGE</option>
-                <option value="HIGHAGE">HIGHAGE</option>
-                <option value="QSUM">QSUM</option>
-                <option value="RSUM">RSUM</option>
-            </select>
-
-             <div> Graph
-            <select multiple="multiple" id="graph-type" name="form-0-project">
-                <option value="Histogram">Histogram</option>
-                <option value="Line Chart">Line Chart</option>
-            </select>
-             <div class="row"> </div>
-             
-             <div id="graphing-container"></div>
-
-             
-            <div id="chart"></div>
-            <style>
-                #chart {
-                    position: relative;
-                }
-
-                .tooltip {
-                    position: absolute;
-                    pointer-events: none;
-                    z-index: 10;
-                }
-                </style>
-            <div id="worldmap"></div>
-            <style>
-                    #worldmap {
-                        position: relative;
-                    }
-
-                    .tooltip {
-                        position: absolute;
-                        pointer-events: none;
-                        z-index: 10;
-                    }
-                </style>
-            <div id = "projectionmenu"></div>
-            </div>
-            <button id="graph-data" class="btn btn-primary">Graph</button>
-            <button id="stereonet" class="btn btn-primary">Stereonet</button>
-            <button id="world" class="btn btn-primary">World Map</button>
-            <button id="download-data" class="btn btn-primary">Download Data</button>
-            <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#search-form" class="btn btn-primary">Search Again</button>
-            </div>
-        </div>
-		</div>
-
-        <div class="modal-footer">
-        </div>
-      </div>
-      
-    </div>
-	</div>
-
 	<div class="modal fade" id="contribution" role="dialog">
 		<div class="modal-dialog modal-lg">
 			<!-- Modal content-->
@@ -622,12 +527,11 @@
                         z-index: 10;
                     }
                 </style>
-				<div id="histogram"></div>
+				<div id="worldmap"></div>
 			</div>
 			
 			<div class="modal-footer">
                 <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
-                <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#graphing" class="btn btn-primary">Graphing</button>
 				<button type="button" id="stats" class="btn btn-primary">Stats</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>
@@ -1336,6 +1240,8 @@
                 "url": '/get_query_data/',
                 "data": q_data,
                 "success": function(json) {
+
+                    
                     
 					search_data = json.data;
 					stats_data=json.stats_data;         
@@ -1343,6 +1249,8 @@
                     $.each(json.data.columns, function(i, val){
                         table_headers += "<th>" + val + "</th>";
                     });
+
+                    console.log(json.data.data)
 
                     $("#table-div").empty();
                     $("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
@@ -1361,7 +1269,9 @@
                     clearMap();
                     
                     $.getJSON('/get_query_data_for_map/', q_data, function(data){
-                        addDataToMap(data)
+                         mapdata = data;
+                        whichmap()
+                       
                     });
 					
                 }, 
@@ -1500,7 +1410,8 @@
 						clearMap();
 						
 						$.getJSON('/get_data/', function(data){
-						addDataToMap(data);
+                        mapdata = data
+						whichmap();
 						});
 						showonMap(s_data);
 					} else {
@@ -1535,6 +1446,8 @@
 				success: function(response) {
 					alert("Displaying stats from fetched data");
 					const mean = response.calculations;
+                    const meancircle = response.circle;
+                    console.log(meancircle)
 					$("#stats-container").empty();
 					$("#stats-container").append(`
                         <div>Dec: ${mean.dec}</div>
@@ -1546,6 +1459,9 @@
 					`);
 
                     $("#chart2").empty();
+                    $("#stereo").empty();
+
+
 
                     const width = 500, height = 500, radius = 240;
 
@@ -1583,17 +1499,17 @@
                         .attr("dy", 18)
                         .text("Mean Inc: " + mean.inc.toFixed(2));
 
-                        label.append("tspan")
+                    label.append("tspan")
                         .attr("x", width - 10)
                         .attr("dy", 18)
                         .text("95%: " + mean.alpha95.toFixed(2));
 
-                        svg.append("circle")
-                            .attr("cx", width/2)
-                            .attr("cy", height/2)
-                            .attr("r", radius)
-                            .attr("fill", "none")
-                            .attr("stroke", "black");
+                    svg.append("circle")
+                        .attr("cx", width/2)
+                        .attr("cy", height/2)
+                        .attr("r", radius)
+                        .attr("fill", "none")
+                        .attr("stroke", "black");
 
                     // Tooltip div
                     const tooltip = d3.select("#chart2")
@@ -1667,6 +1583,8 @@
                     selectedcircles = [];
                     removedcircles = [];
 
+                    let colourcode = false;
+
                     function plotpoint(row) {
 
                         const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
@@ -1675,10 +1593,10 @@
                         if(row['PLAT'] <= 0){
                             console.log(row['PLAT'])
                             newlat = projection([new_long, row['PLAT']])
-                            colour = "blue"
+                            colour = "none"
                         }else{
                             newlat = projection([new_long, -row['PLAT']])
-                            colour = "red"
+                            colour = "black"
                         }
 
                     
@@ -1687,7 +1605,9 @@
                         .attr("cy", newlat[1])  
                         .attr("r", 4)
                         .attr("data-id", i) 
-                        .attr("fill", colour);
+                        .attr("fill", colour)
+                        .attr("stroke", "black")     // outline color
+                        .attr("stroke-width", 1.5);
 
 
                         circle.on("mouseover", function(event, d) {
@@ -1724,103 +1644,162 @@
 
                             } else{
                                 d3.select(this)
-                                .style("stroke", "black")
+                                .style("stroke", "red")
                                 .style("stroke-width", 2);
                                 selectedcircles.push(this)
                                 id = d3.select(this).attr("data-id");
                                 $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
                             }
                         });
+                    }
+
+                    plotpoint({'PLONG': mean.dec.toFixed(2), 'PLAT': mean.inc.toFixed(2)})
+                    let longitude = mean.dec.toFixed(2)
+                    let latitude =  mean.inc.toFixed(2)
+
+                    const new_long = (longitude > 180) ? longitude - 360 : longitude;
+                    let newlat = []
+
+                    if(latitude <= 0){
+                        newlat = projection([new_long, latitude])
+                        colour = "blue"
+                    }else{
+                        newlat = projection([new_long, -latitude])
+                        colour = "red"
+                    }
+
+                
+                    const circle = svg.append("circle")
+                    .attr("cx", newlat[0])
+                    .attr("cy", newlat[1])  
+                    .attr("r", 4)
+                    .attr("data-id", i) 
+                    .attr("fill", "yellow");
+                    
+
+
+                    for(var i =0;i<stats_data.length;i++){
+                        const row = stats_data[i];
+                        plotpoint(row);
+                    }
+
+
+                    meancircle.coordinates.forEach((coord, i) => {
+                        row = {'PLONG': coord[0], 
+                                'PLAT': coord[1]
                         }
 
-                        for(var i =0;i<stats_data.length;i++){
-                            const row = stats_data[i];
-                            plotpoint(row);
+                        const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
+                        
+                        let newlat = []
+
+                        if(coord[1] <= 0){
+                            newlat = projection([new_long, coord[1]])
+                            colour = "none"
+                        }else{
+                            newlat = projection([new_long, -coord[1]])
+                            colour = "black"
                         }
 
-                        $("#stereo").append(`
-                            <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                            <table id ="stereotable" border="1">
-                            <tr>
-                                <th>Select</th>
-                                <th>Latitude</th>
-                                <th>Longitude</th>
-                                <th>Remove</th>
-                            </tr>
-                            </table>
-                            </div>
-                            <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
-                        `);
+                        console.log(newlat)
 
-                        $("#stereo").append(`
-                            <div> Removed Points:  </div>
-                            <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                            <table id ="removedstereotable" border="1">
-                            <tr>
-                                <th>Latitude</th>
-                                <th>Longitude</th>
-                                <th>Add Back</th>
-                            </tr>
-                            </table>
-                            </div>
-                        `);
+                        const circle = svg.append("circle")
+                        .attr("cx", newlat[0])
+                        .attr("cy", newlat[1])  
+                        .attr("r", 4)
+                        .attr("fill", "yellow")
+                        .attr("stroke", "black");
+
+                    })
 
 
-                        x = 0
-                        stats_data.forEach( (row, i)=> {
 
-                                $("#stereotable").append(`
-                                    <tr data-id="${i}">
-                                        <td><input type="checkbox" class="row-select"></td>
-                                        <td>${row.PLAT}</td>
-                                        <td>${row.PLONG}</td>
-                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
-                                    </tr>
-                                `);
-                                x = x+1;
-                            });
 
-                        removedcircles.forEach( (row, i)=> {
 
-                                $("#removedstereotable").append(`
-                                    <tr data-id="${i}">
-                                        <td><input type="checkbox" class="row-select"></td>
-                                        <td>${row.PLAT}</td>
-                                        <td>${row.PLONG}</td>
-                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
-                                    </tr>
-                                `);
-                                x = x+1;
-                            });
+
+
+
+
+
+                    $("#stereo").append(`
+                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                        <table id ="stereotable" border="1">
+                        <tr>
+                            <th>Select</th>
+                            <th>Rockname</th>
+                            <th>Lomagage</th>
+                            <th>Himagage</th>
+                            <th>Remove</th>
+                        </tr>
+                        </table>
+                        </div>
+                        <button id="remove-selected" class="btn btn-primary">Remove Selected</button>
+                        <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
+                        <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
+                        Plot a point: 
+                        Latitude: <input id="latitudeinput" type="number">
+                        Longitude: <input id="longitudeinput" type="number">
+                        <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
+                    `);
+
+                    x = 0
+                    stats_data.forEach( (row, i)=> {
+
+                            $("#stereotable").append(`
+                                <tr data-id="${i}">
+                                    <td><input type="checkbox" class="row-select"></td>
+                                    <td>${row.ROCKNAME}</td>
+                                    <td>${row.LOMAGAGE}</td>
+                                    <td>${row.HIMAGAGE}</td>
+                                    <td><button class="remove-btn" data-id="${i}">Remove</button></td>
+                                </tr>
+                            `);
+                            x = x+1;
+                        });
+              
+
+
+                        $("#stereotable").on("click", ".remove-btn", function() {
+                            const id = $(this).data("id");
+
+                            if($('#removedstereotable tr').length ===0) {
+                                  $("#stereo").append(`
+                                        <div id = "removedpoints">
+                                        <div> Removed Points:  </div>
+                                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                                        <table id ="removedstereotable" border="1">
+                                        <tr>
+                                            <th>Rockname</th>
+                                            <th>Lomagage</th>
+                                            <th>Himagage</th>
+                                        </tr>
+                                        </table>
+                                        </div>
+                                        </div>
+                                    `);
+
+                            }
                             
-                            $("#stereotable").on("click", ".remove-btn", function() {
-                                const id = $(this).data("id");
+                            $(`#stereotable tr[data-id='${id}']`).remove();
 
-                                console.log(id);
-                                
-                                $(`#stereotable tr[data-id='${id}']`).remove();
+                            d3.select(`circle[data-id='${id}']`).remove();
 
-                                d3.select(`circle[data-id='${id}']`).remove();
+                            removedcircles.push(stats_data[id]);
 
-                                removedcircles.push(stats_data[id]);
-
-                                row = stats_data[id]
-                                
-                                $("#removedstereotable").append(`
-                                    <tr data-id="${id}">
-                                        <td>${row.PLAT}</td>
-                                        <td>${row.PLONG}</td>
-                                        <td><button class="add-btn" data-id="${id}">Add Back</button></td>
-                                    </tr>
-                                `);
-
-                            });	
-
+                            row = stats_data[id]
+                            
+                            $("#removedstereotable").append(`
+                                <tr data-id="${id}">
+                                    <td>${row.ROCKNAME}</td>
+                                    <td>${row.LOMAGAGE}</td>
+                                    <td>${row.HIMAGAGE}</td>
+                                    <td><button class="add-btn" data-id="${id}">Add Back</button></td>
+                                </tr>
+                            `);
 
                             $("#removedstereotable").on("click", ".add-btn", function() {
                                 const id = $(this).data("id");
 
-                                console.log(id);
                                 
                                 $(`#removedstereotable tr[data-id='${id}']`).remove();
 
@@ -1831,81 +1810,199 @@
                                 $("#stereotable").append(`
                                     <tr data-id="${i}">
                                         <td><input type="checkbox" class="row-select"></td>
-                                        <td>${row.PLAT}</td>
-                                        <td>${row.PLONG}</td>
+                                        <td>${row.ROCKNAME}</td>
+                                        <td>${row.LOMAGAGE}</td>
+                                        <td>${row.HIMAGAGE}</td>
                                         <td><button class="remove-btn" data-id="${i}">Remove</button></td>
                                     </tr>
                                 `);
                                 
                                 plotpoint(row)
+                                console.log($('#removedstereotable tr').length)
+
+                                if($('#removedstereotable tr').length ===1) {
+                                    console.log("Fill")
+                                     $("#removedpoints").remove();
+
+                                }
+                                });	
 
 
-                            });	
                             
-                            $("#stereotable").on("change", ".row-select", function() {
+                              $("#remove-selected").on("click", function () {
 
-                                const id = $(this).closest("tr").data("id");
-                                console.log(id);
+                            console.log("testing");
+                            $("#stereotable .row-select:checked").each(function () {
+                                let row = $(this).closest("tr");
+                                let id = row.data("id");
+                                console.log(id)
 
-                                const circle = d3.select(`circle[data-id='${id}']`);
-                                const el = circle.node();
-                    
-                                    if(selectedcircles.includes(el)){
+                                 if($('#removedstereotable tr').length ===0) {
+                                  $("#stereo").append(`
+                                        <div id = "removedpoints">
+                                        <div> Removed Points:  </div>
+                                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                                        <table id ="removedstereotable" border="1">
+                                        <tr>
+                                            <th>Rockname</th>
+                                            <th>Lomagage</th>
+                                            <th>Himagage</th>
+                                        </tr>
+                                        </table>
+                                        </div>
+                                        </div>
+                                    `);}
 
-                                        console.log('i work')
+                                 $(`#stereotable tr[data-id='${id}']`).remove();
 
-                                        circle.style("stroke", "none");
-                                        
-                                        let index = selectedcircles.indexOf(el);
+                                    d3.select(`circle[data-id='${id}']`).remove();
 
-                                        selectedcircles.splice(index, 1)
+                                    removedcircles.push(stats_data[id]);
 
-                                    } else{
-                                        circle.style("stroke", "black")
-                                        .style("stroke-width", 2)
+                                    row = stats_data[id]
+                                    
+                                    $("#removedstereotable").append(`
+                                        <tr data-id="${id}">
+                                            <td>${row.ROCKNAME}</td>
+                                            <td>${row.LOMAGAGE}</td>
+                                            <td>${row.HIMAGAGE}</td>
+                                            <td><button class="add-btn" data-id="${id}">Add Back</button></td>
+                                        </tr>
+                                    `);
 
-                                        selectedcircles.push(el)
-
-                                        console.log(selectedcircles);
-                                    }
-
-
-
+                                
                             });
 
-
-                            $("#download-selected").on("click", function () {
-
-                                const selectedRows = [];
-
-                                $("#stereotable .row-select:checked").each(function () {
-                                    const row = $(this).closest("tr");
-                                    const id = row.data("id");
-
-                                    const lat = row.find("td:nth-child(2)").text();
-                                    const lon = row.find("td:nth-child(3)").text();
-
-                                    selectedRows.push({ id, lat, lon });
-                                });
-
-                                console.log(selectedRows);
-
-                                let csvContent = "data:text/csv;charset=utf-8," 
-                                selectedRows.forEach(row => {
-                                    csvContent += `${row.lat},${row.lon}\n`;
-                                });
-
-                                var downloadLink = document.createElement("a");
-                                downloadLink.href = csvContent;
-                                downloadLink.download = "gpmdb-selected-data.csv";
-
-                                document.body.appendChild(downloadLink);
-                                downloadLink.click();
-                                document.body.removeChild(downloadLink);
+        
 
 
+                        });
+
+                        });	
+
+
+                      
+                        
+                        $("#stereotable").on("change", ".row-select", function() {
+
+                            const id = $(this).closest("tr").data("id");
+                            console.log(id);
+
+                            const circle = d3.select(`circle[data-id='${id}']`);
+                            const el = circle.node();
+                
+                                if(selectedcircles.includes(el)){
+
+                                    console.log('i work')
+
+                                    circle.style("stroke", "none");
+                                    
+                                    let index = selectedcircles.indexOf(el);
+
+                                    selectedcircles.splice(index, 1)
+
+                                } else{
+                                    circle.style("stroke", "black")
+                                    .style("stroke-width", 2)
+
+                                    selectedcircles.push(el)
+
+                                    console.log(selectedcircles);
+                                }
+
+
+
+                        });
+
+
+                        $("#download-selected").on("click", function () {
+
+                            const selectedRows = [];
+
+                            $("#stereotable .row-select:checked").each(function () {
+                                const row = $(this).closest("tr");
+                                const id = row.data("id");
+
+                                const lat = row.find("td:nth-child(2)").text();
+                                const lon = row.find("td:nth-child(3)").text();
+
+                                selectedRows.push({ id, lat, lon });
                             });
 
+                            console.log(selectedRows);
+
+                            let csvContent = "data:text/csv;charset=utf-8," 
+                            selectedRows.forEach(row => {
+                                csvContent += `${row.lat},${row.lon}\n`;
+                            });
+
+                            var downloadLink = document.createElement("a");
+                            downloadLink.href = csvContent;
+                            downloadLink.download = "gpmdb-selected-data.csv";
+
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+
+
+                        });
+
+
+
+                        $("#plot-custom-point").on("click", function () {
+
+                            let lat = $('#latitudeinput').val();
+                            let lon = $('#longitudeinput').val();
+
+                             const new_long = (lon > 180) ? lon - 360 : lon;
+                            let newlat = []
+
+                            if(lat <= 0){
+                                console.log(lat)
+                                newlat = projection([new_long, lat])
+                                colour = "none"
+                            }else{
+                                newlat = projection([new_long, -lat])
+                                colour = "red"
+                            }
+
+                        
+                            const circle = svg.append("circle")
+                            .attr("cx", newlat[0])
+                            .attr("cy", newlat[1])  
+                            .attr("r", 4)
+                            .attr("data-id", i) 
+                            .attr("fill", colour)
+                            .attr("stroke", "red")     // outline color
+                            .attr("stroke-width", 1.5);
+
+
+                             circle.on("mouseover", function(event, d) {
+                
+                                tooltip.style("opacity", 1)
+                
+                                
+                                })
+                                .on("mousemove", function(event, d) {
+                                    const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                                    tooltip
+                                    .html(`Lat: ${lat}<br>Lon: ${lon}<br>`)
+                                    .style("left", (x + 10) + "px")
+                                    .style("top", (y + 10) + "px");
+                                    
+                                })
+                                .on("mouseout", function(event, d) {
+                                    tooltip
+                                        .style("opacity", 0)
+                                    
+                                })
+                                .on("click", function(event, d) {
+
+                                });
+
+
+
+                        })
 
 
 
@@ -1951,6 +2048,270 @@
             //window.open(encodeURI(csvContent));
         }
 
+        $("#load-d3-world").on("click", function () {
+
+            $("#map").empty();
+
+            const width = 960;
+            const height = 350;
+
+            let projection = d3.geoMercator()
+                .scale(100)
+                .translate([width / 2, height / 2]);
+
+               
+
+                const svg = d3.select("#map")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+                    const g = svg.append("g");
+
+                    let path = d3.geoPath().projection(projection);
+
+
+                    const zoom = d3.zoom()
+                        .scaleExtent([0.5, 20])             // adjust zoom limits
+                        .on("zoom", (event) => {
+                            g.attr("transform", event.transform);
+                        });
+
+                    // Attach zoom to SVG
+                    svg.call(zoom);
+
+                    const tooltip = d3.select("#map")
+                    .append("div")
+                    .style("opacity", 0)
+                    .attr("class", "tooltip")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "2px")
+                    .style("border-radius", "5px")
+                    .style("padding", "5px")
+
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+                    .then(world => {
+                        const countries = topojson.feature(world, world.objects.countries);
+
+                        g.selectAll("path")
+                            .data(countries.features)
+                            .enter()
+                            .append("path")
+                            .attr("d", path)
+                            .attr("fill", "#ccc")
+                            .attr("stroke", "#000");
+
+                    })
+            
+
+            });
+        let map = null;
+        let geojsonLayer =null;
+        
+        $("#projection-select2").on("change", function(){
+            whichmap()
+            
+        })
+
+        function whichmap(){
+
+            selected = $("#projection-select2").val();
+
+            if(selected != "Leaflet"){
+                console.log()
+                changemap(selected, "#map", mapdata);
+            } else{
+                loadLeaflet(mapdata);
+            }
+        }
+
+
+
+        function loadLeaflet(mapdata){
+
+            $("#map").empty();
+
+                if (map) {
+                    map.off();      // remove all listeners
+                    map.remove();   // destroy map instance
+                    map = null;
+                }
+
+                geojsonLayer=null;
+
+                var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+
+                map = L.map('map',{
+
+                    center:[0, 0], 
+                    zoom: 2,
+                    maxBounds: bounds,
+                    maxBoundsViscosity: 0.25,
+                    
+                    
+                });
+
+                L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                    attribution: '',
+                    minZoom: 0,
+                    maxZoom: 8,
+                }).addTo(map);
+                //var drawnItems = new L.FeatureGroup();
+                //map.addLayer(drawnItems);
+                
+                //Initialize the Draw control
+                const drawControl = new L.Control.Draw({
+                    draw: {
+                        polygon: {
+                        allowIntersection: false, // Prevent overlapping edges
+                        showArea: true, // Show area measurement
+                        shapeOptions: { color: '#3388ff' } // Polygon color
+                        },
+                        circlemarker: false,
+                        circle: false, // Disable circle drawing
+                        marker: false, // Disable marker drawing
+                        polyline: false, // Disable polyline drawing
+                        rectangle: false// Disable rectangle drawing
+                    },
+                    edit: false
+                });
+                map.addControl(drawControl);
+                
+
+                    addDataToMap(mapdata);
+                    map.setView([0,0],1);
+    
+
+
+                    // Handle polygon drawing events
+                 map.on('draw:created', function (e) {
+                     const layer = e.layer; // The drawn layer (polygon)
+                     const polygon = layer.toGeoJSON(); // Convert the polygon to GeoJSON
+                     const coordinates = polygon.geometry.coordinates[0]; // Get the polygon coordinates
+                     // Print the coordinates to the browser console
+                     console.log("Polygon Coordinates:", coordinates);
+                     
+                     
+                     // Send the polygon coordinates to the backend
+                     fetchDataWithinPolygon(coordinates);
+                 });
+                    
+                    
+                    
+                    // Function to fetch data within the drawn polygon
+                function fetchDataWithinPolygon(polygon) {
+                    // Correctly format the polygon as a JSON string
+                    const polygonString = JSON.stringify(polygon); // Convert polygon object to JSON
+                    console.log("polystring :",polygonString);
+                    //Construct the URL with the properly formatted polygon
+                    const url = `/get_data_within_polygon/?polygon=${encodeURIComponent(polygonString)}`; // URL-encode JSON string
+                    //console.log(url)
+                    $('#stats-container').empty();
+                    $('#progress-bar').modal();
+                    $.ajax({
+                        type: 'GET',
+                        url:url,
+                        dataType: 'json',
+                        data: polygonString,
+                        success: function (data) {
+                            // Handle successful response
+                            console.log("Data fetched successfully:", data);
+                            search_data = data.table_data;
+                            stats_data=data.stats_data;
+                            console.log("Search_data after polyselection", search_data);
+                            var table_headers;
+                            $.each(data.table_data.columns.slice(0,-1), function(i, val){
+                                table_headers += "<th>" + val + "</th>";
+                            });
+                            $("#table-div").empty();
+                            $("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
+                            $("#table-div").find("table thead tr").append(table_headers);
+                            
+                            var filtered_data = data.table_data.data.map(function(row) {
+                                return row.slice(0, -1);
+                            })
+                            $('#db-table').dataTable({
+                                "iDisplayLength": 10,
+                                "aaData":filtered_data,
+                                "order":[[3,"desc"]], 
+                                
+                            });
+                            $('#progress-bar').modal('hide');
+                            $('#query-result').modal();
+                        
+                            clearMap();
+                            //const m_data = data.geojson_data;
+                            //console.log("m_data:",m_data);
+                            $.getJSON('/get_map_within_polygon/', {polygon: polygonString}, function(data) {
+                                mapdata = data
+                                whichmap();
+                            });
+                        },
+                        error: function (error) {
+                            // Handle error
+                            console.error("Error fetching data:", error);
+                            alert("An error occurred while fetching data. Please try again.");
+                        },
+                        beforeSend: function() {
+                        // This callback runs before the request is sent, allowing you to inspect the request before it's sent out.
+                        console.log("Request is being sent...");
+                    }
+                    });
+                }
+                    
+            function isValidPolygon(coordinates) {
+                    if (!coordinates || !Array.isArray(coordinates)){ 
+                        return false;
+                        }
+
+                    // Check if the polygon is closed
+                    const firstCoord = coordinates[0][0];
+                    const lastCoord = coordinates[0][coordinates[0].length - 1];
+                    if (firstCoord[0] !== lastCoord[0] || firstCoord[1] !== lastCoord[1]) {
+                        return false;
+                    }
+
+                    // Check if coordinates are within valid bounds
+                    for (const ring of coordinates) {
+                        for (const coord of ring) {
+                            const [lon, lat] = coord;
+                            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                }		
+
+
+
+    
+            
+            function showonMap(data){
+                var lat = s_data['lat'];
+                var lon = s_data['lon'];
+                var starDivIcon = L.divIcon({
+                    className: 'custom-star-marker',
+                    html: '★',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+
+                L.marker([lat, lon], { icon: starDivIcon }).addTo(map);
+                
+            }
+            }
+
+        let mapdata;
+
+        $(function () {
+            $.getJSON('/get_data/', function (data) {
+                mapdata = data
+                loadLeaflet(mapdata); 
+            });
+        });
         
         $('#query-data').click(function(){
             if(!validate()){return;}
@@ -1970,21 +2331,25 @@
                     <option value="EPSG3031">Antarctic Polar</option>
                     </select>
 				`);
-            const width = 960;
-            const height = 500;
-
-            changemap('EPSG3857')
+           
+            changemap('EPSG3857', "#worldmap")
 
             $("#projection-select").on("change", function(){
 
                 const selected = $(this).val();
-                changemap(selected)
+                changemap(selected, "#worldmap")
                 
             })
+        
+        })
 
-            function changemap(selection){
 
-                $("#worldmap").empty();
+         function changemap(selection, place, mapdata){
+
+                const width = 960;
+                const height = 500;
+
+                $(place).empty();
 
                 let projection = d3.geoMercator()
                 .scale(100)
@@ -2010,7 +2375,7 @@
                         break;
                 }
 
-                const svg = d3.select("#worldmap")
+                const svg = d3.select(place)
                 .append("svg")
                 .attr("width", width)
                 .attr("height", height);
@@ -2029,7 +2394,7 @@
                     // Attach zoom to SVG
                     svg.call(zoom);
 
-                    const tooltip = d3.select("#worldmap")
+                    const tooltip = d3.select(place)
                     .append("div")
                     .style("opacity", 0)
                     .attr("class", "tooltip")
@@ -2042,7 +2407,6 @@
 
                     d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
                     .then(world => {
-                        console.log("Loaded world:", world); // <--- DEBUG
                         const countries = topojson.feature(world, world.objects.countries);
 
                         g.selectAll("path")
@@ -2053,12 +2417,11 @@
                             .attr("fill", "#ccc")
                             .attr("stroke", "#000");
 
-                        for(var i =0;i<stats_data.length;i++){
-                            let row = stats_data[i];
-
-                                latlong = projection([row['SLONG'], row['SLAT']])
-                                    
-                                console.log(latlong)
+                        for(var i =0;i<mapdata.length;i++){
+                            let row = mapdata[i];
+                            
+                                latlong = projection([row.geometry.coordinates[0], row.geometry.coordinates[1]])
+                                
 
                                     //latlong = projectPoint(row['PLAT'], row['PLONG'])
 
@@ -2097,67 +2460,6 @@
                         console.error("Map loading error:", err);
                     });
             }
-        })
-
-        $('#graph-data').click(function(){
-         //  if(!validate()){return;}
-            console.log("test");
-            var xaxis = $('#x-axis').find(":selected").val();
-            var yaxis = $('#y-axis').find(":selected").val();
-            var graphtype = $('#graph-type').find(":selected").val();
-            console.log(xaxis)
-            console.log(yaxis)
-            console.log(graphtype)
-
-            url= '/graph_data/';
-
-            graph_data = {}
-            graph_data['xaxis'] = xaxis
-            graph_data['yaxis'] = yaxis
-            graph_data['graphtype'] = graphtype
-
-            count = 0
-            count2 = 0
-
-
-            graph_data['graphingdata'] = search_data
-
-
-            console.log(search_data)
-
-            $('#progress-bar').modal();
-            $.ajax({
-				type: "POST",
-				url:url,
-				contentType: "application/json",
-				data: JSON.stringify({
-					data: graph_data
-				}),
-				dataType: "json",
-				headers: {
-					"X-CSRFToken": csrftoken
-				},		
-				success: function(response) {
-                    const test = response.graph;
-                    $("#graphing-container").empty();
-					$("#graphing-container").append(`
-						Equal-Area Stereonet Plot
-                                  <img src="data:image/png;base64,${test}" alt="Equal Area Plot" style="max-width: 100%;" />
-						Histogram of Site Ages
-	
-					`);
-
-                    download_data = response.graphdata
-
-				},
-				error: function(xhr, status, error) {
-                    console.log(error);
-				},
-				complete: function() {
-                    $('#progress-bar').modal('hide');
-				}
-			});
-        });
 
         $('#download-data').click(function(){
 
@@ -2244,274 +2546,68 @@
         });
 		
 
-        
-	    var geojsonLayer=null;
+             function clearMap(){
+                map.removeLayer(geojsonLayer);
+            }
 
-        var bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+            var geojsonMarkerOptions = {
+                        radius: 3,
+                        fillColor: "#ff7800",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    };
+	   
 
-        var map = L.map('map',{
-
-            center:[0, 0], 
-            zoom: 2,
-            maxBounds: bounds,
-            maxBoundsViscosity: 0.25,
+             function addDataToMap(data){
             
-            
-        });
-
-        var geojsonMarkerOptions = {
-                radius: 3,
-                fillColor: "#ff7800",
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            };
-
-        $(function() {
-            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-                attribution: '',
-                minZoom: 0,
-                maxZoom: 8,
-            }).addTo(map);
-
-			//var drawnItems = new L.FeatureGroup();
-			//map.addLayer(drawnItems);
-			
-			//Initialize the Draw control
-			const drawControl = new L.Control.Draw({
-				draw: {
-					polygon: {
-					allowIntersection: false, // Prevent overlapping edges
-					showArea: true, // Show area measurement
-					shapeOptions: { color: '#3388ff' } // Polygon color
-					},
-					circlemarker: false,
-					circle: false, // Disable circle drawing
-					marker: false, // Disable marker drawing
-					polyline: false, // Disable polyline drawing
-					rectangle: false// Disable rectangle drawing
-				},
-				edit: false
-			});
-			map.addControl(drawControl);
-			
-			$.getJSON('/get_data/', function(data){
-                
-                addDataToMap(data);
-			map.setView([0,0],1);
-		
-			});
-			   // Handle polygon drawing events
-			map.on('draw:created', function (e) {
-				const layer = e.layer; // The drawn layer (polygon)
-				const polygon = layer.toGeoJSON(); // Convert the polygon to GeoJSON
-				const coordinates = polygon.geometry.coordinates[0]; // Get the polygon coordinates
-				// Print the coordinates to the browser console
-				console.log("Polygon Coordinates:", coordinates);
-				
-				
-				// Send the polygon coordinates to the backend
-				fetchDataWithinPolygon(coordinates);
-			});
-			
-            
-            
-			// Function to fetch data within the drawn polygon
-			function fetchDataWithinPolygon(polygon) {
-				// Correctly format the polygon as a JSON string
-				const polygonString = JSON.stringify(polygon); // Convert polygon object to JSON
-				console.log("polystring :",polygonString);
-				//Construct the URL with the properly formatted polygon
-				const url = `/get_data_within_polygon/?polygon=${encodeURIComponent(polygonString)}`; // URL-encode JSON string
-				//console.log(url)
-				$('#stats-container').empty();
-				$('#progress-bar').modal();
-				$.ajax({
-					type: 'GET',
-					url:url,
-					dataType: 'json',
-					data: polygonString,
-					success: function (data) {
-						// Handle successful response
-						console.log("Data fetched successfully:", data);
-						search_data = data.table_data;
-						stats_data=data.stats_data;
-						console.log("Search_data after polyselection", search_data);
-						var table_headers;
-						$.each(data.table_data.columns.slice(0,-1), function(i, val){
-							table_headers += "<th>" + val + "</th>";
-						});
-
-						$("#table-div").empty();
-						$("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
-						$("#table-div").find("table thead tr").append(table_headers);
-						
-						var filtered_data = data.table_data.data.map(function(row) {
-							return row.slice(0, -1);
-						})
-
-						$('#db-table').dataTable({
-							"iDisplayLength": 10,
-							"aaData":filtered_data,
-							"order":[[3,"desc"]], 
-							
-						});
-
-						$('#progress-bar').modal('hide');
-						$('#query-result').modal();
-                    
-						clearMap();
-						//const m_data = data.geojson_data;
-						//console.log("m_data:",m_data);
-						$.getJSON('/get_map_within_polygon/', {polygon: polygonString}, function(data) {
-							addDataToMap(data);
-						});
-                    	//$.getJSON('/get_query_data_for_map/', m_data, function(data){
-							//addDataToMap(data)});		
-						//addDataToMap(m_data);
-						/*//addDataToMap(m_data);
-						//clearMap();
-						//addDataToMap(data);
-						// Create an array to store the points
-						const points = [];
-
-						// Assuming data contains an array of points, loop through them and create LatLng objects
-						data.features.forEach(function (feature) {
-							const lat = feature.geometry.coordinates[1];  // Latitude
-							const lng = feature.geometry.coordinates[0];  // Longitude
-
-							if (lat && lng) {f
-								points.push(L.latLng(lat, lng));  // Add the point to the array
-							}
-						});
-
-						// Check if there are valid points
-						if (points.length > 0) {
-							const bounds = L.latLngBounds(points);  // Create bounds from the points
-
-							// Log the bounds to ensure they are correct
-							console.log("Bounds: ", bounds);
-
-							// Set the map view to fit the bounds
-							map.fitBounds(bounds, {
-								padding: [50, 50],  // Optional: Add padding for better view
-								maxZoom: 12         // Optional: Limit the zoom to a maximum level
-							});
-
-							// Log the map's new center and zoom level after setting the bounds
-							console.log("Map center:", map.getCenter());
-							console.log("Map zoom level:", map.getZoom());
-						} else {
-							console.warn("No valid points available to center the map.");
-						}*/
-					},
-					error: function (error) {
-						// Handle error
-						console.error("Error fetching data:", error);
-						alert("An error occurred while fetching data. Please try again.");
-					},
-					beforeSend: function() {
-					// This callback runs before the request is sent, allowing you to inspect the request before it's sent out.
-					console.log("Request is being sent...");
-				  }
-				});
-			}
-            
-				
-			
-		});
-		
-        function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
-            return "ROCKUNITNO: " +ROCKUNITNO+"<br>"+
-                "ROCKNAME: "+ROCKNAME+"<br>"+
-                "<a href=\"\\PMAGRESULT\\?ROCKUNITNO="+ROCKUNITNO+"\" target=_blank>PMAGRESULT: "+PMAGRESULTCOUNT+"</a>";
-        }
-		function isValidPolygon(coordinates) {
-				if (!coordinates || !Array.isArray(coordinates)){ 
-					return false;
-					}
-
-				// Check if the polygon is closed
-				const firstCoord = coordinates[0][0];
-				const lastCoord = coordinates[0][coordinates[0].length - 1];
-				if (firstCoord[0] !== lastCoord[0] || firstCoord[1] !== lastCoord[1]) {
-					return false;
-				}
-
-				// Check if coordinates are within valid bounds
-				for (const ring of coordinates) {
-					for (const coord of ring) {
-						const [lon, lat] = coord;
-						if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-							return false;
-						}
-					}
-				}
-
-				return true;
-			}		
-        function clearMap(){
-            map.removeLayer(geojsonLayer);
-        }
-
-        function addDataToMap(data){
-           
-        //    const reprojected = reprojectGeoJSON(data, 'EPSG:4326', '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +datum=ETRS89 +units=m +no_defs');
-            geojsonLayer = L.geoJSON(
-                data,
-                { 
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties && 
-                            feature.properties.ROCKNAME && 
-                            feature.properties.ROCKUNITNO && 
-                            feature.properties.PMAGRESULTCOUNT) {
-                            
-                            layer.bindPopup(
-                                getPopupText(
-                                    feature.properties.ROCKUNITNO, 
-                                    feature.properties.ROCKNAME, 
-                                    feature.properties.PMAGRESULTCOUNT), 
-                                {closeButton: false});
+            //    const reprojected = reprojectGeoJSON(data, 'EPSG:4326', '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +datum=ETRS89 +units=m +no_defs');
+                geojsonLayer = L.geoJSON(
+                    data,
+                    { 
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties && 
+                                feature.properties.ROCKNAME && 
+                                feature.properties.ROCKUNITNO && 
+                                feature.properties.PMAGRESULTCOUNT) {
+                                
+                                layer.bindPopup(
+                                    getPopupText(
+                                        feature.properties.ROCKUNITNO, 
+                                        feature.properties.ROCKNAME, 
+                                        feature.properties.PMAGRESULTCOUNT), 
+                                    {closeButton: false});
+                            }
+                        },
+                        pointToLayer: function (feature, latlng) {
+                        //    console.log(latlng)
+                        //    var newcoord= proj4('+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', [latlng.lat, latlng.lng])
+                        //    console.log(newcoord)
+                        //    latlng['lat'] = newcoord[0]
+                        //    latlng['lng'] = newcoord[1]
+                        //    console.log(latlng)
+                            return L.circleMarker(latlng, geojsonMarkerOptions);
                         }
-                    },
-                    pointToLayer: function (feature, latlng) {
-                    //    console.log(latlng)
-                    //    var newcoord= proj4('+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', [latlng.lat, latlng.lng])
-                    //    console.log(newcoord)
-                    //    latlng['lat'] = newcoord[0]
-                    //    latlng['lng'] = newcoord[1]
-                    //    console.log(latlng)
-                        return L.circleMarker(latlng, geojsonMarkerOptions);
                     }
+                );
+                geojsonLayer.addTo(map);
+                const bounds = geojsonLayer.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, {
+                        padding: [50, 50],
+                        maxZoom: 12
+                    });
+                } else {
+                    console.warn("No valid bounds to center map.");
                 }
-            );
-            geojsonLayer.addTo(map);
-			const bounds = geojsonLayer.getBounds();
-			if (bounds.isValid()) {
-				map.fitBounds(bounds, {
-					padding: [50, 50],
-					maxZoom: 12
-				});
-			} else {
-				console.warn("No valid bounds to center map.");
-			}
-        }
-		
-		function showonMap(data){
-			var lat = s_data['lat'];
-			var lon = s_data['lon'];
-            var starDivIcon = L.divIcon({
-				className: 'custom-star-marker',
-				html: '★',
-				iconSize: [20, 20],
-				iconAnchor: [10, 10]
-			});
+            }
 
-			L.marker([lat, lon], { icon: starDivIcon }).addTo(map);
-			
-        }
-        
+              function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
+                return "ROCKUNITNO: " +ROCKUNITNO+"<br>"+
+                    "ROCKNAME: "+ROCKNAME+"<br>"+
+                    "<a href=\"\\PMAGRESULT\\?ROCKUNITNO="+ROCKUNITNO+"\" target=_blank>PMAGRESULT: "+PMAGRESULTCOUNT+"</a>";
+            }
 
 
 	</script>
