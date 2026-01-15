@@ -689,19 +689,27 @@ def get_stats(request):
             print("new fishcer now")
 
             calc = []
+            pointcircle = []
+            allcircles = {}
             for row in stats_data:
                 calc.append([row['PLONG'], row['PLAT']])
+                if row['DP'] is not None and row['DM'] is not None:
+                    a95 = math.sqrt((row['DP'] * row['DM']))
+                    pointcoords = Circle(row['PLONG'], row['PLAT'], a95*111.32)
+                    pointcoords = mapping(pointcoords)
+                    allcircles[row['RESULTNO']] = pointcoords
+             
 
             mean = fisher_mean(calc)
             
-            coords = Circle(mean['dec'], mean['inc'], mean['alpha95'])
+            coords = Circle(mean['dec'], mean['inc'], mean['alpha95']*111.32)
             circlecoords = mapping(coords)
 
-            print(mean['alpha95'])
 
             result = {
                 'calculations': mean,
-                'circle': circlecoords
+                'circle': circlecoords,
+                'pointcircle': allcircles
             }
 
             return JsonResponse(result)
@@ -776,8 +784,6 @@ def shoot(lon, lat, azimuth, maxdist=None):
     glon2 *= 180./np.pi
     glat2 *= 180./np.pi
     baz *= 180./np.pi
-    print(glon2)
-    print(glat2)
     return (glon2, glat2, baz)
 
 
