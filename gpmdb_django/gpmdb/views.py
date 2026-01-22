@@ -649,8 +649,24 @@ def get_data_within_polygon(request):
                         "LOMAGAGE": row[12],
                         "HIMAGAGE": row[13],
                         "DP": row[18],     # Confidence radius in latitude
-                        "DM": row[19]      # Confidence radius in longitude
-                    })
+                        "DM": row[19],
+                        "SLAT": row[14],
+                        "SLONG": row[15],
+                        "ROCKNAME": row[2],
+                        "REFNO": row[0],
+                        "RESULTNO": row[1],
+                        "YEAR": row[3],
+                        "AURTHORS": row[4],
+                        "JOURNAL": row[5],
+                        "VOLUME": row[6],
+                        "VPAGES": row[7],
+                        "CONTINENT": row[8],
+                        "ROCKTYPE": row[9],
+                        "LOWAGE": row[10],
+                        "HIGHAGE": row[11],
+                        "QSUM": row[20],
+                        "RSUM": row[21]
+                        })
                     
                                         
                 
