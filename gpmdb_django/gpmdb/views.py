@@ -719,6 +719,66 @@ def get_stats(request):
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
     
+def selected_means(request):
+
+    
+    if request.method == "POST":
+        try:
+            # Parse the JSON data sent in the POST request
+            data = json.loads(request.body)
+            print("Received data:", data)  # Log the received data
+
+            points = data.get("data",[])
+
+            print(points)
+
+            calc = []
+
+            for row in points.values():
+                calc.append([float(row['PLONG']), float(row['PLAT'])])
+        
+            mean = fisher_mean(calc)
+        
+            result = {
+                'calculations': mean,
+            }
+
+            return JsonResponse(result)
+        except Exception as e:
+            print("Error:", str(e))  # Log the error for debugging
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+def plotted_mean(request):
+
+    
+    if request.method == "POST":
+        try:
+            # Parse the JSON data sent in the POST request
+            data = json.loads(request.body)
+            print("Received data:", data)  # Log the received data
+
+            point = data.get("data",[])
+
+            print(point)
+
+
+            pointcoords = Circle(float(point['PLONG']), float(point['PLAT']), float(point['a95'])*111.32)
+            pointcoords = mapping(pointcoords)
+        
+            result = {
+                'circle': pointcoords
+            }
+
+            return JsonResponse(result)
+        except Exception as e:
+            print("Error:", str(e))  # Log the error for debugging
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
 
 def shoot(lon, lat, azimuth, maxdist=None):
     """Shooter Function
