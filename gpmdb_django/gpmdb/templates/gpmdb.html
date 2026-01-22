@@ -1462,7 +1462,7 @@
 					const mean = response.calculations;
                     const meancircle = response.circle;
                     const pointcircle = response.pointcircle;
-                    
+                    console.log("point")
                     console.log(pointcircle)
 
 					$("#stats-container").empty();
@@ -1500,7 +1500,7 @@
                     const svg = d3.select("#chart2")
                     .append("svg")
                     .attr("width", width)
-                    .attr("height", height);
+                    .attr("height", height + 40);
 
                     //Mean Stats Labels
                     const label = svg.append("text")
@@ -1665,7 +1665,12 @@
 
                             if (d3.select(this).attr("data-id") in selectedcircles){
                                 d3.select(this)
-                                .style("stroke", "none")
+                                .style("stroke", function () {
+                                    return colourByAge
+                                        ? ageColor(this.dataset.age)
+                                        : "black";
+
+                                })
 
                                 id = d3.select(this).attr("data-id");
 
@@ -1709,7 +1714,9 @@
                     .attr("r", 4)
                     .attr("data-id", i) 
                     .attr("class", "mean-point")
-                    .attr("fill", "yellow");
+                    .attr("fill", "red")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 2);
 
                     circle.on("mouseover", function(event, d) {
                     
@@ -1750,9 +1757,11 @@
                         <button id="point-circle" class="btn btn-primary">Selected Point Circle Means</button>
                         <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
                         <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
+                        <button id="selected-means" class="btn btn-primary">Mean of Selected Circles</button>
                         Plot a point: 
                         Latitude: <input id="latitudeinput" type="number">
                         Longitude: <input id="longitudeinput" type="number">
+                        a95: <input id="a95input" type="number">
                         <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
                     `);
                     
@@ -1774,6 +1783,7 @@
 
                     }
 
+                    customselection = {};
                     const meanCircleLayer = svg.append("g")
                     .attr("id", "mean-circle-layer")
                     .style("display", "none");   // visible by default
@@ -1807,39 +1817,6 @@
 
                     })
 
-                    /*
-                     pointcircle.forEach(circle => {
-                        
-                        circle.coordinates.forEach(coord => {
-                                row = {'PLONG': coord[0], 
-                                'PLAT': coord[1]
-                                    }
-
-                                    const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
-                                    
-                                    let newlat = []
-
-                                    if(coord[1] <= 0){
-                                        newlat = projection([new_long, coord[1]])
-                                        colour = "none"
-                                    }else{
-                                        newlat = projection([new_long, -coord[1]])
-                                        colour = "black"
-                                    }
-
-
-                                    const circle = svg.append("circle")
-                                    .attr("cx", newlat[0])
-                                    .attr("cy", newlat[1])  
-                                    .attr("r", 1)
-                                    .attr("fill", "black")
-                                    .attr("stroke", "black");
-                            })
-                                
-
-                   
-                    })
-                    */
                     let visible = false;
     
                     d3.select("#mean-circle").on("click", () => {
@@ -1849,10 +1826,13 @@
 
                     const legendWidth = 160;
                     const legendHeight = 12;
+                    const legendYOffset = 20;
+
 
                     const legendGroup = svg.append("g")
                         .attr("class", "age-legend")
-                        .attr("transform", `translate(${width - legendWidth - 20}, ${height - 40})`);
+                        .attr("transform", `translate(${width - legendWidth - 20}, ${cy + radius + legendYOffset})`)
+                        .style("display", "none");  
 
                     const defs = svg.append("defs");
 
@@ -1893,7 +1873,7 @@
                         .select(".domain")
                         .remove();
 
-                                        legendGroup.append("text")
+                    legendGroup.append("text")
                     .attr("x", legendWidth / 2)
                     .attr("y", -6)
                     .attr("text-anchor", "middle")
@@ -2034,13 +2014,72 @@
                             .attr("fill", function () {
                                 return colourByAge
                                     ? "black"
-                                    : "yellow";
+                                    : "red";
                             })
                             .attr("stroke", function () {
                                 return colourByAge
                                     ? "black"
-                                    : "yellow";
+                                    : "black";
                             });
+
+                            legendGroup.style("display", colourByAge ? "block" : "none");
+
+
+
+
+
+
+
+                        });
+
+                        $("#selected-means").on("click", function () {
+
+                            $.ajax({
+                                type: "POST",
+                                url:'/selected_means/',
+                                contentType: "application/json",
+                                data: JSON.stringify({
+                                    data: selectedcircles
+                                }),
+                                dataType: "json",
+                                headers: {
+                                    "X-CSRFToken": csrftoken
+                                },
+                                            
+                                success: function(response) {
+                                    let selected_mean = response.calculations
+
+                                    
+                                    console.log("test")
+                                    console.log(selected_mean)
+
+                                    svg.selectAll(".selected-mean-label").remove();
+
+                                    //Mean Stats Labels
+                                    const label2 = svg.append("text")
+                                        .attr("class", "selected-mean-label")
+                                        .attr("x", 175)
+                                        .attr("y", height - 10)
+                                        .attr("text-anchor", "end")
+                                        .style("font-size", "14px");
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 0)
+                                        .text("Selected Mean Dec: " + selected_mean.dec.toFixed(2));
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 12)
+                                        .text("Selected Mean Inc: " + selected_mean.inc.toFixed(2));
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 12)
+                                        .text("Selected 95%: " + selected_mean.alpha95.toFixed(2));
+                                                }
+                                            })
+                        
                         });
 
                         $("#remove-selected").on("click", function () {
@@ -2091,7 +2130,16 @@
                                 
                                 });
 
-        
+                                Object.entries(selectedcircles).forEach(([key, value]) => {
+                                    console.log(key)
+
+                                    d3.select(`circle[data-id='${key}']`).remove();
+                                    console.log("test")
+                                    delete selectedcircles[key];
+
+                                });
+
+                                console.log(selectedcircles)
 
 
                         });
@@ -2255,7 +2303,9 @@
                             .attr("cx", newlat[0])
                             .attr("cy", newlat[1])  
                             .attr("r", 4)
-                            .attr("data-id", i) 
+                            .attr("data-id", `${lat} ` + `${lon}`)
+                            .attr("data-lat", lat)
+                            .attr("data-lon", lon)
                             .attr("fill", colour)
                             .attr("stroke", "red")     // outline color
                             .attr("stroke-width", 1.5);
@@ -2282,7 +2332,73 @@
                                 })
                                 .on("click", function(event, d) {
 
+                                    if (d3.select(this).attr("data-id") in selectedcircles){
+                                        d3.select(this)
+                                        .style("stroke", "red")
+
+                                        id = d3.select(this).attr("data-id");
+
+                                        delete selectedcircles[id];
+
+                                        delete customselection[id]
+
+                                        $(`#stereotable tr[data-id='${id}']`).remove();
+
+                                    } else{
+
+                                        id = d3.select(this).attr("data-id");
+            
+                                        selectedcircles[id] = {
+                                            "PLAT": d3.select(this).attr("data-lat"),
+                                            "PLONG": d3.select(this).attr("data-lon")
+                                        };
+
+                                        $("#stereotable").append(`
+                                            <tr data-id="${id}" style="display:none;">
+                                                <td><input type="checkbox" class="row-select"></td>
+                                                <td>NA</td>
+                                                <td>NA</td>
+                                                <td>NA</td>
+                                                <td><button class="remove-btn" data-id="${id}">Remove</button></td>
+                                            </tr>
+                                        `);
+
+                                        $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
+                                        
+                                        d3.select(this)
+                                        .style("stroke", "black")
+                                        .style("stroke-width", 2);
+                                    }
+
+                                    console.log(selectedcircles)
                                 });
+
+
+
+                                if($('#a95input').val()){
+                                     $.ajax({
+                                        type: "POST",
+                                        url:'/plotted_mean/',
+                                        contentType: "application/json",
+                                        data: JSON.stringify({
+                                            data: {"PLAT": lat, "PLONG": lon, "a95": $('#a95input').val()}
+                                        }),
+                                        dataType: "json",
+                                        headers: {
+                                            "X-CSRFToken": csrftoken
+                                        },
+                                                    
+                                        success: function(response) {
+                                                console.log(response.circle);
+                                                pointcircle[`${lat} ` + `${lon}`] = response.circle
+                                                console.log("circle")
+                                                console.log(pointcircle[`${lat} ` + `${lon}`])
+                                            }
+                                            })
+                                        }
+
+
+
 
 
 
