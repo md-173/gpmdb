@@ -16,126 +16,33 @@
     <link rel="stylesheet" type="text/css" href="/static/css/leaflet.css"/>
 	<!-- Leaflet Draw CSS for the drawing functionality -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
-
-	<style>
-		body{
-			background-color:rgb(231,231,231); 
-		}
-		.navbar.nav-custom{
-			background-color: rgb(0,77,140);
-			margin:0;
-			min-height:20px;
-			border:none;
-		}
-		.navbar.nav-custom li a{
-			color:white;
-			font-size:12pt; 
-			font-family: Arial;
-			padding-top:5px;
-			padding-bottom:5px;
-		}
-		.nav-custom.navbar  li  a:hover,  
-		.nav-custom.navbar  li  a:focus{
-			color:yellow;
-			background-color:rgb(0,77,140); 
-		}
-
-		.left-menu-item{
-			background-color:rgb(0,77,140); 
-			color:white; 
-			padding:5px 0px 5px 0px; 
-			margin-bottom:2px;font-size: 11pt;
-			font-weight: bold; 
-			text-align:center;
-		}
-		.left-menu-item:hover,
-		.left-menu-item:focus{
-			color: yellow;
-			cursor: pointer;
-		}
-
-		#GPMDB-title{
-			font-size:44pt; 
-			font-family: Arial; 
-			font-weight:bold; 
-			color:rgb(0,77,140);
-			margin-left:70px;
-		}
-
-		@media screen and (max-width: 1023px){
-			#GPD-title{
-				display:none;
-			}
-		 #GPMDB-title{
-				padding-top:20px;
-			}
-		}
-
-		@media screen and (max-width: 767px){
-			#GPMDB-title{
-				padding-top:40px;
-				font-size:22pt;
-			}
-		}
-
-		@media screen and (max-width: 424px){
-			#three-icons{
-				display:none;
-			}
-		}
-
-		.navbar-toggle{
-			height:25px;
-			padding: 5px 5px;
-			background-color: #ddd;
-		}
-
-		td{
-			white-space: nowrap;
-		}
-		
-		.custom-star-marker {
-			color: gold;
-			font-size: 20px;
-			font-weight: bold;
-			text-shadow: 0 0 3px black;
-		}
-
-        .leaflet-div-icon.leaflet-editing-icon {
-        width: 6px !important;   
-        height: 6px !important;  
-        margin-left: -3px !important;  
-        margin-top: -3px !important;   
-        background-color: #3388ff;     
-        border: 1px solid #000;        
-        border-radius: 50%;            
-    }
-	</style>
+    <!-- Custom theme CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css"/>
 </head>
-<body>  
-    <div style="position:fixed;top:-10px;height:100px;background-color:rgb(231,231,231);width:100%;z-index:1049;">
-    <div class="container">  
-        <div class="row"> 
+<body>
+    <div style="position:fixed;top:-10px;height:100px;background-color:#ffffff;width:100%;z-index:1049;">
+    <div class="container">
+        <div class="row">
         <div class="col-md-12" id="logo">
             <div style="position:absolute;top:0px;"><img src="static/images/compass.png"></div>
             <div id="three-icons" style="float:right; margin-top:20px;">
                 <img style="margin-right:-23px; margin-top:-5px;" src="static/images/ball.png">
                 <img src="static/images/house.png">
-                <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">            
+                <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">
             </div>
 
             <div id="GPMDB-title">GP</div>
-            <div id="GPD-title" style="font-size:24pt; font-family: Arial; font-weight:bold; color:black; margin-top: -24px; margin-left:70px;">GLOBlTest</div>
+            <div id="GPD-title">GLOBlTest</div>
         </div>
         </div>
     </div>
     </div>
 
-    <div style="background-color:rgb(77,131,175); width:100%;position:fixed;top:90px;z-index:1049;">
-	<div class="container" role="menu-container" style=" background-color: rgb(0,77,140);">
+    <div style="background-color:#1a1a1a; width:100%;position:fixed;top:90px;z-index:1049;">
+	<div class="container" role="menu-container" style="background-color:#1a1a1a;">
 		<div class="row">
         <nav class="navbar navbar-default nav-custom">
-            <div class="container-fluid" style=" background-color: rgb(0,77,140);">
+            <div class="container-fluid" style="background-color:#1a1a1a;">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
                         <span class="sr-only">Toggle navigation</span>
@@ -161,15 +68,15 @@
 	</div>
 	</div>
 
-    <div class="container" role="main" style="background-color:rgb(216,216,216);margin-top:130px;">
+    <div class="container" role="main" style="background-color:#f3f4f6;margin-top:130px;">
             <div id="menu-and-map" class="row">
                 <div id="left-menu" class="col-md-3" style="height:400px;padding:5px;">
-                    <div style="background-color:white; height:100%; padding:5px;">
-                        <div  style="background-color:rgb(77,131,175); color:white; padding:5px 0px 5px 10px;">GPMDB Stats</div>
-                        <table style="background-color:white; border-collapse: separate;border-spacing:10px 5px; width:100%; margin-bottom:15px;">
-                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">Palaeomagnetic Poles: <span>{{poles}}</span></td></tr>
-                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">Rock Units: <span>{{sites}}</span></td></tr>
-                            <tr><td style="border-bottom: 1px dashed #999;  padding:5px 0px 5px 10px; font-weight:bold;">References: <span>{{studies}}</span></td></tr>
+                    <div style="background-color:#ffffff; height:100%; padding:10px; border-radius:8px;">
+                        <div class="section-header" style="margin-bottom:10px;">GPMDB Stats</div>
+                        <table class="stats-table">
+                            <tr><td>Palaeomagnetic Poles: <span>{{poles}}</span></td></tr>
+                            <tr><td>Rock Units: <span>{{sites}}</span></td></tr>
+                            <tr><td>References: <span>{{studies}}</span></td></tr>
                         </table>
                         <div class="left-menu-item" data-toggle="modal" data-target="#search-form">Search GPMDB</div>
                         <div class="left-menu-item" onclick="alert('Under Construction!')">File Format Conversion</div>
@@ -192,56 +99,56 @@
                 </div>
             </div>
 
-            <div class="row" id="info" style="background:rgb(216,216,216);padding:5px;">
-                <div id="welcome" class="col-md-7" style="min-height:380px;background:rgb(231,231,231);">
-                    <h3 style="color:rgb(0,77,140);">Welcome to the Global Paleomagnetic Database</h3>
+            <div class="row" id="info" style="background:#f3f4f6;padding:5px;">
+                <div id="welcome" class="col-md-7" style="min-height:380px;background:#ffffff;border-radius:8px;padding:20px;">
+                    <h3>Welcome to the Global Paleomagnetic Database</h3>
                     <p>
                         The Global Paleomagnetic Database (GPMDB) contains published paleomagnetic poles
-                         and directions. The database was originally created by Mike McElhinny and Jo Lock, 
-                         later maintained by Sergei Pisarevsky. This is the second online implementation of 
-                         the database as part of the IGCP 648: Supercontinent Cycles & Global Geodynamics project, 
+                         and directions. The database was originally created by Mike McElhinny and Jo Lock,
+                         later maintained by Sergei Pisarevsky. This is the second online implementation of
+                         the database as part of the IGCP 648: Supercontinent Cycles & Global Geodynamics project,
                          and funded by Professor Zheng-Xiang Li's research grants.
                         </p>
                         <p>
-                        This web site provides online access to the contents of the database. Several methods of 
+                        This web site provides online access to the contents of the database. Several methods of
                         querying the database are provided. Selected data can be exported to csv format.
                     </p>
                 </div>
-                <div id="news" class="col-md-5" style="background:rgb(231,231,231); min-height:380px;border-left:solid 2px rgb(216,216,216);">
-                    <h3 style="background-color:rgb(77,131,175); color:white;font-size:12pt;padding:5px;">Latest News</h3>
-      
+                <div id="news" class="col-md-5" style="background:#ffffff; min-height:380px;border-left:solid 2px #f3f4f6;border-radius:8px;padding:20px;">
+                    <h3 class="news-header">Latest News</h3>
+
                     <p>
-                    <strong>New data available</strong> - 
-                    This database is still under construction and new data will be added frequently. If you have data that you would like added to this database please contact us via the "Feedback" option below.  
+                    <strong>New data available</strong> -
+                    This database is still under construction and new data will be added frequently. If you have data that you would like added to this database please contact us via the "Feedback" option below.
                     </p>
                     <p>
-                    <strong>GPMDB in the news!</strong> - 
-                    Under construction! 
-                    </p> 
+                    <strong>GPMDB in the news!</strong> -
+                    Under construction!
+                    </p>
 
-                    <h3 style="background-color:rgb(77,131,175); color:white;font-size:12pt;padding:5px;">Useful Information</h3>
+                    <h3 class="news-header">Useful Information</h3>
 
                     <p>
-                    <strong>Feedback</strong> - 
+                    <strong>Feedback</strong> -
                     If you notice any issues or would like to make suggestions please <a href="mailto:Earth.Dynamics@curtin.edu.au">contact us</a>. <br>A feedback form will be added in subsequent updates.
                     </p>
-                    <p> 
-                    <strong>To cite this database</strong> - 
+                    <p>
+                    <strong>To cite this database</strong> -
                     If you use the GPMDB, please cite our article: Pisarevsky, S.A., Li, Z.X., Tetley, M.G., Liu, Y., and Beardmore, J., 2022. An updated internet-based Global Paleomagnetic Database. <i>Earth Science Reviews</i>, <b>235</b>, 104258. DOI:<a href="https://doi.org/10.1016/j.earscirev.2022.104258">10.1016/j.earscirev.2022.104258</a>
                     </p>
                 </div>
             </div><!--end of row-->
 
         <div class="row">
-			<div id="footer" class="col-md-12" style="color:white; background-color:rgb(0,77,140); height:50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center;">
+			<div id="footer" class="col-md-12" style="color:white; background-color:#1a1a1a; height:50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 8px 8px;">
 
 				<span>
-					<a href="static/metadata/gpmdb_metadata.json" target="_blank" style="color: white; text-decoration: underline;">
+					<a href="static/metadata/gpmdb_metadata.json" target="_blank">
 						View Metadata
 					</a>
 				</span>
-				
-				
+
+
 			</div>
 		</div>
 

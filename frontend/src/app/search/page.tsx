@@ -111,17 +111,82 @@ export default function SearchPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<ViewTab>('table');
 
-    // Fetch continents and rock types on mount
+    // Fetch continents, rock types, and initial data on mount
     useEffect(() => {
-        async function fetchOptions() {
-            const [continentList, rockTypeList] = await Promise.all([
-                getContinents(),
-                getRockTypes(),
-            ]);
-            setContinents(continentList);
-            setRockTypes(rockTypeList);
+        async function init() {
+            try {
+                const [continentList, rockTypeList] = await Promise.all([
+                    getContinents(),
+                    getRockTypes(),
+                ]);
+                setContinents(continentList);
+                setRockTypes(rockTypeList);
+
+                // Perform initial search to populate map/table
+                setIsLoading(true);
+                const response = await searchData({
+                    continent: '',
+                    rocktype: '',
+                    'rockage-min': '',
+                    'rockage-max': '',
+                    'magage-min': '',
+                    'magage-max': '',
+                    rockname: '',
+                    refno: '',
+                    resultno: '',
+                    'lat-min': '',
+                    'lat-max': '',
+                    'lon-min': '',
+                    'lon-max': '',
+                    'qsum-min': '',
+                    'rsum-min': '',
+                    'k-min': '',
+                    'k-max': '',
+                    'a95-max': '',
+                    'b-min': '',
+                    'n-min': '',
+                });
+                setResults(response.data);
+                setResultCount(response.count);
+            } catch (err) {
+                console.error('Initialization failed:', err);
+                setError('Failed to load initial data. Please check backend connection.');
+            } finally {
+                setIsLoading(false);
+            }
         }
-        fetchOptions();
+        init();
+    }, []);
+
+    // Listen for polygon search events from the map
+    useEffect(() => {
+        const handlePolygonSearch = async (e: Event) => {
+            const customEvent = e as CustomEvent<[number, number][]>;
+            const polygon = customEvent.detail;
+
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Import dynamically to avoid circular dependency if any
+                const { searchPolygon } = await import('@/lib/api');
+                const response = await searchPolygon(polygon);
+                setResults(response.data);
+                setResultCount(response.count);
+                // Switch to table view to show results
+                setActiveTab('table');
+            } catch (err) {
+                setError('Polygon search failed.');
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        window.addEventListener('gpmdb:polygon-search', handlePolygonSearch);
+        return () => {
+            window.removeEventListener('gpmdb:polygon-search', handlePolygonSearch);
+        };
     }, []);
 
     // Convert results to map points

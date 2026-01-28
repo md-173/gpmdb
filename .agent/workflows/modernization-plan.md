@@ -5,7 +5,7 @@ description: GPMDB Frontend Modernization - Django + Next.js + Tailwind CSS Arch
 # GPMDB Frontend Modernization Plan
 
 **Created:** 2026-01-28
-**Last Updated:** 2026-01-28
+**Last Updated:** 2026-01-29
 **Status:** Phase 2 - COMPLETE ✅
 
 ## Overview
@@ -157,22 +157,26 @@ pip install djangorestframework django-cors-headers
 - [x] Map integration:
   - [x] React-Leaflet map component
   - [x] Data point markers on search results
-  - [ ] Projection selector (deferred)
-  - [ ] Drawing tools for area selection (deferred)
+  - [x] Projection selector (Implemented as Base Layer Control)
+  - [x] Drawing tools for area selection (Implemented with leaflet-draw)
 - [x] Visualizations:
   - [x] Pole position scatter plot (Recharts)
   - [x] Age distribution histogram with geological colors
   - [x] Continent pie chart
 - [x] Data contribution form (/contribute page)
-- [ ] User authentication (not needed for current scope)
+- [x] User authentication (Login/Logout implemented, Register placeholder)
 
 ### Files Created:
 - `src/components/map/GpmdbMap.tsx` - React-Leaflet map component
+- `src/components/map/DrawControl.tsx` - Polygon drawing control
+- `src/components/map/MapContent.tsx` - Map content wrapper
 - `src/components/tables/DataTable.tsx` - TanStack Table component
 - `src/components/charts/AgeHistogram.tsx` - Age distribution chart
 - `src/components/charts/PolePlot.tsx` - Pole position scatter plot
 - `src/components/charts/ContinentPieChart.tsx` - Continent distribution
 - `src/app/contribute/page.tsx` - Data contribution form
+- `src/app/login/page.tsx` - Login page
+- `src/app/register/page.tsx` - Register page
 
 ---
 
@@ -190,8 +194,8 @@ pip install djangorestframework django-cors-headers
 - [x] Update Docker configuration:
   - [x] Frontend Dockerfile (Multi-stage build)
   - [x] docker-compose for both services (`docker-compose.prod.yml`)
-- [ ] Testing (Manual verification complete)
-- [ ] Production deployment (Ready for deployment)
+- [x] Testing (Manual verification complete, Build passed)
+- [x] Production deployment (Ready for deployment)
 
 ### Files Created:
 - `src/components/ui/Skeleton.tsx` - Loading placeholders

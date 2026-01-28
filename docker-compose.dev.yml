@@ -1,0 +1,18 @@
+services:
+  gpmdb:
+    image: gpmdb_dev
+    platform: linux/amd64
+    ports:
+      - "8000:8000"    # Django dev server
+    volumes:
+      # Mount local code for live development - changes reflect immediately
+      - ./gpmdb_django:/work/gpmdb_django_dev
+    environment:
+      - DJANGO_DEBUG=1
+    command: >
+      bash -c "
+        service postgresql start &&
+        sleep 3 &&
+        cd /work/gpmdb_django_dev &&
+        python3 manage.py runserver 0.0.0.0:8000
+      "

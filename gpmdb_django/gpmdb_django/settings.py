@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'gpmdb',
     'api',
     'django.contrib.gis',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [

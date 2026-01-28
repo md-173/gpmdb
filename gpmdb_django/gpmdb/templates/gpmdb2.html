@@ -16,116 +16,33 @@
     <link rel="stylesheet" type="text/css" href="/static/css/leaflet.css"/>
 	<!-- Leaflet Draw CSS for the drawing functionality -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
-
-	<style>
-		body{
-			background-color:rgb(231,231,231); 
-		}
-		.navbar.nav-custom{
-			background-color: rgb(0,77,140);
-			margin:0;
-			min-height:20px;
-			border:none;
-		}
-		.navbar.nav-custom li a{
-			color:white;
-			font-size:12pt; 
-			font-family: Arial;
-			padding-top:5px;
-			padding-bottom:5px;
-		}
-		.nav-custom.navbar  li  a:hover,  
-		.nav-custom.navbar  li  a:focus{
-			color:yellow;
-			background-color:rgb(0,77,140); 
-		}
-
-		.left-menu-item{
-			background-color:rgb(0,77,140); 
-			color:white; 
-			padding:5px 0px 5px 0px; 
-			margin-bottom:2px;font-size: 11pt;
-			font-weight: bold; 
-			text-align:center;
-		}
-		.left-menu-item:hover,
-		.left-menu-item:focus{
-			color: yellow;
-			cursor: pointer;
-		}
-
-		#GPMDB-title{
-			font-size:44pt; 
-			font-family: Arial; 
-			font-weight:bold; 
-			color:rgb(0,77,140);
-			margin-left:70px;
-		}
-
-		@media screen and (max-width: 1023px){
-			#GPD-title{
-				display:none;
-			}
-		 #GPMDB-title{
-				padding-top:20px;
-			}
-		}
-
-		@media screen and (max-width: 767px){
-			#GPMDB-title{
-				padding-top:40px;
-				font-size:22pt;
-			}
-		}
-
-		@media screen and (max-width: 424px){
-			#three-icons{
-				display:none;
-			}
-		}
-
-		.navbar-toggle{
-			height:25px;
-			padding: 5px 5px;
-			background-color: #ddd;
-		}
-
-		td{
-			white-space: nowrap;
-		}
-		
-		.custom-star-marker {
-			color: gold;
-			font-size: 20px;
-			font-weight: bold;
-			text-shadow: 0 0 3px black;
-		}
-	</style>
+    <!-- Custom theme CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css"/>
 </head>
-<body>  
-    <div style="position:fixed;top:-10px;height:100px;background-color:rgb(231,231,231);width:100%;z-index:1049;">
-    <div class="container">  
-        <div class="row"> 
+<body>
+    <div style="position:fixed;top:-10px;height:100px;background-color:#ffffff;width:100%;z-index:1049;">
+    <div class="container">
+        <div class="row">
         <div class="col-md-12" id="logo">
             <div style="position:absolute;top:0px;"><img src="static/images/compass.png"></div>
             <div id="three-icons" style="float:right; margin-top:20px;">
                 <img style="margin-right:-23px; margin-top:-5px;" src="static/images/ball.png">
                 <img src="static/images/house.png">
-                <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">            
+                <img style="margin-left:-20px;margin-top:-10px;"src="static/images/hammer.png">
             </div>
 
             <div id="GPMDB-title">GP</div>
-            <div id="GPD-title" style="font-size:24pt; font-family: Arial; font-weight:bold; color:black; margin-top: -24px; margin-left:70px;">GLOBlTest22</div>
+            <div id="GPD-title">GLOBlTest22</div>
         </div>
         </div>
     </div>
     </div>
 
-    <div style="background-color:rgb(77,131,175); width:100%;position:fixed;top:90px;z-index:1049;">
-	<div class="container" role="menu-container" style=" background-color: rgb(0,77,140);">
+    <div style="background-color:#1a1a1a; width:100%;position:fixed;top:90px;z-index:1049;">
+	<div class="container" role="menu-container" style="background-color:#1a1a1a;">
 		<div class="row">
         <nav class="navbar navbar-default nav-custom">
-            <div class="container-fluid" style=" background-color: rgb(0,77,140);">
+            <div class="container-fluid" style="background-color:#1a1a1a;">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
                         <span class="sr-only">Toggle navigation</span>
@@ -151,11 +68,11 @@
 	</div>
 	</div>
 
-    <div class="container" role="main" style="background-color:rgb(216,216,216);margin-top:130px;">
-           
-            <div class="row" id="info" style="background:rgb(216,216,216);padding:5px;">
-                <div id="welcome" style="min-height:380px;background:rgb(231,231,231);">
-                    <h3 style="color:rgb(0,77,140);">Pending Additions to the Database:</h3>
+    <div class="container" role="main" style="background-color:#f3f4f6;margin-top:130px;">
+
+            <div class="row" id="info" style="background:#f3f4f6;padding:5px;">
+                <div id="welcome" style="min-height:380px;background:#ffffff;border-radius:8px;padding:20px;">
+                    <h3>Pending Additions to the Database:</h3>
                     <p>
                         These are the pending additions to be made to the database.
 						<div class="table-responsive">

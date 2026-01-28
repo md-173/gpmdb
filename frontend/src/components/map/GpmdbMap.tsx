@@ -70,57 +70,22 @@ export default function GpmdbMap({
         );
     }
 
-    return (
-        <div style={{ height }} className="rounded-lg overflow-hidden">
-            <MapContainer
-                center={center}
-                zoom={zoom}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={true}
-            >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+    // Dynamically import MapContent (client-side only)
+    const MapContent = dynamic(
+        () => import('./MapContent'),
+        { ssr: false }
+    );
 
-                {/* Render data points */}
-                {points.map((point) => (
-                    <CircleMarker
-                        key={point.id}
-                        center={[point.lat, point.lon]}
-                        radius={6}
-                        pathOptions={{
-                            color: '#cc7a60',
-                            fillColor: '#cc7a60',
-                            fillOpacity: 0.7,
-                            weight: 1,
-                        }}
-                        eventHandlers={{
-                            click: () => onPointClick?.(point),
-                        }}
-                    >
-                        <Popup>
-                            <div className="text-sm">
-                                {point.label && (
-                                    <div className="font-semibold">{point.label}</div>
-                                )}
-                                {point.rockName && (
-                                    <div><strong>Rock:</strong> {point.rockName}</div>
-                                )}
-                                {point.age && (
-                                    <div><strong>Age:</strong> {point.age} Ma</div>
-                                )}
-                                {point.continent && (
-                                    <div><strong>Continent:</strong> {point.continent}</div>
-                                )}
-                                <div className="text-xs text-gray-500">
-                                    {point.lat.toFixed(2)}°, {point.lon.toFixed(2)}°
-                                </div>
-                            </div>
-                        </Popup>
-                    </CircleMarker>
-                ))}
-            </MapContainer>
+    return (
+        <div className="relative">
+            <div style={{ height }} className="rounded-lg overflow-hidden z-0">
+                <MapContent
+                    points={points}
+                    center={center}
+                    zoom={zoom}
+                    onPointClick={onPointClick}
+                />
+            </div>
         </div>
     );
 }

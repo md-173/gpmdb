@@ -18,6 +18,7 @@ from django.urls import re_path as url, include
 from django.contrib import admin
 from gpmdb import views
 from gpmdb import api_views
+from gpmdb import api_auth
 
 urlpatterns = [
     # Legacy Django template views
@@ -50,6 +51,12 @@ urlpatterns = [
     url(r'^api/continents/?$', api_views.api_continents, name='api_continents'),
     url(r'^api/rocktypes/?$', api_views.api_rocktypes, name='api_rocktypes'),
     url(r'^api/contribution/?$', api_views.api_contribution, name='api_contribution'),
+    url(r'^api/search/polygon/?$', api_views.api_search_polygon, name='api_search_polygon'),
+    
+    # Auth endpoints
+    url(r'^api/auth/login/?$', api_auth.api_login, name='api_login'),
+    url(r'^api/auth/logout/?$', api_auth.api_logout, name='api_logout'),
+    url(r'^api/auth/user/?$', api_auth.api_user, name='api_user'),
 ]
         
 #    url(r'^admin/', admin.site.urls),

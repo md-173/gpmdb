@@ -364,3 +364,92 @@ def api_contribution(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def api_search_polygon(request):
+    """
+    GET /api/search/polygon/
+    Query param: polygon=[[lon,lat],[lon,lat],...] (JSON string)
+    """
+    try:
+        polygon_str = request.GET.get('polygon')
+        if not polygon_str:
+            return JsonResponse({'error': 'Polygon parameter is missing'}, status=400)
+            
+        # Parse polygon
+        polygon = json.loads(polygon_str)
+        
+        # Create WKT (Well Known Text) for PostGIS
+        # Ensure the polygon is closed (first point = last point)
+        if polygon[0] != polygon[-1]:
+            polygon.append(polygon[0])
+            
+        polygon_wkt = "POLYGON((" + ", ".join(f"{point[0]} {point[1]}" for point in polygon) + "))"
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Query using ST_Within
+        query_str = '''
+            SELECT r."REFNO", pmr."RESULTNO", ru."ROCKNAME", r."YEAR", r."AUTHORS",
+                r."JOURNAL", r."VOLUME", r."VPAGES", 
+                ru."CONTINENT", ru."ROCKTYPE", ru."LOWAGE", ru."HIGHAGE", 
+                pmr."LOMAGAGE", pmr."HIMAGAGE", pmr."SLAT", pmr."SLONG", pmr."PLAT", pmr."PLONG", 
+                pmr."DP", pmr."DM", re."QSUM", re."RSUM", pmr."KD", pmr."ED95", pmr."B", pmr."N"
+            FROM ((("ROCKUNIT" AS ru 
+                INNER JOIN "REFERENCE" AS r ON r."REFNO" = ru."REFNO")
+                INNER JOIN "PMAGRESULT" AS pmr ON ru."ROCKUNITNO" = pmr."ROCKUNITNO")
+                INNER JOIN "RELIABILITY" AS re ON pmr."RESULTNO" = re."RESULTNO")
+            WHERE ST_Within(ru.geom, ST_SetSRID(ST_GeomFromText(%s), 4326))
+            ORDER BY r."YEAR" DESC LIMIT 1000
+        '''
+        
+        cursor.execute(query_str, (polygon_wkt,))
+        
+        # Get column names
+        columns = [desc[0] for desc in cursor.description]
+        
+        # Build result list (same format as api_search)
+        results = []
+        for row in cursor:
+            result = {
+                'refNo': row[0],
+                'resultNo': row[1],
+                'rockName': row[2],
+                'year': row[3],
+                'authors': row[4],
+                'journal': row[5],
+                'volume': row[6],
+                'pages': row[7],
+                'continent': row[8],
+                'rockType': row[9],
+                'lowAge': row[10],
+                'highAge': row[11],
+                'loMagAge': row[12],
+                'hiMagAge': row[13],
+                'sLat': float(row[14]) if row[14] else None,
+                'sLon': float(row[15]) if row[15] else None,
+                'pLat': float(row[16]) if row[16] else None,
+                'pLon': float(row[17]) if row[17] else None,
+                'dp': float(row[18]) if row[18] else None,
+                'dm': float(row[19]) if row[19] else None,
+                'qsum': row[20],
+                'rsum': row[21],
+                'k': float(row[22]) if row[22] else None,
+                'a95': float(row[23]) if row[23] else None,
+                'b': row[24],
+                'n': row[25],
+            }
+            results.append(result)
+        
+        cursor.close()
+        conn.close()
+        
+        return JsonResponse({
+            'columns': columns,
+            'data': results,
+            'count': len(results),
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

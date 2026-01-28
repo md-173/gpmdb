@@ -265,3 +265,100 @@ export function exportToCSV(data: PaleomagneticResult[], filename: string = 'gpm
     link.click();
     URL.revokeObjectURL(link.href);
 }
+
+/**
+ * Search data within a polygon
+ */
+export async function searchPolygon(polygon: [number, number][]): Promise<SearchResponse> {
+    try {
+        const polygonStr = JSON.stringify(polygon);
+        const response = await api.get<SearchResponse>(`/search/polygon/?polygon=${encodeURIComponent(polygonStr)}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to search polygon:', error);
+        throw error;
+    }
+}
+
+// Auth Types
+export interface User {
+    id: number;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    isStaff: boolean;
+}
+
+export interface AuthResponse {
+    token: string;
+    user: User;
+}
+
+/**
+ * Login
+ */
+export async function login(username: string, password: string): Promise<AuthResponse> {
+    try {
+        const response = await api.post<AuthResponse>('/auth/login/', { username, password });
+        // Set token in header for future requests
+        if (response.data.token) {
+            api.defaults.headers.common['Authorization'] = `Token ${response.data.token}`;
+            // Store in localStorage if in browser
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('gpmdb_token', response.data.token);
+            }
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Login failed:', error);
+        throw error;
+    }
+}
+
+/**
+ * Logout
+ */
+export async function logout(): Promise<void> {
+    try {
+        await api.post('/auth/logout/');
+        delete api.defaults.headers.common['Authorization'];
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('gpmdb_token');
+        }
+    } catch (error) {
+        console.error('Logout failed:', error);
+        // Clean up anyway
+        delete api.defaults.headers.common['Authorization'];
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('gpmdb_token');
+        }
+    }
+}
+
+/**
+ * Get current user
+ */
+export async function getUser(): Promise<User> {
+    try {
+        // Restore token if exists
+        if (typeof window !== 'undefined' && !api.defaults.headers.common['Authorization']) {
+            const token = localStorage.getItem('gpmdb_token');
+            if (token) {
+                api.defaults.headers.common['Authorization'] = `Token ${token}`;
+            }
+        }
+
+        const response = await api.get<User>('/auth/user/');
+        return response.data;
+    } catch (error) {
+        // If 401, clear token
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+            delete api.defaults.headers.common['Authorization'];
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('gpmdb_token');
+            }
+        }
+        throw error;
+    }
+}
