@@ -120,7 +120,7 @@ npm run dev
 - [x] Set up CORS for frontend access
 - [x] Connect Next.js to Django APIs
 - [x] Update frontend components to fetch real data
-- [ ] Create API documentation (optional)
+- [x] Create API documentation (`API.md`)
 
 ### Files Created/Modified:
 - `gpmdb_django/gpmdb_django/settings.py` - Added DRF & CORS config
