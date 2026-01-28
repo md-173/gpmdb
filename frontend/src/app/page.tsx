@@ -1,15 +1,48 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { getStats, DatabaseStats } from '@/lib/api';
 
-// Placeholder stats - these will come from the Django API later
-const stats = {
-  poles: 12847,
-  rockUnits: 8234,
-  references: 3156,
-};
+// Dynamically import the map component to avoid SSR issues
+const GpmdbMap = dynamic(
+  () => import('@/components/map/GpmdbMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-secondary)]">
+        <div className="text-center">
+          <div className="text-4xl mb-2">🗺️</div>
+          <p>Loading map...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function Home() {
+  const [stats, setStats] = useState<DatabaseStats>({
+    poles: 0,
+    rockUnits: 0,
+    references: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const data = await getStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
   return (
     <div className="bg-[var(--bg-secondary)] min-h-screen">
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -26,13 +59,28 @@ export default function Home() {
               <table className="w-full mb-4 text-sm">
                 <tbody>
                   <tr className="border-b border-dashed border-[var(--border-gray)]">
-                    <td className="py-2">Palaeomagnetic Poles: <span className="font-semibold">{stats.poles.toLocaleString()}</span></td>
+                    <td className="py-2">
+                      Palaeomagnetic Poles: {' '}
+                      <span className="font-semibold">
+                        {loading ? '...' : stats.poles.toLocaleString()}
+                      </span>
+                    </td>
                   </tr>
                   <tr className="border-b border-dashed border-[var(--border-gray)]">
-                    <td className="py-2">Rock Units: <span className="font-semibold">{stats.rockUnits.toLocaleString()}</span></td>
+                    <td className="py-2">
+                      Rock Units: {' '}
+                      <span className="font-semibold">
+                        {loading ? '...' : stats.rockUnits.toLocaleString()}
+                      </span>
+                    </td>
                   </tr>
                   <tr className="border-b border-dashed border-[var(--border-gray)]">
-                    <td className="py-2">References: <span className="font-semibold">{stats.references.toLocaleString()}</span></td>
+                    <td className="py-2">
+                      References: {' '}
+                      <span className="font-semibold">
+                        {loading ? '...' : stats.references.toLocaleString()}
+                      </span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -76,23 +124,19 @@ export default function Home() {
           {/* Map Area */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg overflow-hidden" style={{ height: '350px' }}>
-              {/* Map placeholder - will be replaced with React-Leaflet */}
-              <div className="w-full h-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-secondary)]">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">🗺️</div>
-                  <p>Interactive Map</p>
-                  <p className="text-sm">(Coming in Phase 2)</p>
-                </div>
-              </div>
+              <GpmdbMap
+                height="350px"
+                center={[0, 0]}
+                zoom={2}
+                points={[]}
+              />
             </div>
 
             {/* Projection Selector */}
             <div className="mt-2">
               <select className="px-3 py-2 border border-[var(--border-gray)] rounded-md text-sm bg-white">
-                <option value="Leaflet">Leaflet</option>
-                <option value="EPSG3857">Web Mercator</option>
-                <option value="EPSG4326">Plate Carrée (WGS84)</option>
-                <option value="EPSG3031">Antarctic Polar</option>
+                <option value="osm">OpenStreetMap</option>
+                <option value="satellite">Satellite</option>
               </select>
             </div>
           </div>

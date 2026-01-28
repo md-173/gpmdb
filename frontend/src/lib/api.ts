@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base API URL - will point to Django backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Base API URL - Django backend via Docker (Apache on port 8080)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -20,45 +20,60 @@ export interface DatabaseStats {
 
 export interface SearchParams {
     continent?: string;
-    rockType?: string;
-    rockAgeMin?: number;
-    rockAgeMax?: number;
-    magAgeMin?: number;
-    magAgeMax?: number;
-    rockName?: string;
-    refNo?: number;
-    resultNo?: number;
-    minLat?: number;
-    maxLat?: number;
-    minLon?: number;
-    maxLon?: number;
-    minQsum?: number;
-    minRsum?: number;
-    minK?: number;
-    maxK?: number;
-    maxA95?: number;
-    minB?: number;
-    minN?: number;
+    rocktype?: string;
+    'rockage-min'?: string;
+    'rockage-max'?: string;
+    'magage-min'?: string;
+    'magage-max'?: string;
+    rockname?: string;
+    refno?: string;
+    resultno?: string;
+    'lat-min'?: string;
+    'lat-max'?: string;
+    'lon-min'?: string;
+    'lon-max'?: string;
+    'qsum-min'?: string;
+    'rsum-min'?: string;
+    'k-min'?: string;
+    'k-max'?: string;
+    'a95-max'?: string;
+    'b-min'?: string;
+    'n-min'?: string;
 }
 
 export interface PaleomagneticResult {
-    resultNo: number;
     refNo: number;
-    rockUnit: string;
+    resultNo: number;
+    rockName: string;
+    year: number;
+    authors: string;
+    journal: string;
+    volume: string;
+    pages: string;
     continent: string;
-    terrane?: string;
-    lat: number;
-    lon: number;
-    age: number;
-    ageError?: number;
     rockType: string;
-    poleLat: number;
-    poleLon: number;
-    a95: number;
-    k?: number;
-    n?: number;
-    qsum?: number;
-    rsum?: number;
+    lowAge: number;
+    highAge: number;
+    loMagAge: number;
+    hiMagAge: number;
+    sLat: number | null;
+    sLon: number | null;
+    pLat: number | null;
+    pLon: number | null;
+    dp: number | null;
+    dm: number | null;
+    qsum: number;
+    rsum: number;
+    k: number | null;
+    a95: number | null;
+    b: number | null;
+    n: number | null;
+}
+
+export interface SearchResponse {
+    columns: string[];
+    data: PaleomagneticResult[];
+    count: number;
 }
 
 export interface Reference {
@@ -67,9 +82,8 @@ export interface Reference {
     year: number;
     title: string;
     journal: string;
-    volume?: string;
-    pages?: string;
-    doi?: string;
+    volume: string;
+    pages: string;
 }
 
 // API Functions
@@ -78,40 +92,113 @@ export interface Reference {
  * Get database statistics
  */
 export async function getStats(): Promise<DatabaseStats> {
-    // TODO: Replace with actual API call when Django REST API is ready
-    // const response = await api.get('/stats/');
-    // return response.data;
-
-    // Placeholder data for now
-    return {
-        poles: 12847,
-        rockUnits: 8234,
-        references: 3156,
-    };
+    try {
+        const response = await api.get<DatabaseStats>('/stats/');
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        // Return placeholder data if API fails
+        return {
+            poles: 0,
+            rockUnits: 0,
+            references: 0,
+        };
+    }
 }
 
 /**
  * Search paleomagnetic data
  */
-export async function searchData(params: SearchParams): Promise<PaleomagneticResult[]> {
-    // TODO: Replace with actual API call when Django REST API is ready
-    // const response = await api.post('/search/', params);
-    // return response.data;
+export async function searchData(params: SearchParams): Promise<SearchResponse> {
+    try {
+        // Convert params to query string, filtering out empty values
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value && value.trim() !== '') {
+                queryParams.append(key, value);
+            }
+        });
 
-    console.log('Search params:', params);
-    return [];
+        const response = await api.get<SearchResponse>(`/search/?${queryParams.toString()}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to search:', error);
+        throw error;
+    }
 }
 
 /**
- * Get reference by number
+ * Get references with optional filtering
  */
-export async function getReference(refNo: number): Promise<Reference | null> {
-    // TODO: Replace with actual API call
-    // const response = await api.get(`/references/${refNo}/`);
-    // return response.data;
+export async function getReferences(params?: {
+    limit?: number;
+    offset?: number;
+    year?: number;
+    author?: string;
+}): Promise<{ data: Reference[]; count: number }> {
+    try {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, String(value));
+                }
+            });
+        }
 
-    console.log('Get reference:', refNo);
-    return null;
+        const response = await api.get(`/references/?${queryParams.toString()}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch references:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get list of continents
+ */
+export async function getContinents(): Promise<string[]> {
+    try {
+        const response = await api.get<{ continents: string[] }>('/continents/');
+        return response.data.continents;
+    } catch (error) {
+        console.error('Failed to fetch continents:', error);
+        // Return default list if API fails
+        return [
+            'Africa',
+            'Antarctica',
+            'Asia',
+            'Atlantic Ocean',
+            'Australia',
+            'Europe',
+            'Greenland',
+            'Indian Ocean',
+            'Middle East',
+            'North America',
+            'Pacific Ocean',
+            'South America',
+        ];
+    }
+}
+
+/**
+ * Get list of rock types
+ */
+export async function getRockTypes(): Promise<string[]> {
+    try {
+        const response = await api.get<{ rockTypes: string[] }>('/rocktypes/');
+        return response.data.rockTypes;
+    } catch (error) {
+        console.error('Failed to fetch rock types:', error);
+        // Return default list if API fails
+        return [
+            'extrusives',
+            'intrusives',
+            'sediments',
+            'limestones',
+            'metamorphics',
+        ];
+    }
 }
 
 /**
@@ -125,12 +212,13 @@ export async function submitContribution(data: {
     lat?: number;
     lon?: number;
 }): Promise<{ success: boolean; message: string }> {
-    // TODO: Replace with actual API call
-    // const response = await api.post('/contributions/', data);
-    // return response.data;
-
-    console.log('Submit contribution:', data);
-    return { success: true, message: 'Contribution submitted (placeholder)' };
+    try {
+        const response = await api.post('/contribution/', data);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to submit contribution:', error);
+        throw error;
+    }
 }
 
 /**
@@ -142,18 +230,29 @@ export function exportToCSV(data: PaleomagneticResult[], filename: string = 'gpm
         return;
     }
 
-    // Create CSV headers
-    const headers = Object.keys(data[0]);
+    // Define column order and headers
+    const headers = [
+        'RefNo', 'ResultNo', 'RockName', 'Year', 'Authors', 'Journal', 'Volume', 'Pages',
+        'Continent', 'RockType', 'LowAge', 'HighAge', 'LoMagAge', 'HiMagAge',
+        'SLat', 'SLon', 'PLat', 'PLon', 'DP', 'DM', 'QSUM', 'RSUM', 'K', 'A95', 'B', 'N'
+    ];
+
+    const keys: (keyof PaleomagneticResult)[] = [
+        'refNo', 'resultNo', 'rockName', 'year', 'authors', 'journal', 'volume', 'pages',
+        'continent', 'rockType', 'lowAge', 'highAge', 'loMagAge', 'hiMagAge',
+        'sLat', 'sLon', 'pLat', 'pLon', 'dp', 'dm', 'qsum', 'rsum', 'k', 'a95', 'b', 'n'
+    ];
+
     const csvContent = [
         headers.join(','),
         ...data.map(row =>
-            headers.map(header => {
-                const value = row[header as keyof PaleomagneticResult];
-                // Escape values that contain commas or quotes
+            keys.map(key => {
+                const value = row[key];
+                if (value === null || value === undefined) return '';
                 if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
                     return `"${value.replace(/"/g, '""')}"`;
                 }
-                return value ?? '';
+                return value;
             }).join(',')
         )
     ].join('\n');
