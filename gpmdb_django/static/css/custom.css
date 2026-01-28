@@ -1,0 +1,512 @@
+/* Google Font import for JetBrains Mono */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+/* CSS Variables for consistent theming */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #5b6370;
+  --accent-coral: #cc7a60;
+  --accent-coral-hover: #b5694f;
+  --accent-green: #00c758;
+  --accent-blue: #3080ff;
+  --dark: #1a1a1a;
+  --border-gray: #e5e7eb;
+  --grid-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Base styles with subtle grid background */
+body {
+  background-color: var(--bg-primary);
+  /* Subtle grid pattern like skillsmp.com */
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Typography with JetBrains Mono */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 60px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 30px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+/* Labels and form text */
+label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Paragraphs */
+p {
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.7;
+}
+
+/* Navigation bar - dark minimal style */
+.navbar.nav-custom {
+  background-color: var(--dark);
+  margin: 0;
+  min-height: 20px;
+  border: none;
+  border-bottom: 1px solid #333;
+}
+
+.navbar.nav-custom li a {
+  color: #ffffff;
+  font-size: 12pt;
+  font-family: 'JetBrains Mono', monospace;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  transition: color 0.2s ease;
+}
+
+.nav-custom.navbar li a:hover,
+.nav-custom.navbar li a:focus {
+  color: var(--accent-coral);
+  background-color: var(--dark);
+}
+
+/* Left menu items - coral accent style */
+.left-menu-item {
+  background-color: var(--accent-coral);
+  color: white;
+  padding: 8px 0px;
+  margin-bottom: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11pt;
+  font-weight: 500;
+  text-align: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.left-menu-item:hover,
+.left-menu-item:focus {
+  background-color: var(--accent-coral-hover);
+  color: white;
+  cursor: pointer;
+}
+
+/* Section headers - dark with coral accent bar */
+.section-header {
+  background-color: var(--dark);
+  color: white;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent-coral);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Title styling */
+#GPMDB-title {
+  font-size: 44pt;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: bold;
+  color: var(--dark);
+  margin-left: 70px;
+}
+
+#GPD-title {
+  font-size: 24pt;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: bold;
+  color: var(--text-secondary);
+  margin-top: -24px;
+  margin-left: 70px;
+}
+
+/* Responsive title adjustments */
+@media screen and (max-width: 1023px) {
+  #GPD-title {
+    display: none;
+  }
+  #GPMDB-title {
+    padding-top: 20px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  #GPMDB-title {
+    padding-top: 40px;
+    font-size: 22pt;
+  }
+}
+
+@media screen and (max-width: 424px) {
+  #three-icons {
+    display: none;
+  }
+}
+
+/* Navbar toggle button */
+.navbar-toggle {
+  height: 25px;
+  padding: 5px 5px;
+  background-color: var(--bg-secondary);
+  border-color: var(--border-gray);
+}
+
+/* Table styles */
+td {
+  white-space: nowrap;
+}
+
+/* Buttons - modern flat style with coral accent */
+.btn-primary {
+  background-color: var(--accent-coral);
+  border-color: var(--accent-coral);
+  color: white;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 16px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active {
+  background-color: var(--accent-coral-hover);
+  border-color: var(--accent-coral-hover);
+  color: white;
+}
+
+.btn-info {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.btn-info:hover,
+.btn-info:focus {
+  background-color: #2568cc;
+  border-color: #2568cc;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  border-radius: 6px;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-default,
+.btn {
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Form controls - clean borders */
+.form-control {
+  border: 1px solid var(--border-gray);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(204, 122, 96, 0.1);
+  outline: none;
+}
+
+/* Cards/panels - subtle shadows */
+.panel,
+.modal-content {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-gray);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border-gray);
+  padding: 16px 20px;
+}
+
+.modal-header .modal-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border-gray);
+  padding: 16px 20px;
+}
+
+/* Header area styling */
+.header-area {
+  background-color: var(--bg-primary);
+}
+
+/* Main container background with grid */
+.main-container {
+  background-color: var(--bg-secondary);
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Content areas - solid background to hide grid */
+.content-panel {
+  background-color: var(--bg-primary);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Hide grid on white content panels */
+#welcome,
+#news,
+#left-menu > div,
+.modal-content,
+.login-container {
+  background-image: none;
+}
+
+/* Stats table styling */
+.stats-table {
+  background-color: var(--bg-primary);
+  border-collapse: separate;
+  border-spacing: 10px 5px;
+  width: 100%;
+  margin-bottom: 15px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stats-table td {
+  border-bottom: 1px dashed var(--border-gray);
+  padding: 8px 10px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Footer styling */
+#footer {
+  background-color: var(--dark);
+  color: white;
+}
+
+#footer a {
+  color: white;
+  text-decoration: underline;
+}
+
+#footer a:hover {
+  color: var(--accent-coral);
+}
+
+/* News section header */
+.news-header {
+  background-color: var(--dark);
+  color: white;
+  font-size: 12pt;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent-coral);
+}
+
+/* Welcome section */
+#welcome h3,
+#news h3 {
+  color: var(--dark);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Links */
+a {
+  color: var(--accent-blue);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-coral);
+  text-decoration: none;
+}
+
+/* Custom star marker (preserve for map) */
+.custom-star-marker {
+  color: gold;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 0 0 3px black;
+}
+
+/* Leaflet editing icons (preserve for map) */
+.leaflet-div-icon.leaflet-editing-icon {
+  width: 6px !important;
+  height: 6px !important;
+  margin-left: -3px !important;
+  margin-top: -3px !important;
+  background-color: #3388ff;
+  border: 1px solid #000;
+  border-radius: 50%;
+}
+
+/* Tooltip styling */
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-gray);
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress bar */
+.progress {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: var(--accent-coral);
+}
+
+/* DataTables override for consistent styling */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--accent-coral) !important;
+  border-color: var(--accent-coral) !important;
+  color: white !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-gray) !important;
+}
+
+/* Table styling */
+table.dataTable thead th {
+  background-color: var(--dark);
+  color: white;
+}
+
+table.table-bordered {
+  border-color: var(--border-gray);
+}
+
+table.table-bordered > thead > tr > th {
+  background-color: var(--dark);
+  color: white;
+  border-color: #333;
+}
+
+/* MyButton styling for additions page */
+.MyButton {
+  background-color: var(--accent-coral);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.MyButton:hover {
+  background-color: var(--accent-coral-hover);
+}
+
+/* Login page specific styles */
+.login-container {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 40px;
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h2 {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--dark);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-gray);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.login-container input:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(204, 122, 96, 0.1);
+  outline: none;
+}
+
+.login-container button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--accent-coral);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.login-container button[type="submit"]:hover {
+  background-color: var(--accent-coral-hover);
+}
+
+.login-container label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
