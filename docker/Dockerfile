@@ -20,6 +20,7 @@ ENV GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
 RUN apt-get install -y python3-pip
 RUN pip3 install pmagpy
 RUN pip3 install pandas
+RUN pip3 install djangorestframework
 
 RUN apt-get install -y python3-pip python3-dev libfreetype6-dev libpng-dev pkg-config
 
@@ -67,11 +68,9 @@ ADD docker/ssl.conf /etc/apache2/sites-enabled/
 RUN mkdir /etc/apache2/ssl/
 ADD docker/*.pem /etc/apache2/ssl/
 
-# Add Tini
-ENV TINI_VERSION v0.9.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
+# Add Tini via apt for multi-arch support
+RUN apt-get install -y tini
+ENTRYPOINT ["/usr/bin/tini", "--"]
 
 EXPOSE 5432 80 443
 

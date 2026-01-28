@@ -11,7 +11,6 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    platform: linux/amd64 # Required for Apple Silicon Macs
     ports:
       - "8080:80" # HTTP - access at http://localhost:8080
       - "8443:443" # HTTPS
