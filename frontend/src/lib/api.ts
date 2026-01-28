@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API URL - Django backend via Docker (Apache on port 8080)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 // Create axios instance with default config
 export const api = axios.create({
