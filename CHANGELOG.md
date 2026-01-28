@@ -1,57 +1,40 @@
 # Changelog
 
-All notable changes to the GPMDB project will be documented in this file.
+All notable changes to the GPMDB Modernization project will be documented in this file.
 
-## [2.0.0] - 2026-01-28
+## [1.0.0] - 2026-01-29
 
-### Added - Next.js Frontend (Phase 1)
+### Added
+- **Frontend Application**:
+  - Initialized Next.js 16 application with Tailwind CSS 4.
+  - Created modern, responsive UI components (Cards, Buttons, Inputs).
+  - Implemented `GpmdbMap` component using React-Leaflet for interactive data visualization.
+  - Added `DataTable` component using TanStack Table for sortable, paginated results.
+  - Added data visualization charts: `AgeHistogram`, `PolePlot`, `ContinentPieChart` using Recharts.
+  - Created pages: Homepage (Stats & Map), Search (Advanced filters & Results), Contribute (Data submission).
+  - Added `Skeleton` loading states and `ErrorBoundary` for robust error handling.
+  - Configured SEO meta tags.
 
-This release introduces a modern React-based frontend using Next.js and Tailwind CSS, 
-while preserving the original visual design and styling.
+- **Backend API**:
+  - Added `api_views.py` with REST endpoints:
+    - `GET /api/stats/`: Database statistics.
+    - `GET /api/search/`: Advanced search with filtering.
+    - `GET /api/references/`, `/api/continents/`, `/api/rocktypes/`: Metadata endpoints.
+    - `POST /api/contribution/`: Data contribution endpoint.
+  - Added `middleware.py` for Custom CORS handling (Django 2.2 compatible).
+  - Updated `urls.py` to include `/api/` routes.
 
-#### New Frontend Structure (`/frontend`)
-- **Next.js 16** with App Router for modern React architecture
-- **Tailwind CSS 4** for utility-first styling
-- **TypeScript** for type-safe development
+- **Deployment**:
+  - Created `frontend/Dockerfile` for production build (multi-stage).
+  - Created `docker-compose.prod.yml` for unified deployment of Django backend and Next.js frontend.
+  - Updated `docker-compose.yml` for development.
 
-#### Pages Created
-- `src/app/page.tsx` - Homepage with stats sidebar, map placeholder, welcome/news sections
-- `src/app/search/page.tsx` - Full search form with all original filter options
-- `src/app/about/page.tsx` - About page with history, team, and citation info
+### Changed
+- **Django Settings**:
+  - Updated `settings.py` to include `gpmdb.middleware.CorsMiddleware`.
+  - Configured `CORS_ALLOWED_ORIGINS` for frontend communication.
+- **Documentation**:
+  - Updated `.agent/workflows/modernization-plan.md` with completed phases.
 
-#### Components Created
-- `src/components/layout/Header.tsx` - Responsive header with dark navbar
-- `src/components/layout/Footer.tsx` - Simple footer matching original design
-- `src/components/ui/Button.tsx` - Reusable button component with variants
-- `src/components/ui/Card.tsx` - Card and SectionHeader components
-
-#### Styling
-- `src/app/globals.css` - Design system matching original custom.css
-  - Light theme with subtle grid background
-  - JetBrains Mono font
-  - Coral (#cc7a60) accent color
-  - Clean, minimal aesthetic
-
-#### API Layer
-- `src/lib/api.ts` - API client prepared for Django REST Framework integration
-
-#### Dependencies Added
-- react-leaflet, leaflet - For interactive maps (Phase 2)
-- @tanstack/react-table - For data tables (Phase 3)
-- recharts - For charts (Phase 3)
-- axios - For API calls
-- lucide-react - For icons
-- framer-motion - For subtle animations (simplified)
-
-### Added - Workflow Documentation
-- `.agent/workflows/modernization-plan.md` - Complete 4-phase implementation plan
-
-### Preserved
-- All original Django templates remain functional
-- Original custom.css styling preserved
-- Database and backend unchanged
-
-### Technical Notes
-- Frontend runs on port 3000: `cd frontend && npm run dev`
-- Django backend continues on port 8000
-- Phase 2 will connect frontend to Django via REST API
+### Fixed
+- Resolved dependency conflicts with Django REST Framework by implementing lightweight, native Django JSON views compatible with the existing Docker environment (Django 2.2).

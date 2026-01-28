@@ -1,0 +1,34 @@
+# Docker Compose for GPMDB Development
+# Usage:
+#   Build first time:  docker-compose build
+#   Start:             docker-compose up -d
+#   View logs:         docker-compose logs -f
+#   Stop:              docker-compose down
+#   Rebuild:           docker-compose build --no-cache
+
+services:
+  gpmdb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64 # Required for Apple Silicon Macs
+    ports:
+      - "8080:80" # HTTP - access at http://localhost:8080
+      - "8443:443" # HTTPS
+      - "8000:8000" # Django dev server for Next.js API access
+      - "5432:5432" # PostgreSQL (optional, for direct DB access)
+    volumes:
+      # Mount local directories for live development (changes reflect immediately)
+      - ./gpmdb_django/gpmdb/templates:/work/gpmdb/templates:ro
+      - ./gpmdb_django/static:/work/static:ro
+      - ./gpmdb_django/gpmdb/views.py:/work/gpmdb/views.py:ro
+      - ./gpmdb_django/gpmdb/api_views.py:/work/gpmdb/api_views.py:ro
+      - ./gpmdb_django/gpmdb/middleware.py:/work/gpmdb/middleware.py:ro
+      - ./gpmdb_django/gpmdb_django/settings.py:/work/gpmdb_django/settings.py:ro
+      - ./gpmdb_django/gpmdb_django/urls.py:/work/gpmdb_django/urls.py:ro
+      # Note: Some changes (like views.py) may require Apache restart
+      # Run: docker-compose exec gpmdb service apache2 restart
+    restart: unless-stopped
+    # Enable container to be kept running
+    stdin_open: true
+    tty: true

@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Django Backend (Legacy + API)
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64
+    ports:
+      - "8080:80" # Apache serving Django
+      - "5432:5432" # PostgreSQL
+    volumes:
+      - ./gpmdb_django/gpmdb/templates:/work/gpmdb/templates:ro
+      - ./gpmdb_django/static:/work/static:ro
+      - ./gpmdb_django/gpmdb/views.py:/work/gpmdb/views.py:ro
+      - ./gpmdb_django/gpmdb/api_views.py:/work/gpmdb/api_views.py:ro
+      - ./gpmdb_django/gpmdb/middleware.py:/work/gpmdb/middleware.py:ro
+      - ./gpmdb_django/gpmdb_django/settings.py:/work/gpmdb_django/settings.py:ro
+      - ./gpmdb_django/gpmdb_django/urls.py:/work/gpmdb_django/urls.py:ro
+    restart: always
+    networks:
+      - gpmdb-network
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+    restart: always
+    networks:
+      - gpmdb-network
+
+networks:
+  gpmdb-network:
+    driver: bridge
