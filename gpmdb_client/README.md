@@ -1,4 +1,4 @@
-# GPMDB
+# GPMDB API
 
 Python client for the [Global Paleomagnetic Database](https://gpmdb.net).
 
