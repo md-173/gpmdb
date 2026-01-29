@@ -43,6 +43,7 @@ MIT
 From repo root:
 
 docker build -t gpmdb -f docker/Dockerfile .
+
 docker run -d -p 7777:80 --restart always gpmdb
 
 Confirm online:
