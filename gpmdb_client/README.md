@@ -42,7 +42,8 @@ MIT
 
 From repo root:
 
-docker build -t gpmdb -f docker/Dockerfile .docker run -d -p 7777:80 --restart always gpmdb
+docker build -t gpmdb -f docker/Dockerfile .
+docker run -d -p 7777:80 --restart always gpmdb
 
 Confirm online:
 http://127.0.0.1:7777/api/v1/metadata/
