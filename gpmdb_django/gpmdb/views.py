@@ -694,7 +694,7 @@ def get_stats(request):
 
             mean = fisher_mean(calc)
             
-            coords = Circle(mean['dec'], mean['inc'], mean['alpha95'])
+            coords = Circle(mean['dec'], mean['inc'], mean['alpha95']*111.8)
             circlecoords = mapping(coords)
 
             print(mean['alpha95'])
