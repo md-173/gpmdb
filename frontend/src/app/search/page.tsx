@@ -4,10 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { ColumnDef } from '@tanstack/react-table';
-import { searchData, getContinents, getRockTypes, exportToCSV, SearchParams, PaleomagneticResult } from '@/lib/api';
+import { searchData, searchByResultNos, searchPolygon, getContinents, getRockTypes, exportToCSV, SearchParams, PaleomagneticResult } from '@/lib/api';
 import { DataTable } from '@/components/tables';
 import { MapPoint } from '@/components/map';
-import { AgeHistogram, PolePlot, ContinentPieChart } from '@/components/charts';
+import { AgeHistogram, PolePlot, ContinentPieChart, StereonetPanel } from '@/components/charts';
 
 // Dynamically import the map component to avoid SSR issues
 const GpmdbMap = dynamic(
@@ -77,7 +77,7 @@ const columns: ColumnDef<PaleomagneticResult>[] = [
     { accessorKey: 'qsum', header: 'QSUM', size: 50 },
 ];
 
-type ViewTab = 'table' | 'map' | 'charts';
+type ViewTab = 'table' | 'map' | 'charts' | 'stereonet';
 
 export default function SearchPage() {
     const [continents, setContinents] = useState<string[]>([]);
@@ -121,41 +121,62 @@ export default function SearchPage() {
                 ]);
                 setContinents(continentList);
                 setRockTypes(rockTypeList);
-
-                // Perform initial search to populate map/table
-                setIsLoading(true);
-                const response = await searchData({
-                    continent: '',
-                    rocktype: '',
-                    'rockage-min': '',
-                    'rockage-max': '',
-                    'magage-min': '',
-                    'magage-max': '',
-                    rockname: '',
-                    refno: '',
-                    resultno: '',
-                    'lat-min': '',
-                    'lat-max': '',
-                    'lon-min': '',
-                    'lon-max': '',
-                    'qsum-min': '',
-                    'rsum-min': '',
-                    'k-min': '',
-                    'k-max': '',
-                    'a95-max': '',
-                    'b-min': '',
-                    'n-min': '',
-                });
-                setResults(response.data);
-                setResultCount(response.count);
             } catch (err) {
                 console.error('Initialization failed:', err);
                 setError('Failed to load initial data. Please check backend connection.');
-            } finally {
-                setIsLoading(false);
             }
         }
         init();
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const storedIds = sessionStorage.getItem('gpmdb_selected_ids');
+        if (storedIds) {
+            try {
+                const parsedIds = JSON.parse(storedIds) as Array<number | string>;
+                sessionStorage.removeItem('gpmdb_selected_ids');
+                sessionStorage.removeItem('gpmdb_polygon');
+                if (parsedIds.length === 0) return;
+                setIsLoading(true);
+                setError(null);
+                searchByResultNos(parsedIds)
+                    .then((response) => {
+                        setResults(response.data);
+                        setResultCount(response.count);
+                        setActiveTab('table');
+                    })
+                    .catch((err) => {
+                        console.error('Search by resultNos failed:', err);
+                        setError('Search by result numbers failed.');
+                    })
+                    .finally(() => setIsLoading(false));
+                return;
+            } catch (error) {
+                sessionStorage.removeItem('gpmdb_selected_ids');
+            }
+        }
+        const stored = sessionStorage.getItem('gpmdb_polygon');
+        if (!stored) return;
+        try {
+            const polygon = JSON.parse(stored) as [number, number][];
+            sessionStorage.removeItem('gpmdb_polygon');
+            setIsLoading(true);
+            setError(null);
+            searchPolygon(polygon)
+                .then((response) => {
+                    setResults(response.data);
+                    setResultCount(response.count);
+                    setActiveTab('table');
+                })
+                .catch((err) => {
+                    console.error('Polygon search failed:', err);
+                    setError('Polygon search failed.');
+                })
+                .finally(() => setIsLoading(false));
+        } catch (error) {
+            sessionStorage.removeItem('gpmdb_polygon');
+        }
     }, []);
 
     // Listen for polygon search events from the map
@@ -390,7 +411,7 @@ export default function SearchPage() {
                             <div className="px-5 py-4 flex justify-between items-center border-b border-[var(--border-gray)]">
                                 <div>
                                     <h2 className="text-lg font-semibold text-[var(--text-primary)]">Search Results</h2>
-                                    <p className="text-sm text-[var(--text-secondary)]">Found {resultCount} results</p>
+                                    <p className="text-sm text-[var(--text-secondary)]">Found {resultCount} poles</p>
                                 </div>
                                 {results.length > 0 && (
                                     <button onClick={handleExport} className="px-4 py-2 bg-[var(--accent-blue)] text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
@@ -410,6 +431,9 @@ export default function SearchPage() {
                                     </button>
                                     <button onClick={() => setActiveTab('charts')} className={tabClass('charts')}>
                                         📈 Charts
+                                    </button>
+                                    <button onClick={() => setActiveTab('stereonet')} className={tabClass('stereonet')}>
+                                        🧭 Stereonet
                                     </button>
                                 </div>
                             )}
@@ -436,6 +460,7 @@ export default function SearchPage() {
                                                 height="500px"
                                                 center={[0, 0]}
                                                 zoom={2}
+                                                enableDraw={true}
                                             />
                                         )}
 
@@ -463,6 +488,11 @@ export default function SearchPage() {
                                                     </div>
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {/* Stereonet View */}
+                                        {activeTab === 'stereonet' && (
+                                            <StereonetPanel data={results} />
                                         )}
                                     </>
                                 ) : (

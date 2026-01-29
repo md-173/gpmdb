@@ -2,10 +2,18 @@ import axios from 'axios';
 
 // Base API URL - Django backend via Docker (Apache on port 8080)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 // Create axios instance with default config
 export const api = axios.create({
     baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+const legacyApi = axios.create({
+    baseURL: API_ROOT_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -39,6 +47,8 @@ export interface SearchParams {
     'a95-max'?: string;
     'b-min'?: string;
     'n-min'?: string;
+    limit?: number | string;
+    offset?: number | string;
 }
 
 export interface PaleomagneticResult {
@@ -86,6 +96,42 @@ export interface Reference {
     pages: string;
 }
 
+export interface ContributionPayload {
+    doi: string;
+    email: string;
+    comments?: string;
+    age?: number;
+    lat?: number;
+    lon?: number;
+    [key: string]: string | number | undefined;
+}
+
+export interface LegacyStereoPoint {
+    PLAT: number;
+    PLONG: number;
+    RESULTNO: number;
+    ROCKNAME?: string;
+    LOMAGAGE?: number | null;
+    HIMAGAGE?: number | null;
+    DP?: number | null;
+    DM?: number | null;
+}
+
+export interface StereonetMean {
+    dec: number;
+    inc: number;
+    n: number;
+    r: number;
+    alpha95: number;
+    csd: number;
+}
+
+export interface StereonetStatsResponse {
+    calculations: StereonetMean;
+    circle?: { coordinates: number[][][] };
+    pointcircle?: Record<string, { coordinates: number[][][] }>;
+}
+
 // API Functions
 
 /**
@@ -114,9 +160,10 @@ export async function searchData(params: SearchParams): Promise<SearchResponse> 
         // Convert params to query string, filtering out empty values
         const queryParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
-            if (value && value.trim() !== '') {
-                queryParams.append(key, value);
-            }
+            if (value === undefined || value === null) return;
+            const stringValue = typeof value === 'string' ? value.trim() : String(value);
+            if (stringValue === '') return;
+            queryParams.append(key, stringValue);
         });
 
         const response = await api.get<SearchResponse>(`/search/?${queryParams.toString()}`);
@@ -204,14 +251,9 @@ export async function getRockTypes(): Promise<string[]> {
 /**
  * Submit data contribution
  */
-export async function submitContribution(data: {
-    doi: string;
-    email: string;
-    comments?: string;
-    age?: number;
-    lat?: number;
-    lon?: number;
-}): Promise<{ success: boolean; message: string }> {
+export async function submitContribution(
+    data: ContributionPayload
+): Promise<{ success: boolean; message: string }> {
     try {
         const response = await api.post('/contribution/', data);
         return response.data;
@@ -276,6 +318,24 @@ export async function searchPolygon(polygon: [number, number][]): Promise<Search
         return response.data;
     } catch (error) {
         console.error('Failed to search polygon:', error);
+        throw error;
+    }
+}
+
+/**
+ * Search data by result numbers (POST to avoid long URLs).
+ */
+export async function searchByResultNos(resultNos: Array<number | string>): Promise<SearchResponse> {
+    try {
+        const payload = {
+            resultNos: resultNos
+                .map((value) => Number(value))
+                .filter((value) => Number.isFinite(value)),
+        };
+        const response = await api.post<SearchResponse>('/search/resultnos/', payload);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to search by resultNos:', error);
         throw error;
     }
 }
@@ -361,4 +421,36 @@ export async function getUser(): Promise<User> {
         }
         throw error;
     }
+}
+
+/**
+ * Stereonet stats for a list of points (legacy endpoint).
+ */
+export async function getStereonetStats(
+    data: LegacyStereoPoint[]
+): Promise<StereonetStatsResponse> {
+    const response = await api.post('/stereonet/stats/', { data });
+    return response.data;
+}
+
+/**
+ * Mean of selected points (legacy endpoint expects object map).
+ */
+export async function getSelectedMeans(
+    data: Record<string, LegacyStereoPoint>
+): Promise<{ calculations: StereonetMean; circle?: { coordinates: number[][][] } }> {
+    const response = await api.post('/stereonet/selected-means/', { data });
+    return response.data;
+}
+
+/**
+ * Circle for a custom plotted point (legacy endpoint).
+ */
+export async function getPlottedMean(data: {
+    PLAT: number;
+    PLONG: number;
+    a95: number;
+}): Promise<{ circle?: { coordinates: number[][][] } }> {
+    const response = await api.post('/stereonet/plotted-mean/', { data });
+    return response.data;
 }

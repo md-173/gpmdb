@@ -52,6 +52,10 @@ urlpatterns = [
     url(r'^api/rocktypes/?$', api_views.api_rocktypes, name='api_rocktypes'),
     url(r'^api/contribution/?$', api_views.api_contribution, name='api_contribution'),
     url(r'^api/search/polygon/?$', api_views.api_search_polygon, name='api_search_polygon'),
+    url(r'^api/search/resultnos/?$', api_views.api_search_resultnos, name='api_search_resultnos'),
+    url(r'^api/stereonet/stats/?$', api_views.api_stereonet_stats, name='api_stereonet_stats'),
+    url(r'^api/stereonet/selected-means/?$', api_views.api_stereonet_selected_means, name='api_stereonet_selected_means'),
+    url(r'^api/stereonet/plotted-mean/?$', api_views.api_stereonet_plotted_mean, name='api_stereonet_plotted_mean'),
     
     # Auth endpoints
     url(r'^api/auth/login/?$', api_auth.api_login, name='api_login'),

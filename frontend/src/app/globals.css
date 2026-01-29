@@ -1,6 +1,9 @@
 /* Google Font import for JetBrains Mono - must come first */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 
+@import "maplibre-gl/dist/maplibre-gl.css";
+@import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+
 @import "tailwindcss";
 
 /* ============================================
@@ -54,6 +57,46 @@ body {
   color: var(--text-primary);
   font-size: 16px;
   line-height: 1.6;
+}
+
+/* MapLibre defaults */
+.maplibregl-canvas {
+  cursor: default !important;
+}
+
+.maplibregl-ctrl-top-right .mapboxgl-ctrl,
+.maplibregl-ctrl-top-right .mapboxgl-ctrl-group {
+  pointer-events: auto;
+}
+
+/* Draw control: larger buttons + lighter icon color */
+.mapboxgl-ctrl-group button.mapbox-gl-draw_polygon,
+.mapboxgl-ctrl-group button.mapbox-gl-draw_trash {
+  width: 36px;
+  height: 36px;
+  background-size: 20px 20px;
+  background-position: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  filter: invert(49%) sepia(38%) saturate(1020%) hue-rotate(325deg) brightness(98%) contrast(90%);
+}
+
+.mapboxgl-ctrl-group button.mapbox-gl-draw_polygon:hover,
+.mapboxgl-ctrl-group button.mapbox-gl-draw_trash:hover {
+  background-color: transparent;
+}
+
+.mapboxgl-ctrl-group {
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-container {
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 /* Typography */

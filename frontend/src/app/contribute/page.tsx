@@ -8,9 +8,40 @@ export default function ContributePage() {
     const [formData, setFormData] = useState({
         doi: '',
         email: '',
+        alternateEmail: '',
         lat: '',
         lon: '',
         age: '',
+        rockName: '',
+        rockType: '',
+        place: '',
+        continent: '',
+        terrane: '',
+        refNo: '',
+        rLat: '',
+        rLon: '',
+        stratAge: '',
+        lowAge: '',
+        highAge: '',
+        method: '',
+        rockUnitNo: '',
+        resultNo: '',
+        loMagAge: '',
+        hiMagAge: '',
+        tests: '',
+        tilt: '',
+        sLat: '',
+        sLon: '',
+        pType: '',
+        noReversed: '',
+        demagCode: '',
+        treatment: '',
+        authors: '',
+        year: '',
+        journal: '',
+        vPages: '',
+        title: '',
+        remarks: '',
         comments: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +53,13 @@ export default function ContributePage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const parseOptionalNumber = (value: string) => {
+        const trimmed = value.trim();
+        if (trimmed === '') return undefined;
+        const num = Number(trimmed);
+        return Number.isFinite(num) ? num : undefined;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -31,10 +69,41 @@ export default function ContributePage() {
             await submitContribution({
                 doi: formData.doi,
                 email: formData.email,
-                lat: formData.lat ? parseFloat(formData.lat) : undefined,
-                lon: formData.lon ? parseFloat(formData.lon) : undefined,
-                age: formData.age ? parseFloat(formData.age) : undefined,
+                alternate_email: formData.alternateEmail || undefined,
                 comments: formData.comments || undefined,
+                lat: parseOptionalNumber(formData.lat),
+                lon: parseOptionalNumber(formData.lon),
+                age: parseOptionalNumber(formData.age),
+                rockname: formData.rockName || undefined,
+                rocktype: formData.rockType || undefined,
+                place: formData.place || undefined,
+                continent: formData.continent || undefined,
+                terrane: formData.terrane || undefined,
+                refno: parseOptionalNumber(formData.refNo),
+                rlat: parseOptionalNumber(formData.rLat),
+                rlong: parseOptionalNumber(formData.rLon),
+                stratage: formData.stratAge || undefined,
+                lowage: parseOptionalNumber(formData.lowAge),
+                highage: parseOptionalNumber(formData.highAge),
+                method: formData.method || undefined,
+                rockunitno: parseOptionalNumber(formData.rockUnitNo),
+                resultno: parseOptionalNumber(formData.resultNo),
+                lomagage: parseOptionalNumber(formData.loMagAge),
+                himagage: parseOptionalNumber(formData.hiMagAge),
+                tests: formData.tests || undefined,
+                tilt: parseOptionalNumber(formData.tilt),
+                slat: parseOptionalNumber(formData.sLat),
+                slong: parseOptionalNumber(formData.sLon),
+                ptype: formData.pType || undefined,
+                noreversed: formData.noReversed || undefined,
+                demagcode: parseOptionalNumber(formData.demagCode),
+                treatment: formData.treatment || undefined,
+                authors: formData.authors || undefined,
+                year: parseOptionalNumber(formData.year),
+                journal: formData.journal || undefined,
+                vpages: formData.vPages || undefined,
+                title: formData.title || undefined,
+                remarks: formData.remarks || undefined,
             });
             setSuccess(true);
         } catch (err) {
@@ -51,7 +120,7 @@ export default function ContributePage() {
     if (success) {
         return (
             <div className="bg-[var(--bg-secondary)] min-h-screen py-6">
-                <div className="max-w-xl mx-auto px-4">
+                <div className="max-w-4xl mx-auto px-4">
                     <div className="bg-white rounded-lg shadow-lg border border-[var(--border-gray)] p-8 text-center">
                         <div className="text-4xl mb-4">✅</div>
                         <h1 className="text-xl font-semibold mb-2">Thank You!</h1>
@@ -72,7 +141,7 @@ export default function ContributePage() {
 
     return (
         <div className="bg-[var(--bg-secondary)] min-h-screen py-6">
-            <div className="max-w-xl mx-auto px-4">
+            <div className="max-w-4xl mx-auto px-4">
                 <div className="bg-white rounded-lg shadow-lg border border-[var(--border-gray)]">
                     {/* Header */}
                     <div className="border-b border-[var(--border-gray)] px-5 py-4">
@@ -120,7 +189,19 @@ export default function ContributePage() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="mb-4">
+                            <label className={labelClass}>Alternate Email</label>
+                            <input
+                                type="email"
+                                name="alternateEmail"
+                                value={formData.alternateEmail}
+                                onChange={handleChange}
+                                className={inputClass}
+                            />
+                        </div>
+
+                        <h3 className="font-medium mb-2 text-gray-700">Site Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className={labelClass}>Latitude (optional)</label>
                                 <input
@@ -147,18 +228,362 @@ export default function ContributePage() {
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Site Age (Ma)</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="age"
+                                    value={formData.age}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Reference No.</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    name="refNo"
+                                    value={formData.refNo}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <h3 className="font-medium mb-2 text-gray-700">Rock Unit</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Rock Name</label>
+                                <input
+                                    type="text"
+                                    name="rockName"
+                                    value={formData.rockName}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Rock Type</label>
+                                <input
+                                    type="text"
+                                    name="rockType"
+                                    value={formData.rockType}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Place</label>
+                                <input
+                                    type="text"
+                                    name="place"
+                                    value={formData.place}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Continent</label>
+                                <input
+                                    type="text"
+                                    name="continent"
+                                    value={formData.continent}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Terrane</label>
+                                <input
+                                    type="text"
+                                    name="terrane"
+                                    value={formData.terrane}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Rock Unit No.</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    name="rockUnitNo"
+                                    value={formData.rockUnitNo}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>RLat</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="rLat"
+                                    value={formData.rLat}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>RLong</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="rLon"
+                                    value={formData.rLon}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Strat Age</label>
+                                <input
+                                    type="text"
+                                    name="stratAge"
+                                    value={formData.stratAge}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Method</label>
+                                <input
+                                    type="text"
+                                    name="method"
+                                    value={formData.method}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Low Age</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="lowAge"
+                                    value={formData.lowAge}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>High Age</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="highAge"
+                                    value={formData.highAge}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <h3 className="font-medium mb-2 text-gray-700">PMAG Result</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Result No.</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    name="resultNo"
+                                    value={formData.resultNo}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Tests</label>
+                                <input
+                                    type="text"
+                                    name="tests"
+                                    value={formData.tests}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Lo Mag Age</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="loMagAge"
+                                    value={formData.loMagAge}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Hi Mag Age</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="hiMagAge"
+                                    value={formData.hiMagAge}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>Tilt</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="tilt"
+                                    value={formData.tilt}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>P Type</label>
+                                <input
+                                    type="text"
+                                    name="pType"
+                                    value={formData.pType}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>SLAT</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="sLat"
+                                    value={formData.sLat}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>SLONG</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    name="sLon"
+                                    value={formData.sLon}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className={labelClass}>No Reversed</label>
+                                <input
+                                    type="text"
+                                    name="noReversed"
+                                    value={formData.noReversed}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Demag Code</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    name="demagCode"
+                                    value={formData.demagCode}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                />
+                            </div>
+                        </div>
+
                         <div className="mb-4">
-                            <label className={labelClass}>Age in Ma (optional)</label>
+                            <label className={labelClass}>Treatment</label>
                             <input
-                                type="number"
-                                step="any"
-                                name="age"
-                                value={formData.age}
+                                type="text"
+                                name="treatment"
+                                value={formData.treatment}
                                 onChange={handleChange}
-                                placeholder="e.g., 2500"
                                 className={inputClass}
                             />
                         </div>
+
+                        <h3 className="font-medium mb-2 text-gray-700">Reference Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                            <input
+                                type="text"
+                                name="authors"
+                                placeholder="Authors"
+                                value={formData.authors}
+                                onChange={handleChange}
+                                className={inputClass}
+                            />
+                            <input
+                                type="number"
+                                name="year"
+                                placeholder="Year"
+                                value={formData.year}
+                                onChange={handleChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <input
+                            type="text"
+                            name="title"
+                            placeholder="Title"
+                            value={formData.title}
+                            onChange={handleChange}
+                            className={`${inputClass} mb-2`}
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <input
+                                type="text"
+                                name="journal"
+                                placeholder="Journal"
+                                value={formData.journal}
+                                onChange={handleChange}
+                                className={inputClass}
+                            />
+                            <input
+                                type="text"
+                                name="vPages"
+                                placeholder="VPages"
+                                value={formData.vPages}
+                                onChange={handleChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <input
+                            type="text"
+                            name="remarks"
+                            placeholder="Remarks"
+                            value={formData.remarks}
+                            onChange={handleChange}
+                            className={inputClass}
+                        />
 
                         <div className="mb-4">
                             <label className={labelClass}>Additional Comments (optional)</label>

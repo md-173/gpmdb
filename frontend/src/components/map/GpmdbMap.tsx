@@ -1,28 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-
-// Dynamically import Leaflet components (they don't work with SSR)
-const MapContainer = dynamic(
-    () => import('react-leaflet').then((mod) => mod.MapContainer),
-    { ssr: false }
-);
-const TileLayer = dynamic(
-    () => import('react-leaflet').then((mod) => mod.TileLayer),
-    { ssr: false }
-);
-const CircleMarker = dynamic(
-    () => import('react-leaflet').then((mod) => mod.CircleMarker),
-    { ssr: false }
-);
-const Popup = dynamic(
-    () => import('react-leaflet').then((mod) => mod.Popup),
-    { ssr: false }
-);
-
-// Import Leaflet CSS
-import 'leaflet/dist/leaflet.css';
+import MapContent from './MapContent';
 
 export interface MapPoint {
     id: number | string;
@@ -40,6 +19,7 @@ interface GpmdbMapProps {
     zoom?: number;
     height?: string;
     onPointClick?: (point: MapPoint) => void;
+    enableDraw?: boolean;
 }
 
 export default function GpmdbMap({
@@ -48,6 +28,7 @@ export default function GpmdbMap({
     zoom = 2,
     height = '400px',
     onPointClick,
+    enableDraw = false,
 }: GpmdbMapProps) {
     const [isMounted, setIsMounted] = useState(false);
 
@@ -70,12 +51,6 @@ export default function GpmdbMap({
         );
     }
 
-    // Dynamically import MapContent (client-side only)
-    const MapContent = dynamic(
-        () => import('./MapContent'),
-        { ssr: false }
-    );
-
     return (
         <div className="relative">
             <div style={{ height }} className="rounded-lg overflow-hidden z-0">
@@ -84,6 +59,7 @@ export default function GpmdbMap({
                     center={center}
                     zoom={zoom}
                     onPointClick={onPointClick}
+                    enableDraw={enableDraw}
                 />
             </div>
         </div>

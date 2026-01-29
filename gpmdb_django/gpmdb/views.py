@@ -691,6 +691,7 @@ def get_data_within_polygon(request):
     except Exception as e:
         return HttpResponse(json.dumps({'status': 'error', 'message': 'An unexpected error occurred'}), content_type="application/json", status=500)
         
+@csrf_exempt
 def get_stats(request):
     if request.method == "POST":
         try:
@@ -735,6 +736,7 @@ def get_stats(request):
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
     
+@csrf_exempt
 def selected_means(request):
 
     
@@ -767,6 +769,7 @@ def selected_means(request):
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
+@csrf_exempt
 def plotted_mean(request):
 
     
