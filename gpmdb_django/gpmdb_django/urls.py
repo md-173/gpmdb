@@ -17,8 +17,10 @@ from django.urls import re_path as url, include
 
 from django.contrib import admin
 from gpmdb import views
+from gpmdb import api_views
 
 urlpatterns = [
+    # Legacy Django template views
     url(r'^$', views.index, name='index'),
     url(r'^accounts/', include("django.contrib.auth.urls")),
     url(r'^additions/?$', views.addition, name='addition'),
@@ -39,7 +41,15 @@ urlpatterns = [
     url(r'^get_map_within_polygon/?$', views.get_map_within_polygon, name='get_map_within_polygon'),
     url(r'^api/v1/', include('api.urls')),
 
+    # ============================================
+    # REST API endpoints for Next.js frontend
+    # ============================================
+    url(r'^api/stats/?$', api_views.api_stats, name='api_stats'),
+    url(r'^api/search/?$', api_views.api_search, name='api_search'),
+    url(r'^api/references/?$', api_views.api_references, name='api_references'),
+    url(r'^api/continents/?$', api_views.api_continents, name='api_continents'),
+    url(r'^api/rocktypes/?$', api_views.api_rocktypes, name='api_rocktypes'),
+    url(r'^api/contribution/?$', api_views.api_contribution, name='api_contribution'),
 ]
         
 #    url(r'^admin/', admin.site.urls),
-
