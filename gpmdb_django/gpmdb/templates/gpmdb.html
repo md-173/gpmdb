@@ -528,6 +528,17 @@
                     }
                 </style>
 				<div id="worldmap"></div>
+                <style>
+                    #worldmap {
+                        position: relative;
+                    }
+
+                    .tooltip {
+                        position: absolute;
+                        pointer-events: none;
+                        z-index: 10;
+                    }
+                </style>
 			</div>
 			
 			<div class="modal-footer">
@@ -1160,6 +1171,9 @@
         function show_data(){
             $('#progress-bar').modal();
 			$('#stats-container').empty();
+            $('#chart2').empty();
+            $('#stereo').empty();
+            $('#worldmap').empty();
             q_data={}
 			
 	        var continent = $('#continent').find(":selected").val();
@@ -1444,11 +1458,16 @@
 				},
 							
 				success: function(response) {
-					alert("Displaying stats from fetched data");
+
 					const mean = response.calculations;
                     const meancircle = response.circle;
-                    console.log(meancircle)
+                    const pointcircle = response.pointcircle;
+                    console.log("point")
+                    console.log(pointcircle)
+
 					$("#stats-container").empty();
+                    $("#worldmap").empty();
+                    
 					$("#stats-container").append(`
                         <div>Dec: ${mean.dec}</div>
                         <div>Inc: ${mean.inc}</div>
@@ -1456,6 +1475,7 @@
                         <div>R: ${mean.r}</div>
                         <div>95: ${mean.alpha95}</div>
                         <div>CSD: ${mean.csd}</div>
+                        <button id="mean-circle" class="btn btn-primary">Show Mean Circle</button>
 					`);
 
                     $("#chart2").empty();
@@ -1480,9 +1500,9 @@
                     const svg = d3.select("#chart2")
                     .append("svg")
                     .attr("width", width)
-                    .attr("height", height);
+                    .attr("height", height + 40);
 
-
+                    //Mean Stats Labels
                     const label = svg.append("text")
                         .attr("x", width - 10)
                         .attr("y", 20)
@@ -1525,6 +1545,7 @@
 
                     const angles = d3.range(0, 360, 15); // every 30 degrees
 
+                    //Stereonet graph lines creation
                     svg.selectAll("line.ticks")
                         .data(angles)
                         .enter()
@@ -1558,6 +1579,7 @@
 
 
                     const xDashes = d3.range(-radius, radius, 20); // every 20px
+
                     xDashes.forEach(x => {
                         if (x === 0) return; // skip center
                         svg.append("line")
@@ -1580,23 +1602,30 @@
                             .attr("stroke", "black")
                             .attr("stroke-width", 1);
                     });
-                    selectedcircles = [];
+                    
+                    selectedcircles = {};
                     removedcircles = [];
 
-                    let colourcode = false;
+                    const ages = stats_data.map(d => d.LOMAGAGE);
+
+                    const ageColor = d3.scaleSequential()
+                    .domain(d3.extent(ages))
+                    .interpolator(d3.interpolateViridis);
 
                     function plotpoint(row) {
 
                         const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
+
                         let newlat = []
 
                         if(row['PLAT'] <= 0){
-                            console.log(row['PLAT'])
                             newlat = projection([new_long, row['PLAT']])
-                            colour = "none"
+                            colour = "white"
+                            outline = "black"
                         }else{
                             newlat = projection([new_long, -row['PLAT']])
                             colour = "black"
+                            outline = "black"
                         }
 
                     
@@ -1604,9 +1633,12 @@
                         .attr("cx", newlat[0])
                         .attr("cy", newlat[1])  
                         .attr("r", 4)
-                        .attr("data-id", i) 
+                        .attr("data-id", row.RESULTNO)
+                        .attr("data-age", row.LOMAGAGE)
+                        .attr("data-lat", row.PLAT)
+                        .attr("class", "data-point")
                         .attr("fill", colour)
-                        .attr("stroke", "black")     // outline color
+                        .attr("stroke", outline)     // outline color
                         .attr("stroke-width", 1.5);
 
 
@@ -1631,29 +1663,38 @@
                         })
                         .on("click", function(event, d) {
 
-                            if (selectedcircles.includes(this)){
+                            if (d3.select(this).attr("data-id") in selectedcircles){
                                 d3.select(this)
-                                .style("stroke", "none")
+                                .style("stroke", function () {
+                                    return colourByAge
+                                        ? ageColor(this.dataset.age)
+                                        : "black";
+
+                                })
+
                                 id = d3.select(this).attr("data-id");
+
                                 $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", false);
-                                let index = selectedcircles.indexOf(this);
-                                selectedcircles.splice(index, 1)
 
-
-
+                                delete selectedcircles[id];
 
                             } else{
+
+                                id = d3.select(this).attr("data-id");
+    
+
+                                selectedcircles[id] = row;
+                                
                                 d3.select(this)
                                 .style("stroke", "red")
                                 .style("stroke-width", 2);
-                                selectedcircles.push(this)
-                                id = d3.select(this).attr("data-id");
+
                                 $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
                             }
                         });
                     }
 
-                    plotpoint({'PLONG': mean.dec.toFixed(2), 'PLAT': mean.inc.toFixed(2)})
+                
                     let longitude = mean.dec.toFixed(2)
                     let latitude =  mean.inc.toFixed(2)
 
@@ -1662,10 +1703,8 @@
 
                     if(latitude <= 0){
                         newlat = projection([new_long, latitude])
-                        colour = "blue"
                     }else{
                         newlat = projection([new_long, -latitude])
-                        colour = "red"
                     }
 
                 
@@ -1674,16 +1713,82 @@
                     .attr("cy", newlat[1])  
                     .attr("r", 4)
                     .attr("data-id", i) 
-                    .attr("fill", "yellow");
+                    .attr("class", "mean-point")
+                    .attr("fill", "red")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 2);
+
+                    circle.on("mouseover", function(event, d) {
+                    
+                        tooltip.style("opacity", 1)
+    
+                        
+                        })
+                        .on("mousemove", function(event, d) {
+                            const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                            tooltip
+                            .html(`Mean <br> Lat: ${latitude}<br>Lon: ${longitude}<br>`)
+                            .style("left", (x + 10) + "px")
+                            .style("top", (y + 10) + "px");
+                            
+                        })
+                        .on("mouseout", function(event, d) {
+                            tooltip
+                                .style("opacity", 0)
+                            
+                        })
+                        .on("click", function(event, d) {
+
+                        });
+
+                    $("#stereo").append(`
+                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                        <table id ="stereotable" border="1">
+                        <tr>
+                            <th>Select</th>
+                            <th>Rockname</th>
+                            <th>Lomagage</th>
+                            <th>Himagage</th>
+                            <th>Remove</th>
+                        </tr>
+                        </table>
+                        </div>
+                        <button id="remove-selected" class="btn btn-primary">Remove Selected</button>
+                        <button id="point-circle" class="btn btn-primary">Selected Point Circle Means</button>
+                        <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
+                        <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
+                        <button id="selected-means" class="btn btn-primary">Mean of Selected Circles</button>
+                        Plot a point: 
+                        Latitude: <input id="latitudeinput" type="number">
+                        Longitude: <input id="longitudeinput" type="number">
+                        a95: <input id="a95input" type="number">
+                        <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
+                    `);
                     
 
-
+                    //plotting points
                     for(var i =0;i<stats_data.length;i++){
                         const row = stats_data[i];
                         plotpoint(row);
+
+                        $("#stereotable").append(`
+                              <tr data-id="${row.RESULTNO}">
+                                  <td><input type="checkbox" class="row-select"></td>
+                                  <td>${row.ROCKNAME}</td>
+                                  <td>${row.LOMAGAGE}</td>
+                                  <td>${row.HIMAGAGE}</td>
+                                  <td><button class="remove-btn" data-id="${row.RESULTNO}">Remove</button></td>
+                              </tr>
+                          `);
+
                     }
 
+                    customselection = {};
+                    const meanCircleLayer = svg.append("g")
+                    .attr("id", "mean-circle-layer")
+                    .style("display", "none");   // visible by default
 
+                    //mean circle creation around the mean
                     meancircle.coordinates.forEach((coord, i) => {
                         row = {'PLONG': coord[0], 
                                 'PLAT': coord[1]
@@ -1703,65 +1808,85 @@
 
                         console.log(newlat)
 
-                        const circle = svg.append("circle")
+                        meanCircleLayer.append("circle")
                         .attr("cx", newlat[0])
                         .attr("cy", newlat[1])  
-                        .attr("r", 4)
-                        .attr("fill", "yellow")
+                        .attr("r", 1)
+                        .attr("fill", "black")
                         .attr("stroke", "black");
 
                     })
 
+                    let visible = false;
+    
+                    d3.select("#mean-circle").on("click", () => {
+                        visible = !visible;
+                        meanCircleLayer.style("display", visible ? "block" : "none");
+                    });
+
+                    const legendWidth = 160;
+                    const legendHeight = 12;
+                    const legendYOffset = 20;
 
 
+                    const legendGroup = svg.append("g")
+                        .attr("class", "age-legend")
+                        .attr("transform", `translate(${width - legendWidth - 20}, ${cy + radius + legendYOffset})`)
+                        .style("display", "none");  
 
+                    const defs = svg.append("defs");
 
+                    const gradient = defs.append("linearGradient")
+                        .attr("id", "age-gradient");
 
+                    gradient.selectAll("stop")
+                        .data(d3.range(0, 1.01, 0.1))
+                        .enter()
+                        .append("stop")
+                        .attr("offset", d => `${d * 100}%`)
+                        .attr("stop-color", d =>
+                            ageColor(
+                                d3.interpolateNumber(
+                                    ageColor.domain()[0],
+                                    ageColor.domain()[1]
+                                )(d)
+                            )
+                        );
 
+                        legendGroup.append("rect")
+                        .attr("width", legendWidth)
+                        .attr("height", legendHeight)
+                        .style("fill", "url(#age-gradient)")
+                        .style("stroke", "black");
 
+                        const legendScale = d3.scaleLinear()
+                        .domain(ageColor.domain())
+                        .range([0, legendWidth]);
 
+                    const legendAxis = d3.axisBottom(legendScale)
+                        .ticks(4)
+                        .tickSize(4);
 
-                    $("#stereo").append(`
-                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                        <table id ="stereotable" border="1">
-                        <tr>
-                            <th>Select</th>
-                            <th>Rockname</th>
-                            <th>Lomagage</th>
-                            <th>Himagage</th>
-                            <th>Remove</th>
-                        </tr>
-                        </table>
-                        </div>
-                        <button id="remove-selected" class="btn btn-primary">Remove Selected</button>
-                        <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
-                        <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
-                        Plot a point: 
-                        Latitude: <input id="latitudeinput" type="number">
-                        Longitude: <input id="longitudeinput" type="number">
-                        <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
-                    `);
+                    legendGroup.append("g")
+                        .attr("transform", `translate(0, ${legendHeight})`)
+                        .call(legendAxis)
+                        .select(".domain")
+                        .remove();
 
-                    x = 0
-                    stats_data.forEach( (row, i)=> {
-
-                            $("#stereotable").append(`
-                                <tr data-id="${i}">
-                                    <td><input type="checkbox" class="row-select"></td>
-                                    <td>${row.ROCKNAME}</td>
-                                    <td>${row.LOMAGAGE}</td>
-                                    <td>${row.HIMAGAGE}</td>
-                                    <td><button class="remove-btn" data-id="${i}">Remove</button></td>
-                                </tr>
-                            `);
-                            x = x+1;
-                        });
-              
+                    legendGroup.append("text")
+                    .attr("x", legendWidth / 2)
+                    .attr("y", -6)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "12px")
+                    .text("LOMAG Age");
 
 
                         $("#stereotable").on("click", ".remove-btn", function() {
-                            const id = $(this).data("id");
 
+                            var id = $(this).data("id");
+                            console.log(id)
+                
+                            
                             if($('#removedstereotable tr').length ===0) {
                                   $("#stereo").append(`
                                         <div id = "removedpoints">
@@ -1783,11 +1908,14 @@
                             $(`#stereotable tr[data-id='${id}']`).remove();
 
                             d3.select(`circle[data-id='${id}']`).remove();
+                            var row;
 
-                            removedcircles.push(stats_data[id]);
-
-                            row = stats_data[id]
-                            
+                            for(var i =0;i<stats_data.length;i++){
+                                row = stats_data[i];
+                                if (row.RESULTNO === id){
+                                    break;
+                                }
+                            }
                             $("#removedstereotable").append(`
                                 <tr data-id="${id}">
                                     <td>${row.ROCKNAME}</td>
@@ -1797,69 +1925,198 @@
                                 </tr>
                             `);
 
-                            $("#removedstereotable").on("click", ".add-btn", function() {
-                                const id = $(this).data("id");
+                        });
 
-                                
-                                $(`#removedstereotable tr[data-id='${id}']`).remove();
-
-                                removedcircles.splice(id,1)
-
-                                row = stats_data[id]
-                                
-                                $("#stereotable").append(`
-                                    <tr data-id="${i}">
-                                        <td><input type="checkbox" class="row-select"></td>
-                                        <td>${row.ROCKNAME}</td>
-                                        <td>${row.LOMAGAGE}</td>
-                                        <td>${row.HIMAGAGE}</td>
-                                        <td><button class="remove-btn" data-id="${i}">Remove</button></td>
-                                    </tr>
-                                `);
-                                
-                                plotpoint(row)
-                                console.log($('#removedstereotable tr').length)
-
-                                if($('#removedstereotable tr').length ===1) {
-                                    console.log("Fill")
-                                     $("#removedpoints").remove();
-
-                                }
-                                });	
-
-
+                        $("#point-circle").on("click", function () {
                             
-                              $("#remove-selected").on("click", function () {
-
-                            console.log("testing");
                             $("#stereotable .row-select:checked").each(function () {
-                                let row = $(this).closest("tr");
-                                let id = row.data("id");
-                                console.log(id)
+                                    let id = $(this).closest("tr").data("id");
+                                    var points = pointcircle[id];
+                                    key = "mean" + id
 
-                                 if($('#removedstereotable tr').length ===0) {
-                                  $("#stereo").append(`
-                                        <div id = "removedpoints">
-                                        <div> Removed Points:  </div>
-                                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                                        <table id ="removedstereotable" border="1">
-                                        <tr>
-                                            <th>Rockname</th>
-                                            <th>Lomagage</th>
-                                            <th>Himagage</th>
-                                        </tr>
-                                        </table>
-                                        </div>
-                                        </div>
-                                    `);}
+                                    var sel = svg.selectAll(`circle.mean-point[data-id='mean${id}']`);
+                                    //sel.remove();
+                                    console.log(sel)
+                                    if (!sel.empty()) {
+                                            sel.remove();
+                                        }else{
+                                            points.coordinates.forEach(coord => {
+                                            row = {'PLONG': coord[0], 
+                                            'PLAT': coord[1]
+                                            }
 
-                                 $(`#stereotable tr[data-id='${id}']`).remove();
+                                            
+
+                                            const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
+                                            
+                                            let newlat = []
+
+                                            if(coord[1] <= 0){
+                                                newlat = projection([new_long, coord[1]])
+                                                colour = "none"
+                                            }else{
+                                                newlat = projection([new_long, -coord[1]])
+                                                colour = "black"
+                                            }
+
+
+
+                                            const circle = svg.append("circle")
+                                            .attr("data-id", "mean" + id)
+                                            .attr("class", "mean-point")
+                                            .attr("cx", newlat[0])
+                                            .attr("cy", newlat[1])  
+                                            .attr("r", 1)
+                                            .attr("fill", "black")
+                                            .attr("stroke", "black");
+                                         })
+                                        }
+
+
+                                    
+                                    
+                                    
+
+                                
+                                });
+
+                        });	
+
+                        let colourByAge = false;
+
+                        $("#colour-code").on("click", function () {
+
+                            colourByAge = !colourByAge;
+                            
+                            svg.selectAll("circle.data-point")
+                            .transition()
+                            .duration(300)
+                            .attr("fill", function () {
+                                var lat  = this.dataset.lat;
+                                if (lat >= 0){
+                                return colourByAge
+                                    ? ageColor(this.dataset.age)
+                                    : "black";
+                                }else{
+                                    return "white"
+                                }
+                            })
+                            .attr("stroke", function () {
+                                return colourByAge
+                                    ? ageColor(this.dataset.age)
+                                    : "black";
+
+                            });
+
+                            svg.selectAll("circle.mean-point")
+                            .transition()
+                            .duration(300)
+                            .attr("fill", function () {
+                                return colourByAge
+                                    ? "black"
+                                    : "red";
+                            })
+                            .attr("stroke", function () {
+                                return colourByAge
+                                    ? "black"
+                                    : "black";
+                            });
+
+                            legendGroup.style("display", colourByAge ? "block" : "none");
+
+
+
+
+
+
+
+                        });
+
+                        $("#selected-means").on("click", function () {
+
+                            $.ajax({
+                                type: "POST",
+                                url:'/selected_means/',
+                                contentType: "application/json",
+                                data: JSON.stringify({
+                                    data: selectedcircles
+                                }),
+                                dataType: "json",
+                                headers: {
+                                    "X-CSRFToken": csrftoken
+                                },
+                                            
+                                success: function(response) {
+                                    let selected_mean = response.calculations
+
+                                    
+                                    console.log("test")
+                                    console.log(selected_mean)
+
+                                    svg.selectAll(".selected-mean-label").remove();
+
+                                    //Mean Stats Labels
+                                    const label2 = svg.append("text")
+                                        .attr("class", "selected-mean-label")
+                                        .attr("x", 175)
+                                        .attr("y", height - 10)
+                                        .attr("text-anchor", "end")
+                                        .style("font-size", "14px");
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 0)
+                                        .text("Selected Mean Dec: " + selected_mean.dec.toFixed(2));
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 12)
+                                        .text("Selected Mean Inc: " + selected_mean.inc.toFixed(2));
+
+                                    label2.append("tspan")
+                                        .attr("x", 175)
+                                        .attr("dy", 12)
+                                        .text("Selected 95%: " + selected_mean.alpha95.toFixed(2));
+                                                }
+                                            })
+                        
+                        });
+
+                        $("#remove-selected").on("click", function () {
+
+                            if($('#removedstereotable').length === 0) {
+
+                                        $("#stereo").append(`
+                                                <div id = "removedpoints">
+                                                <div> Removed Points:  </div>
+                                                <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                                                <table id ="removedstereotable" border="1">
+                                                <tr>
+                                                    <th>Rockname</th>
+                                                    <th>Lomagage</th>
+                                                    <th>Himagage</th>
+                                                </tr>
+                                                </table>
+                                                </div>
+                                                </div>
+                                            `);}
+
+                                
+                                $("#stereotable .row-select:checked").each(function () {
+                                    let id = $(this).closest("tr").data("id");
+                                    console.log(id)
+                                    var row;
+                                    for(var i =0;i<stats_data.length;i++){
+                                        row = stats_data[i];
+                                        if (row.RESULTNO === id){
+                                            break;
+                                        }
+                                    }
+                        
+
+                                    $(`#stereotable tr[data-id='${id}']`).remove();
 
                                     d3.select(`circle[data-id='${id}']`).remove();
-
-                                    removedcircles.push(stats_data[id]);
-
-                                    row = stats_data[id]
                                     
                                     $("#removedstereotable").append(`
                                         <tr data-id="${id}">
@@ -1871,41 +2128,92 @@
                                     `);
 
                                 
-                            });
+                                });
 
-        
+                                Object.entries(selectedcircles).forEach(([key, value]) => {
+                                    console.log(key)
+
+                                    d3.select(`circle[data-id='${key}']`).remove();
+                                    console.log("test")
+                                    delete selectedcircles[key];
+
+                                });
+
+                                console.log(selectedcircles)
 
 
                         });
 
-                        });	
+                        $("#stereo").on("click", "#removedstereotable .add-btn", function() {
 
+                            const id = $(this).data("id");
+    
+                                
+                            $(`#removedstereotable tr[data-id='${id}']`).remove();
+
+                            var row;
+                             
+                            for(var i =0;i<stats_data.length;i++){
+                                row = stats_data[i];
+                                if (row.RESULTNO === id){
+                                    console.log("testn5")
+                                    console.log(row)
+                                     break;
+                                }
+                            }
+
+
+                            $("#stereotable").append(`
+                                <tr data-id="${id}">
+                                    <td><input type="checkbox" class="row-select"></td>
+                                    <td>${row.ROCKNAME}</td>
+                                    <td>${row.LOMAGAGE}</td>
+                                    <td>${row.HIMAGAGE}</td>
+                                    <td><button class="remove-btn" data-id="${id}">Remove</button></td>
+                                </tr>
+                            `);
+                                
+                                plotpoint(row)
+
+                                if($('#removedstereotable tr').length ===1) {
+                                     $("#removedpoints").remove();
+
+                                }
+                                
+                                });
 
                       
                         
                         $("#stereotable").on("change", ".row-select", function() {
 
                             const id = $(this).closest("tr").data("id");
-                            console.log(id);
 
                             const circle = d3.select(`circle[data-id='${id}']`);
                             const el = circle.node();
+                            var circleid = el.dataset.id;
                 
-                                if(selectedcircles.includes(el)){
-
-                                    console.log('i work')
+                                if(id in selectedcircles){
 
                                     circle.style("stroke", "none");
-                                    
-                                    let index = selectedcircles.indexOf(el);
+                                    delete selectedcircles[id];
 
-                                    selectedcircles.splice(index, 1)
+                                    console.log(selectedcircles);
 
                                 } else{
-                                    circle.style("stroke", "black")
+
+                                    circle.style("stroke", "red")
                                     .style("stroke-width", 2)
 
-                                    selectedcircles.push(el)
+                                     var row;
+
+                                    for(var i =0;i<stats_data.length;i++){
+                                        row = stats_data[i];
+                                        if (row.RESULTNO === id){
+                                            break;
+                                        }
+                                    }
+
+                                    selectedcircles[id] = row;
 
                                     console.log(selectedcircles);
                                 }
@@ -1913,10 +2221,13 @@
 
 
                         });
+                    
 
 
                         $("#download-selected").on("click", function () {
 
+                            console.log("download")
+                            /*
                             const selectedRows = [];
 
                             $("#stereotable .row-select:checked").each(function () {
@@ -1930,11 +2241,33 @@
                             });
 
                             console.log(selectedRows);
+                            */
+
 
                             let csvContent = "data:text/csv;charset=utf-8," 
-                            selectedRows.forEach(row => {
-                                csvContent += `${row.lat},${row.lon}\n`;
-                            });
+
+                            let headersWritten = false;
+
+                            Object.entries(selectedcircles).forEach(([key, value])=> {
+                                console.log(key)
+                                console.log(value)  
+                                Object.entries(value).forEach(([key, value2])=> {
+
+                                    if (!headersWritten){
+                                        csvContent = csvContent + Object.keys(value).join(",") + "\n";
+                                        headersWritten = true;
+                                    }
+
+                                     if (typeof value2 === 'string' || value2 instanceof String){
+                                            value2=value2.replace("\"", "\"\"");
+                                            if(value2.includes(",")){
+                                                value2 = "\"" +value2+"\"";
+                                            }
+                                        }
+                                    csvContent = csvContent + value2 + ","      
+                            })
+                                    csvContent = csvContent + '\n';
+                            })
 
                             var downloadLink = document.createElement("a");
                             downloadLink.href = csvContent;
@@ -1943,7 +2276,6 @@
                             document.body.appendChild(downloadLink);
                             downloadLink.click();
                             document.body.removeChild(downloadLink);
-
 
                         });
 
@@ -1971,7 +2303,9 @@
                             .attr("cx", newlat[0])
                             .attr("cy", newlat[1])  
                             .attr("r", 4)
-                            .attr("data-id", i) 
+                            .attr("data-id", `${lat} ` + `${lon}`)
+                            .attr("data-lat", lat)
+                            .attr("data-lon", lon)
                             .attr("fill", colour)
                             .attr("stroke", "red")     // outline color
                             .attr("stroke-width", 1.5);
@@ -1998,13 +2332,79 @@
                                 })
                                 .on("click", function(event, d) {
 
+                                    if (d3.select(this).attr("data-id") in selectedcircles){
+                                        d3.select(this)
+                                        .style("stroke", "red")
+
+                                        id = d3.select(this).attr("data-id");
+
+                                        delete selectedcircles[id];
+
+                                        delete customselection[id]
+
+                                        $(`#stereotable tr[data-id='${id}']`).remove();
+
+                                    } else{
+
+                                        id = d3.select(this).attr("data-id");
+            
+                                        selectedcircles[id] = {
+                                            "PLAT": d3.select(this).attr("data-lat"),
+                                            "PLONG": d3.select(this).attr("data-lon")
+                                        };
+
+                                        $("#stereotable").append(`
+                                            <tr data-id="${id}" style="display:none;">
+                                                <td><input type="checkbox" class="row-select"></td>
+                                                <td>NA</td>
+                                                <td>NA</td>
+                                                <td>NA</td>
+                                                <td><button class="remove-btn" data-id="${id}">Remove</button></td>
+                                            </tr>
+                                        `);
+
+                                        $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
+                                        
+                                        d3.select(this)
+                                        .style("stroke", "black")
+                                        .style("stroke-width", 2);
+                                    }
+
+                                    console.log(selectedcircles)
                                 });
+
+
+
+                                if($('#a95input').val()){
+                                     $.ajax({
+                                        type: "POST",
+                                        url:'/plotted_mean/',
+                                        contentType: "application/json",
+                                        data: JSON.stringify({
+                                            data: {"PLAT": lat, "PLONG": lon, "a95": $('#a95input').val()}
+                                        }),
+                                        dataType: "json",
+                                        headers: {
+                                            "X-CSRFToken": csrftoken
+                                        },
+                                                    
+                                        success: function(response) {
+                                                console.log(response.circle);
+                                                pointcircle[`${lat} ` + `${lon}`] = response.circle
+                                                console.log("circle")
+                                                console.log(pointcircle[`${lat} ` + `${lon}`])
+                                            }
+                                            })
+                                        }
+
+
+
 
 
 
                         })
 
-
+                        changemap("EPSG4326", "#worldmap", mapdata)
 
 
 
@@ -2433,10 +2833,10 @@
                                     .on("mousemove", function(event, d) {
 
 
-                                        const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                                    const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
                                         tooltip
                                         .style("opacity", 1)     
-                                        .html(`Lat: ${row.PLAT} <br> Long: ${row.PLONG}`)
+                                        .html(`Lat: ${row.geometry.coordinates[0]} <br> Long: ${row.geometry.coordinates[1]}`)
                                         .style("left", (x + 10) + "px")
                                         .style("top", (y + 10) + "px");
                                         

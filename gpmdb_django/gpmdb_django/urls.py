@@ -22,6 +22,8 @@ urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^accounts/', include("django.contrib.auth.urls")),
     url(r'^additions/?$', views.addition, name='addition'),
+    url(r'^selected_means/?$', views.selected_means, name='selectedmeans'),
+    url(r'^plotted_mean/?$', views.plotted_mean, name='plottedmean'),
     url(r'^add_item/?$', views.add_item, name='added'),
     url(r'^get_data/?$', views.get_data, name='get_data'),
     url(r'^submit_data/?$', views.submit_data, name='submit_data'),

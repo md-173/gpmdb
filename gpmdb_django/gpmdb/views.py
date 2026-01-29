@@ -649,8 +649,24 @@ def get_data_within_polygon(request):
                         "LOMAGAGE": row[12],
                         "HIMAGAGE": row[13],
                         "DP": row[18],     # Confidence radius in latitude
-                        "DM": row[19]      # Confidence radius in longitude
-                    })
+                        "DM": row[19],
+                        "SLAT": row[14],
+                        "SLONG": row[15],
+                        "ROCKNAME": row[2],
+                        "REFNO": row[0],
+                        "RESULTNO": row[1],
+                        "YEAR": row[3],
+                        "AURTHORS": row[4],
+                        "JOURNAL": row[5],
+                        "VOLUME": row[6],
+                        "VPAGES": row[7],
+                        "CONTINENT": row[8],
+                        "ROCKTYPE": row[9],
+                        "LOWAGE": row[10],
+                        "HIGHAGE": row[11],
+                        "QSUM": row[20],
+                        "RSUM": row[21]
+                        })
                     
                                         
                 
@@ -689,19 +705,27 @@ def get_stats(request):
             print("new fishcer now")
 
             calc = []
+            pointcircle = []
+            allcircles = {}
             for row in stats_data:
                 calc.append([row['PLONG'], row['PLAT']])
+                if row['DP'] is not None and row['DM'] is not None:
+                    a95 = math.sqrt((row['DP'] * row['DM']))
+                    pointcoords = Circle(row['PLONG'], row['PLAT'], a95*111.32)
+                    pointcoords = mapping(pointcoords)
+                    allcircles[row['RESULTNO']] = pointcoords
+             
 
             mean = fisher_mean(calc)
             
-            coords = Circle(mean['dec'], mean['inc'], mean['alpha95']*111.8)
+            coords = Circle(mean['dec'], mean['inc'], mean['alpha95']*111.32)
             circlecoords = mapping(coords)
 
-            print(mean['alpha95'])
 
             result = {
                 'calculations': mean,
-                'circle': circlecoords
+                'circle': circlecoords,
+                'pointcircle': allcircles
             }
 
             return JsonResponse(result)
@@ -711,6 +735,66 @@ def get_stats(request):
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
     
+def selected_means(request):
+
+    
+    if request.method == "POST":
+        try:
+            # Parse the JSON data sent in the POST request
+            data = json.loads(request.body)
+            print("Received data:", data)  # Log the received data
+
+            points = data.get("data",[])
+
+            print(points)
+
+            calc = []
+
+            for row in points.values():
+                calc.append([float(row['PLONG']), float(row['PLAT'])])
+        
+            mean = fisher_mean(calc)
+        
+            result = {
+                'calculations': mean,
+            }
+
+            return JsonResponse(result)
+        except Exception as e:
+            print("Error:", str(e))  # Log the error for debugging
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+def plotted_mean(request):
+
+    
+    if request.method == "POST":
+        try:
+            # Parse the JSON data sent in the POST request
+            data = json.loads(request.body)
+            print("Received data:", data)  # Log the received data
+
+            point = data.get("data",[])
+
+            print(point)
+
+
+            pointcoords = Circle(float(point['PLONG']), float(point['PLAT']), float(point['a95'])*111.32)
+            pointcoords = mapping(pointcoords)
+        
+            result = {
+                'circle': pointcoords
+            }
+
+            return JsonResponse(result)
+        except Exception as e:
+            print("Error:", str(e))  # Log the error for debugging
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
 
 def shoot(lon, lat, azimuth, maxdist=None):
     """Shooter Function
@@ -776,8 +860,6 @@ def shoot(lon, lat, azimuth, maxdist=None):
     glon2 *= 180./np.pi
     glat2 *= 180./np.pi
     baz *= 180./np.pi
-    print(glon2)
-    print(glat2)
     return (glon2, glat2, baz)
 
 
