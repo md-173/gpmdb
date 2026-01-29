@@ -81,3 +81,49 @@ michael.chin@sydney.edu.au
 * Stop the running docker container `docker ps` & `docker stop ${CONTAINER ID}`
 * Run `docker run -d -p 80:80 -p 443:443 -p 5432:5432 --restart always edrg/gpmdb`
 * Check the updates at http://paleoweb01p.curtin.edu.au
+
+# GPMDB API Local Test Guide
+
+## 1) Build and run the API in Docker
+
+From repo root:
+
+docker build -t gpmdb -f docker/Dockerfile .
+
+docker run -d -p 7777:80 --restart always gpmdb
+
+Confirm online:
+http://127.0.0.1:7777/api/v1/metadata/
+
+## 2) Install the Python client (editable)
+
+From C:\Dev\gpmd\merged\gpmdb_client:
+
+python -m pip install -e .
+
+## 3) Create a test file (test.py)
+
+Create C:\Dev\gpmd\merged\gpmdb_client\test.py with following or custom tests using query parameters below:
+
+import gpmdb
+
+### Point to local API
+gpmdb.set_base_url("http://127.0.0.1:7777")
+
+print(gpmdb.get_metadata())
+
+### Simple query
+df = gpmdb.get_data(limit=5
+
+print(df)
+
+### Query with filters
+df = gpmdb.get_data(CONTINENT="Australia", AGE_MIN=100, AGE_MAX=200, limit=10)
+
+print(df)
+
+print(f"Got {len(df)} results")
+
+### Run it:
+
+python C:\Dev\gpmd\merged\gpmdb_client\test.py
