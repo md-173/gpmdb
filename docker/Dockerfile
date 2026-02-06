@@ -1,4 +1,6 @@
-#in the root diretory, run "docker build -t gpmdb_dev -f docker/Dockerfile ."
+# in the root diretory, run "docker build -t gpmdb_dev -f docker/Dockerfile ."
+# SSL Currently Disabled for local dev without certs. Termination of
+# HTTPS must be determined for deployment to decide on re-enabling
 
 FROM ubuntu:20.04
 
@@ -63,9 +65,11 @@ RUN rm GD2021Clean.zip
 RUN rm /etc/apache2/sites-available/000-default.conf
 
 ADD docker/000-default.conf /etc/apache2/sites-available/
-ADD docker/ssl.conf /etc/apache2/sites-enabled/
-RUN mkdir /etc/apache2/ssl/
-ADD docker/*.pem /etc/apache2/ssl/
+
+# SSL DISABLED FOR LOCAL DEV WITHOUT CERTS
+#ADD docker/ssl.conf /etc/apache2/sites-enabled/
+#RUN mkdir /etc/apache2/ssl/
+#ADD docker/*.pem /etc/apache2/ssl/
 
 # Add Tini
 ENV TINI_VERSION v0.9.0
