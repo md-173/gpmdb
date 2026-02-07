@@ -91,3 +91,6 @@ RUN chmod 755 /work/run.sh
 
 
 CMD ["/work/run.sh"]
+
+# Add enviroment .env file capability
+RUN pip3 install python-dotenv

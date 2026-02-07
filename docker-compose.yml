@@ -1,0 +1,8 @@
+services:
+  gpmdb:
+    image: gpmdb
+    ports:
+      - "7777:80"
+    volumes:
+      - ./.env:/work/.env
+    restart: always
