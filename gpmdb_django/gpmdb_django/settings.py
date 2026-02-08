@@ -86,11 +86,11 @@ WSGI_APPLICATION = 'gpmdb_django.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get("DB_NAME"),
-        'USER': os.environ.get("DB_USER"),
-        'PASSWORD': os.environ.get("DB_PASSWORD"),
-        'HOST': os.environ.get("DB_HOST"),
-        'PORT': os.environ.get("DB_PORT"),
+        'NAME': os.environ.get("DB_NAME", "GD2021"),
+        'USER': os.environ.get("DB_USER", "gpmdb"),
+        'PASSWORD': os.environ.get("DB_PASSWORD", "gpmdb"),
+        'HOST': os.environ.get("DB_HOST", "127.0.0.1"),
+        'PORT': os.environ.get("DB_PORT", "5432"),
     }
 }
 

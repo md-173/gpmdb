@@ -23,6 +23,9 @@ RUN apt-get install -y python3-pip
 RUN pip3 install pmagpy
 RUN pip3 install pandas
 
+# Add enviroment .env file capability
+RUN pip3 install python-dotenv
+
 RUN apt-get install -y python3-pip python3-dev libfreetype6-dev libpng-dev pkg-config
 
 RUN pip3 install matplotlib
@@ -92,5 +95,3 @@ RUN chmod 755 /work/run.sh
 
 CMD ["/work/run.sh"]
 
-# Add enviroment .env file capability
-RUN pip3 install python-dotenv

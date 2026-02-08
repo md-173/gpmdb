@@ -26,13 +26,20 @@ import numpy as np
 from pmagpy.pmag import fisher_mean
 from shapely.geometry import LineString
 from shapely.geometry import mapping
-
+import os
 
 #the password here is no secret, read-only user
 #in the future, if you need more priviledge, use local peer auth. See /etc/postgresql/12/main/pg_hba.conf
-conn_string = "host='localhost' dbname='GD2021' user='gpmdb' password='gpmdb' port=5432"
-conn_string_admin = "host='localhost' dbname='GD2021' user='gpmdbadmin' password='admin' port=5432"
+DB_NAME = os.environ.get("DB_NAME", "GD2021")
+DB_USER = os.environ.get("DB_USER", "gpmdb")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "gpmdb")
+DB_ADMIN_USER = os.environ.get("DB_ADMIN_USER", "gpmdbadmin")
+DB_ADMIN_PASSWORD = os.environ.get("DB_ADMIN_PASSWORD", "admin")
+DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+DB_PORT = os.environ.get("DB_PORT", "5432")
 
+conn_string = f"host='{DB_HOST}' dbname='{DB_NAME}' user='{DB_USER}' password='{DB_PASSWORD}' port={DB_PORT}"
+conn_string_admin = f"host='{DB_HOST}' dbname='{DB_NAME}' user='{DB_ADMIN_USER}' password='{DB_ADMIN_PASSWORD}' port={DB_PORT}"
 #
 # return the front page
 #
