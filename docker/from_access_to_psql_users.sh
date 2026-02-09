@@ -54,38 +54,20 @@ fi
 #done
 
 #ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;PMAGRESULT;REFERENCE;ROCKUNIT;TERRANE;TIMESCALE;
-psql -U postgres -c "DROP DATABASE IF EXISTS GD2021;"
-echo "importing database GD2021"
-#dropdb GD2021
-createdb GD2021
-
-mdb-schema /work/GD2021Clean.mdb postgres | psql -d GD2021 -U postgres > /dev/null
-
-IFS=';' read -ra tables <<< $(mdb-tables -d \; /work/GD2021Clean.mdb)
-#the order is important
-#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;Paste Errors;TERRANE;TIMESCALE;pr1;new-paleoz;new340-260poles_gondw;poles2009a;McElhinny;Character;lips_older180;Young_plumes;Yebo1;Yebo2;pallats2017;pallats2017-2;pallats2017-3;bad;pallats2017-4;pallat2017-fin;pallars2017-rocktype;sam-new;sam-new2;afr-new;ind-new;aus-new;asia-new;eur-new;ant-new;n-amer-new;gre-new;m-east-new;asia-new2;2000-1800;poles2017a;100-170;pallats2017b;pallats2017c;2016-17;poles2017b;"
-#IFS=';' read -ra tables <<< "ALTRESULT;CONTINENTS;COUNTRY;CROSSREF;FIELDTESTS;INFORMATION;JOURNAL;REFERENCE;ROCKUNIT;PMAGRESULT;SUMMARY;VERSION;"
-for i in "${tables[@]}"; do
-    mdb-export -I postgres -q \' /work/GD2021Clean.mdb "$i" | psql -d GD2021 -U postgres > /dev/null
-    echo "importing $i"
-done
 
 # Create users using env-provided credentials
-psql -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+psql -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null
 psql -U postgres -c "ALTER USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
 psql -U postgres -c "GRANT CONNECT ON DATABASE \"GD2021\" TO ${DB_USER};"
 psql -U postgres -d GD2021 -c "GRANT USAGE ON SCHEMA public TO ${DB_USER};"
 psql -U postgres -d GD2021 -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${DB_USER};"
 
-psql -U postgres -c "CREATE USER ${DB_ADMIN_USER} WITH PASSWORD '${DB_ADMIN_PASSWORD}';"
+psql -U postgres -c "CREATE USER ${DB_ADMIN_USER} WITH PASSWORD '${DB_ADMIN_PASSWORD}';" 2>/dev/null
 psql -U postgres -c "ALTER USER ${DB_ADMIN_USER} WITH PASSWORD '${DB_ADMIN_PASSWORD}';"
 psql -U postgres -c "GRANT CONNECT ON DATABASE \"GD2021\" TO ${DB_ADMIN_USER};"
 psql -U postgres -d GD2021 -c "GRANT USAGE ON SCHEMA public TO ${DB_ADMIN_USER};"
 psql -U postgres -d GD2021 -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DB_ADMIN_USER};"
 psql -U postgres -d GD2021 -c "ALTER SCHEMA public OWNER TO ${DB_ADMIN_USER};"
-psql -U postgres -d GD2021 -c "CREATE EXTENSION postgis;"
-psql -U postgres -d GD2021 -c "ALTER TABLE \"ROCKUNIT\" ADD COLUMN geom geometry(Point, 4326);"
-psql -U postgres -d GD2021 -c "UPDATE \"ROCKUNIT\" SET geom = ST_SetSRID(ST_MakePoint(\"RLONG\", \"RLAT\"), 4326) WHERE \"RLONG\" IS NOT NULL AND \"RLAT\" IS NOT NULL;"
 
 #Be aware, the Apache user name is www-data or apache or httpd... 
 #psql -U postgres -c "CREATE USER root;"

@@ -22,7 +22,7 @@ echo "listen_addresses = '*'" >> /etc/postgresql/12/main/postgresql.conf
 # Run the DB init script as postgres (peer auth)
 INIT_MARKER="/work/.gpmdb_initialized"
 if [ ! -f "$INIT_MARKER" ]; then
-  su - postgres -c "/work/from_access_to_psql.sh"
+  su - postgres -c "/work/from_access_to_psql_users.sh"
   touch "$INIT_MARKER"
 else
   echo "DB already initialized, skipping import."

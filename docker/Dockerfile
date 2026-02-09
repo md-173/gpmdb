@@ -56,7 +56,7 @@ RUN mkdir /work
 
 WORKDIR /work
 
-ADD docker/from_access_to_psql.sh data/GD2005B.MDB docker/run.sh docker/gpmdb.wsgi /work/
+ADD docker/from_access_to_psql_build.sh docker/from_access_to_psql_users.sh data/GD2005B.MDB docker/run.sh docker/gpmdb.wsgi /work/
 ADD data/GD2020.zip /work/
 ADD data/GD2021Clean.zip /work/
 ADD gpmdb_django /work/
@@ -88,17 +88,13 @@ ENTRYPOINT ["/tini", "--", "/entrypoint.sh"]
 
 EXPOSE 5432 80 443
 
-RUN chmod 755 /work/from_access_to_psql.sh
-
-USER postgres
-
-# Moved to Entrypoint file for easier deployment using env variables for secrets
-# RUN /work/from_access_to_psql.sh
-
-USER root
-
+RUN chmod 755 /work/from_access_to_psql_build.sh
+RUN chmod 755 /work/from_access_to_psql_users.sh
 RUN chmod 755 /work/run.sh
 
+USER postgres
+RUN /work/from_access_to_psql_build.sh
+USER root
 
 CMD ["/work/run.sh"]
 
