@@ -27,16 +27,18 @@ from pmagpy.pmag import fisher_mean
 from shapely.geometry import LineString
 from shapely.geometry import mapping
 import os
+# Pre-req for .env environment file
+from dotenv import load_dotenv
 
 #the password here is no secret, read-only user
 #in the future, if you need more priviledge, use local peer auth. See /etc/postgresql/12/main/pg_hba.conf
-DB_NAME = os.environ.get("DB_NAME", "GD2021")
-DB_USER = os.environ.get("DB_USER", "gpmdb")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "gpmdb")
-DB_ADMIN_USER = os.environ.get("DB_ADMIN_USER", "gpmdbadmin")
-DB_ADMIN_PASSWORD = os.environ.get("DB_ADMIN_PASSWORD", "admin")
-DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
-DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASSWORD = os.environ["DB_PASSWORD"]
+DB_ADMIN_USER = os.environ["DB_ADMIN_USER"]
+DB_ADMIN_PASSWORD = os.environ["DB_ADMIN_PASSWORD"]
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = os.environ["DB_PORT"]
 
 conn_string = f"host='{DB_HOST}' dbname='{DB_NAME}' user='{DB_USER}' password='{DB_PASSWORD}' port={DB_PORT}"
 conn_string_admin = f"host='{DB_HOST}' dbname='{DB_NAME}' user='{DB_ADMIN_USER}' password='{DB_ADMIN_PASSWORD}' port={DB_PORT}"

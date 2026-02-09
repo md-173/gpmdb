@@ -127,3 +127,38 @@ print(f"Got {len(df)} results")
 ### Run it:
 
 python C:\Dev\gpmd\merged\gpmdb_client\test.py
+
+
+
+## Environment Setup
+## This project uses a `.env` file to manage secrets and configuration.
+**Step 1:** Copy the example env file:
+cp .env.example .env
+On Windows:
+copy .env.example .env
+**Step 2:** Open `.env` and fill in the values:
+DJANGO_SECRET_KEY=<your-secret-key>
+DB_NAME=GD2021
+DB_USER=gpmdb
+DB_PASSWORD=<your-db-password>
+DB_ADMIN_USER=gpmdbadmin
+DB_ADMIN_PASSWORD=<your-admin-password>
+DB_HOST=127.0.0.1
+DB_PORT=5432
+
+To generate a Django secret key:
+python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+**Important:** Never commit `.env` — it contains secrets. Only `.env.example` should be in version control.
+
+## Build and Run
+**Step 1:** Build the Docker image (from the repo root):
+docker build -t gpmdb . -f docker/Dockerfile
+**Step 2:** Start the container:
+docker compose up -d
+**Step 3:** Open in a browser:
+http://127.0.0.1:7777
+The container takes a minute to start on first run (database import). Subsequent restarts are faster.To stop:
+docker compose down
+To rebuild after code changes:
+docker build -t gpmdb . -f docker/Dockerfile
+docker compose up -d

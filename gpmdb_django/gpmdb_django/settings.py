@@ -86,14 +86,13 @@ WSGI_APPLICATION = 'gpmdb_django.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get("DB_NAME", "GD2021"),
-        'USER': os.environ.get("DB_USER", "gpmdb"),
-        'PASSWORD': os.environ.get("DB_PASSWORD", "gpmdb"),
-        'HOST': os.environ.get("DB_HOST", "127.0.0.1"),
-        'PORT': os.environ.get("DB_PORT", "5432"),
+        'NAME': os.environ["DB_NAME"],
+        'USER': os.environ["DB_USER"],
+        'PASSWORD': os.environ["DB_PASSWORD"],
+        'HOST': os.environ["DB_HOST"],
+        'PORT': os.environ["DB_PORT"],
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators

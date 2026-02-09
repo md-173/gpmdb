@@ -78,7 +78,13 @@ ADD docker/000-default.conf /etc/apache2/sites-available/
 ENV TINI_VERSION v0.9.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
+
+# Add entrypoint script
+ADD docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Keep Tini as PID 1, run entrypoint
+ENTRYPOINT ["/tini", "--", "/entrypoint.sh"]
 
 EXPOSE 5432 80 443
 
@@ -86,7 +92,8 @@ RUN chmod 755 /work/from_access_to_psql.sh
 
 USER postgres
 
-RUN /work/from_access_to_psql.sh
+# Moved to Entrypoint file for easier deployment using env variables for secrets
+# RUN /work/from_access_to_psql.sh
 
 USER root
 
