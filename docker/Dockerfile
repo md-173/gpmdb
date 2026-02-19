@@ -69,7 +69,7 @@ RUN rm /etc/apache2/sites-available/000-default.conf
 
 ADD docker/000-default.conf /etc/apache2/sites-available/
 
-# SSL DISABLED FOR LOCAL DEV WITHOUT CERTS
+# SSL DISABLED FOR LOCAL DEV WITHOUT CERTS - Uncomment this block for deployment!
 #ADD docker/ssl.conf /etc/apache2/sites-enabled/
 #RUN mkdir /etc/apache2/ssl/
 #ADD docker/*.pem /etc/apache2/ssl/

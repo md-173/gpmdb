@@ -26,11 +26,13 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SAFE: Secret key is safely handled through environment variables
+# Can be found in .env file for local dev (.env.example shows format)
+# New key can be generated via: python -c "import secrets; print(secrets.token_urlsafe(50))"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SAFE: Defaults to no debug mode unless the environment file specifies DJANGO_DEBUG=True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ['*']
 
