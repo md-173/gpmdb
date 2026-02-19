@@ -191,6 +191,25 @@
                     </div>
                 </div>
             </div>
+            <div class="table-responsive">
+            <div id="table-div"></div>
+            </div>
+            <div id="controls"></div>
+				<div id="stats-container"></div>
+                <div id="stereonetgraph" style="display:inline-block; width:600px; vertical-align:top;"></div>
+                <div id="stereonettable" style="display:inline-block; width:100px; vertical-align:top;"></div>
+                <style>
+                    #stereonetgraph {
+                        position: relative;
+                    }
+
+                    .tooltip {
+                        position: absolute;
+                        pointer-events: none;
+                        z-index: 10;
+                    }
+                </style>
+                <div id="custom-stereonet-point"></div>
 
             <div class="row" id="info" style="background:rgb(216,216,216);padding:5px;">
                 <div id="welcome" class="col-md-7" style="min-height:380px;background:rgb(231,231,231);">
@@ -514,22 +533,10 @@
             <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
                 <div id="table-div"></div>
 				<div id="stats-container"></div>
-                <div id="chart2" style="display:inline-block; width:600px; vertical-align:top;"></div>
-                <div id="stereo" style="display:inline-block; width:100px; vertical-align:top;"></div>
+                <div id="stereonetgraph" style="display:inline-block; width:600px; vertical-align:top;"></div>
+                <div id="stereonettable" style="display:inline-block; width:100px; vertical-align:top;"></div>
                 <style>
-                    #chart2 {
-                        position: relative;
-                    }
-
-                    .tooltip {
-                        position: absolute;
-                        pointer-events: none;
-                        z-index: 10;
-                    }
-                </style>
-				<div id="worldmap"></div>
-                <style>
-                    #worldmap {
+                    #stereonetgraph {
                         position: relative;
                     }
 
@@ -542,10 +549,7 @@
 			</div>
 			
 			<div class="modal-footer">
-                <button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button>
-				<button type="button" id="stats" class="btn btn-primary">Stats</button>
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>
+    
 			</div>
         </div>
         </div><!--modal-dialog modal-lg-->
@@ -789,6 +793,16 @@
         var a95_max = NaN;
 		var lat = NaN;
 		var lon = NaN;
+
+        let gpmdb_map = {
+            leaflet: null,
+            d3map: null,
+            mapdata: null,
+            leafletIndex: null,
+        }
+
+
+        
 		
         function validate(){
             refno = parseInt($('#refno').val());
@@ -1016,6 +1030,7 @@
 		var stats_data;
         var download_data;
 
+
         $('#add-data').click(function(){
 				console.log("Submitted");
 				a_data = {};
@@ -1171,8 +1186,8 @@
         function show_data(){
             $('#progress-bar').modal();
 			$('#stats-container').empty();
-            $('#chart2').empty();
-            $('#stereo').empty();
+            $('#stereonetgraph').empty();
+            $('#stereonettable').empty();
             $('#worldmap').empty();
             q_data={}
 			
@@ -1256,9 +1271,10 @@
                 "success": function(json) {
 
                     
-                    
-					search_data = json.data;
+                    search_data = json.data;
 					stats_data=json.stats_data;         
+
+					      
 					var table_headers;
                     $.each(json.data.columns, function(i, val){
                         table_headers += "<th>" + val + "</th>";
@@ -1267,8 +1283,14 @@
                     console.log(json.data.data)
 
                     $("#table-div").empty();
+                    $("#controls").empty();
                     $("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
                     $("#table-div").find("table thead tr").append(table_headers);
+                    console.log($("#controls").length);
+                    $("#controls").append('<button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button> <button type="button" id="stats" class="btn btn-primary">Stats</button><button type="button" class="btn btn-default" data-dismiss="modal">Close</button><button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>');
+
+
+
 
                     $('#db-table').dataTable({
                         "iDisplayLength": 10,
@@ -1278,12 +1300,11 @@
                     });
 
                     $('#progress-bar').modal('hide');
-                    $('#query-result').modal();
                     
                     clearMap();
                     
                     $.getJSON('/get_query_data_for_map/', q_data, function(data){
-                         mapdata = data;
+                        gpmdb_map.mapdata = data;
                         whichmap()
                        
                     });
@@ -1424,7 +1445,7 @@
 						clearMap();
 						
 						$.getJSON('/get_data/', function(data){
-                        mapdata = data
+                        gpmdb_map.mapdata = data
 						whichmap();
 						});
 						showonMap(s_data);
@@ -1459,264 +1480,61 @@
 							
 				success: function(response) {
 
-					const mean = response.calculations;
-                    const meancircle = response.circle;
-                    const pointcircle = response.pointcircle;
-                    console.log("point")
-                    console.log(pointcircle)
+                    gpmdb_stats = {
+                        indexed_stats: {},
+                        mean: null,
+                        meancircle: null,
+                        pointcircle: null,
+                        selectedcircles: {},
+                        removedcircles: {},
+                        customselection: {},
+                        colourcode: false
+                    }
+                    indexed_stats = {}
 
-					$("#stats-container").empty();
+                    for(var i =0;i<stats_data.length;i++){
+                            row = stats_data[i];
+                            indexed_stats[row.RESULTNO] = row;
+                        }
+
+
+                    gpmdb_stats.indexed_stats = indexed_stats
+                    gpmdb_stats.mean = response.calculations;
+                    gpmdb_stats.meancircle = response.circle;
+                    gpmdb_stats.pointcircle = response.pointcircle; 
+
+                    $("#stats-container").empty();
                     $("#worldmap").empty();
-                    
-					$("#stats-container").append(`
-                        <div>Dec: ${mean.dec}</div>
-                        <div>Inc: ${mean.inc}</div>
-                        <div>Number: ${mean.n}</div>
-                        <div>R: ${mean.r}</div>
-                        <div>95: ${mean.alpha95}</div>
-                        <div>CSD: ${mean.csd}</div>
-                        <button id="mean-circle" class="btn btn-primary">Show Mean Circle</button>
-					`);
-
-                    $("#chart2").empty();
-                    $("#stereo").empty();
+                    $("#stereonetgraph").empty();
+                    $("#stereonettable").empty();
 
 
+                    let svg = drawStereonet();
+                    let tooltip = initialisetooltip();
 
-                    const width = 500, height = 500, radius = 240;
+                    initialisestats(gpmdb_stats.mean, svg)
+                    agecolour = initializecolourcode(gpmdb_stats.indexed_stats)
+                    plotallpoints(gpmdb_stats.indexed_stats, svg, tooltip, gpmdb_stats.selectedcircles, gpmdb_stats.colourcode, agecolour)
+                    plotmean(gpmdb_stats.mean, svg)
+                    let meancirclelayer = initializemeancircle(svg, gpmdb_stats.meancircle);
+                    createtable(gpmdb_stats.indexed_stats)
+                    bindtablebuttons(gpmdb_stats.indexed_stats, svg, gpmdb_stats.selectedcircles)
+                    bindstereonetbuttons(svg, meancirclelayer, agecolour, gpmdb_stats.pointcircle, gpmdb_stats.selectedcircles, gpmdb_stats.colourcode)
 
-                    const cx = width / 2;
-                    const cy = height / 2;
+/*
 
-                    const projection = d3.geoAzimuthalEqualArea()
-                        .scale(170)  // e.g
-                        .translate([width/2, height/2])
-                        .rotate([0, 90,0])   // <-- force lower hemisphere
-                        .clipAngle(180);  
-
-
-                    const path = d3.geoPath().projection(projection);
-
-                    const svg = d3.select("#chart2")
-                    .append("svg")
-                    .attr("width", width)
-                    .attr("height", height + 40);
-
-                    //Mean Stats Labels
-                    const label = svg.append("text")
-                        .attr("x", width - 10)
-                        .attr("y", 20)
-                        .attr("text-anchor", "end")
-                        .style("font-size", "14px");
-
-                    label.append("tspan")
-                        .attr("x", width - 10)
-                        .attr("dy", 0)
-                        .text("Mean Dec: " + mean.dec.toFixed(2));
-
-                    label.append("tspan")
-                        .attr("x", width - 10)
-                        .attr("dy", 18)
-                        .text("Mean Inc: " + mean.inc.toFixed(2));
-
-                    label.append("tspan")
-                        .attr("x", width - 10)
-                        .attr("dy", 18)
-                        .text("95%: " + mean.alpha95.toFixed(2));
-
-                    svg.append("circle")
-                        .attr("cx", width/2)
-                        .attr("cy", height/2)
-                        .attr("r", radius)
-                        .attr("fill", "none")
-                        .attr("stroke", "black");
-
-                    // Tooltip div
-                    const tooltip = d3.select("#chart2")
-                    .append("div")
-                    .style("opacity", 0)
-                    .attr("class", "tooltip")
-                    .style("background-color", "white")
-                    .style("border", "solid")
-                    .style("border-width", "2px")
-                    .style("border-radius", "5px")
-                    .style("padding", "5px")
-
-
-                    const angles = d3.range(0, 360, 15); // every 30 degrees
-
-                    //Stereonet graph lines creation
-                    svg.selectAll("line.ticks")
-                        .data(angles)
-                        .enter()
-                        .append("line")
-                        .attr("class", "ticks")
-                        .attr("x1", d => width / 2 + (radius - 10) * Math.cos(d * Math.PI / 180))
-                        .attr("y1", d => height / 2 + (radius - 10) * Math.sin(d * Math.PI / 180))
-                        .attr("x2", d => width / 2 + radius * Math.cos(d * Math.PI / 180))
-                        .attr("y2", d => height / 2 + radius * Math.sin(d * Math.PI / 180))
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 2);
-
-
-                    // Draw center +
-                    const crossSize = 10;
-                    svg.append("line")
-                        .attr("x1", cx - crossSize)
-                        .attr("y1", cy)
-                        .attr("x2", cx + crossSize)
-                        .attr("y2", cy)
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 2);
-
-                    svg.append("line")
-                        .attr("x1", cx)
-                        .attr("y1", cy - crossSize)
-                        .attr("x2", cx)
-                        .attr("y2", cy + crossSize)
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 2);
-
-
-                    const xDashes = d3.range(-radius, radius, 20); // every 20px
-
-                    xDashes.forEach(x => {
-                        if (x === 0) return; // skip center
-                        svg.append("line")
-                            .attr("x1", cx + x)
-                            .attr("y1", cy - 5)
-                            .attr("x2", cx + x)
-                            .attr("y2", cy + 5)
-                            .attr("stroke", "black")
-                            .attr("stroke-width", 1);
-                    });
-
-                    const yDashes = d3.range(-radius, radius, 20);
-                    yDashes.forEach(y => {
-                        if (y === 0) return; // skip center
-                        svg.append("line")
-                            .attr("x1", cx - 5)
-                            .attr("y1", cy + y)
-                            .attr("x2", cx + 5)
-                            .attr("y2", cy + y)
-                            .attr("stroke", "black")
-                            .attr("stroke-width", 1);
-                    });
-                    
-                    selectedcircles = {};
-                    removedcircles = [];
-
-                    const ages = stats_data.map(d => d.LOMAGAGE);
-
-                    const ageColor = d3.scaleSequential()
-                    .domain(d3.extent(ages))
-                    .interpolator(d3.interpolateViridis);
+ //Mean Stats Labels
+        
 
                     function plotpoint(row) {
 
-                        const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
-
-                        let newlat = []
-
-                        if(row['PLAT'] <= 0){
-                            newlat = projection([new_long, row['PLAT']])
-                            colour = "white"
-                            outline = "black"
-                        }else{
-                            newlat = projection([new_long, -row['PLAT']])
-                            colour = "black"
-                            outline = "black"
-                        }
-
-                    
-                        const circle = svg.append("circle")
-                        .attr("cx", newlat[0])
-                        .attr("cy", newlat[1])  
-                        .attr("r", 4)
-                        .attr("data-id", row.RESULTNO)
-                        .attr("data-age", row.LOMAGAGE)
-                        .attr("data-lat", row.PLAT)
-                        .attr("class", "data-point")
-                        .attr("fill", colour)
-                        .attr("stroke", outline)     // outline color
-                        .attr("stroke-width", 1.5);
+                       //still need to add circle functions
 
 
-                        circle.on("mouseover", function(event, d) {
-                    
-                        tooltip.style("opacity", 1)
-    
-                        
-                        })
-                        .on("mousemove", function(event, d) {
-                            const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
-                            tooltip
-                            .html(`Lat: ${row.PLAT}<br>Lon: ${row.PLONG}<br>`)
-                            .style("left", (x + 10) + "px")
-                            .style("top", (y + 10) + "px");
-                            
-                        })
-                        .on("mouseout", function(event, d) {
-                            tooltip
-                                .style("opacity", 0)
-                            
-                        })
-                        .on("click", function(event, d) {
-
-                            if (d3.select(this).attr("data-id") in selectedcircles){
-                                d3.select(this)
-                                .style("stroke", function () {
-                                    return colourByAge
-                                        ? ageColor(this.dataset.age)
-                                        : "black";
-
-                                })
-
-                                id = d3.select(this).attr("data-id");
-
-                                $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", false);
-
-                                delete selectedcircles[id];
-
-                            } else{
-
-                                id = d3.select(this).attr("data-id");
-    
-
-                                selectedcircles[id] = row;
-                                
-                                d3.select(this)
-                                .style("stroke", "red")
-                                .style("stroke-width", 2);
-
-                                $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
-                            }
-                        });
+                       
                     }
 
-                
-                    let longitude = mean.dec.toFixed(2)
-                    let latitude =  mean.inc.toFixed(2)
-
-                    const new_long = (longitude > 180) ? longitude - 360 : longitude;
-                    let newlat = []
-
-                    if(latitude <= 0){
-                        newlat = projection([new_long, latitude])
-                    }else{
-                        newlat = projection([new_long, -latitude])
-                    }
-
-                
-                    const circle = svg.append("circle")
-                    .attr("cx", newlat[0])
-                    .attr("cy", newlat[1])  
-                    .attr("r", 4)
-                    .attr("data-id", i) 
-                    .attr("class", "mean-point")
-                    .attr("fill", "red")
-                    .attr("stroke", "black")
-                    .attr("stroke-width", 2);
+                   
 
                     circle.on("mouseover", function(event, d) {
                     
@@ -1741,88 +1559,10 @@
 
                         });
 
-                    $("#stereo").append(`
-                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                        <table id ="stereotable" border="1">
-                        <tr>
-                            <th>Select</th>
-                            <th>Rockname</th>
-                            <th>Lomagage</th>
-                            <th>Himagage</th>
-                            <th>Remove</th>
-                        </tr>
-                        </table>
-                        </div>
-                        <button id="remove-selected" class="btn btn-primary">Remove Selected</button>
-                        <button id="point-circle" class="btn btn-primary">Selected Point Circle Means</button>
-                        <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
-                        <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
-                        <button id="selected-means" class="btn btn-primary">Mean of Selected Circles</button>
-                        Plot a point: 
-                        Latitude: <input id="latitudeinput" type="number">
-                        Longitude: <input id="longitudeinput" type="number">
-                        a95: <input id="a95input" type="number">
-                        <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
-                    `);
-                    
 
                     //plotting points
-                    for(var i =0;i<stats_data.length;i++){
-                        const row = stats_data[i];
-                        plotpoint(row);
-
-                        $("#stereotable").append(`
-                              <tr data-id="${row.RESULTNO}">
-                                  <td><input type="checkbox" class="row-select"></td>
-                                  <td>${row.ROCKNAME}</td>
-                                  <td>${row.LOMAGAGE}</td>
-                                  <td>${row.HIMAGAGE}</td>
-                                  <td><button class="remove-btn" data-id="${row.RESULTNO}">Remove</button></td>
-                              </tr>
-                          `);
-
-                    }
-
-                    customselection = {};
-                    const meanCircleLayer = svg.append("g")
-                    .attr("id", "mean-circle-layer")
-                    .style("display", "none");   // visible by default
-
-                    //mean circle creation around the mean
-                    meancircle.coordinates.forEach((coord, i) => {
-                        row = {'PLONG': coord[0], 
-                                'PLAT': coord[1]
-                        }
-
-                        const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
-                        
-                        let newlat = []
-
-                        if(coord[1] <= 0){
-                            newlat = projection([new_long, coord[1]])
-                            colour = "none"
-                        }else{
-                            newlat = projection([new_long, -coord[1]])
-                            colour = "black"
-                        }
-
-                        console.log(newlat)
-
-                        meanCircleLayer.append("circle")
-                        .attr("cx", newlat[0])
-                        .attr("cy", newlat[1])  
-                        .attr("r", 1)
-                        .attr("fill", "black")
-                        .attr("stroke", "black");
-
-                    })
 
                     let visible = false;
-    
-                    d3.select("#mean-circle").on("click", () => {
-                        visible = !visible;
-                        meanCircleLayer.style("display", visible ? "block" : "none");
-                    });
 
                     const legendWidth = 160;
                     const legendHeight = 12;
@@ -1879,214 +1619,20 @@
                     .attr("text-anchor", "middle")
                     .style("font-size", "12px")
                     .text("LOMAG Age");
+                    
 
-
-                        $("#stereotable").on("click", ".remove-btn", function() {
-
-                            var id = $(this).data("id");
-                            console.log(id)
-                
-                            
-                            if($('#removedstereotable tr').length ===0) {
-                                  $("#stereo").append(`
-                                        <div id = "removedpoints">
-                                        <div> Removed Points:  </div>
-                                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
-                                        <table id ="removedstereotable" border="1">
-                                        <tr>
-                                            <th>Rockname</th>
-                                            <th>Lomagage</th>
-                                            <th>Himagage</th>
-                                        </tr>
-                                        </table>
-                                        </div>
-                                        </div>
-                                    `);
-
-                            }
-                            
-                            $(`#stereotable tr[data-id='${id}']`).remove();
-
-                            d3.select(`circle[data-id='${id}']`).remove();
-                            var row;
-
-                            for(var i =0;i<stats_data.length;i++){
-                                row = stats_data[i];
-                                if (row.RESULTNO === id){
-                                    break;
-                                }
-                            }
-                            $("#removedstereotable").append(`
-                                <tr data-id="${id}">
-                                    <td>${row.ROCKNAME}</td>
-                                    <td>${row.LOMAGAGE}</td>
-                                    <td>${row.HIMAGAGE}</td>
-                                    <td><button class="add-btn" data-id="${id}">Add Back</button></td>
-                                </tr>
-                            `);
-
-                        });
-
-                        $("#point-circle").on("click", function () {
-                            
-                            $("#stereotable .row-select:checked").each(function () {
-                                    let id = $(this).closest("tr").data("id");
-                                    var points = pointcircle[id];
-                                    key = "mean" + id
-
-                                    var sel = svg.selectAll(`circle.mean-point[data-id='mean${id}']`);
-                                    //sel.remove();
-                                    console.log(sel)
-                                    if (!sel.empty()) {
-                                            sel.remove();
-                                        }else{
-                                            points.coordinates.forEach(coord => {
-                                            row = {'PLONG': coord[0], 
-                                            'PLAT': coord[1]
-                                            }
-
-                                            
-
-                                            const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
-                                            
-                                            let newlat = []
-
-                                            if(coord[1] <= 0){
-                                                newlat = projection([new_long, coord[1]])
-                                                colour = "none"
-                                            }else{
-                                                newlat = projection([new_long, -coord[1]])
-                                                colour = "black"
-                                            }
-
-
-
-                                            const circle = svg.append("circle")
-                                            .attr("data-id", "mean" + id)
-                                            .attr("class", "mean-point")
-                                            .attr("cx", newlat[0])
-                                            .attr("cy", newlat[1])  
-                                            .attr("r", 1)
-                                            .attr("fill", "black")
-                                            .attr("stroke", "black");
-                                         })
-                                        }
-
-
-                                    
-                                    
-                                    
-
-                                
-                                });
-
-                        });	
-
-                        let colourByAge = false;
 
                         $("#colour-code").on("click", function () {
-
-                            colourByAge = !colourByAge;
-                            
-                            svg.selectAll("circle.data-point")
-                            .transition()
-                            .duration(300)
-                            .attr("fill", function () {
-                                var lat  = this.dataset.lat;
-                                if (lat >= 0){
-                                return colourByAge
-                                    ? ageColor(this.dataset.age)
-                                    : "black";
-                                }else{
-                                    return "white"
-                                }
-                            })
-                            .attr("stroke", function () {
-                                return colourByAge
-                                    ? ageColor(this.dataset.age)
-                                    : "black";
-
-                            });
-
-                            svg.selectAll("circle.mean-point")
-                            .transition()
-                            .duration(300)
-                            .attr("fill", function () {
-                                return colourByAge
-                                    ? "black"
-                                    : "red";
-                            })
-                            .attr("stroke", function () {
-                                return colourByAge
-                                    ? "black"
-                                    : "black";
-                            });
-
                             legendGroup.style("display", colourByAge ? "block" : "none");
 
-
-
-
-
-
-
                         });
 
-                        $("#selected-means").on("click", function () {
-
-                            $.ajax({
-                                type: "POST",
-                                url:'/selected_means/',
-                                contentType: "application/json",
-                                data: JSON.stringify({
-                                    data: selectedcircles
-                                }),
-                                dataType: "json",
-                                headers: {
-                                    "X-CSRFToken": csrftoken
-                                },
-                                            
-                                success: function(response) {
-                                    let selected_mean = response.calculations
-
-                                    
-                                    console.log("test")
-                                    console.log(selected_mean)
-
-                                    svg.selectAll(".selected-mean-label").remove();
-
-                                    //Mean Stats Labels
-                                    const label2 = svg.append("text")
-                                        .attr("class", "selected-mean-label")
-                                        .attr("x", 175)
-                                        .attr("y", height - 10)
-                                        .attr("text-anchor", "end")
-                                        .style("font-size", "14px");
-
-                                    label2.append("tspan")
-                                        .attr("x", 175)
-                                        .attr("dy", 0)
-                                        .text("Selected Mean Dec: " + selected_mean.dec.toFixed(2));
-
-                                    label2.append("tspan")
-                                        .attr("x", 175)
-                                        .attr("dy", 12)
-                                        .text("Selected Mean Inc: " + selected_mean.inc.toFixed(2));
-
-                                    label2.append("tspan")
-                                        .attr("x", 175)
-                                        .attr("dy", 12)
-                                        .text("Selected 95%: " + selected_mean.alpha95.toFixed(2));
-                                                }
-                                            })
-                        
-                        });
-
+        
                         $("#remove-selected").on("click", function () {
 
                             if($('#removedstereotable').length === 0) {
 
-                                        $("#stereo").append(`
+                                        $("#stereonettable").append(`
                                                 <div id = "removedpoints">
                                                 <div> Removed Points:  </div>
                                                 <div style="max-height:300px; overflow-y:auto; width:fit-content;">
@@ -2102,19 +1648,14 @@
                                             `);}
 
                                 
-                                $("#stereotable .row-select:checked").each(function () {
+                                $("#stereonetdatatable .row-select:checked").each(function () {
                                     let id = $(this).closest("tr").data("id");
                                     console.log(id)
                                     var row;
-                                    for(var i =0;i<stats_data.length;i++){
-                                        row = stats_data[i];
-                                        if (row.RESULTNO === id){
-                                            break;
-                                        }
-                                    }
+                                    row = indexed_stats[id];
                         
 
-                                    $(`#stereotable tr[data-id='${id}']`).remove();
+                                    $(`#stereonetdatatable tr[data-id='${id}']`).remove();
 
                                     d3.select(`circle[data-id='${id}']`).remove();
                                     
@@ -2126,6 +1667,13 @@
                                             <td><button class="add-btn" data-id="${id}">Add Back</button></td>
                                         </tr>
                                     `);
+
+                                    var sel = svg.selectAll(`circle.mean-point[data-id='mean${id}']`);
+                                    //sel.remove();
+                                    console.log(sel)
+                                    if (!sel.empty()) {
+                                            sel.remove();
+                                        }
 
                                 
                                 });
@@ -2143,172 +1691,10 @@
 
 
                         });
-
-                        $("#stereo").on("click", "#removedstereotable .add-btn", function() {
-
-                            const id = $(this).data("id");
-    
-                                
-                            $(`#removedstereotable tr[data-id='${id}']`).remove();
-
-                            var row;
-                             
-                            for(var i =0;i<stats_data.length;i++){
-                                row = stats_data[i];
-                                if (row.RESULTNO === id){
-                                    console.log("testn5")
-                                    console.log(row)
-                                     break;
-                                }
-                            }
-
-
-                            $("#stereotable").append(`
-                                <tr data-id="${id}">
-                                    <td><input type="checkbox" class="row-select"></td>
-                                    <td>${row.ROCKNAME}</td>
-                                    <td>${row.LOMAGAGE}</td>
-                                    <td>${row.HIMAGAGE}</td>
-                                    <td><button class="remove-btn" data-id="${id}">Remove</button></td>
-                                </tr>
-                            `);
-                                
-                                plotpoint(row)
-
-                                if($('#removedstereotable tr').length ===1) {
-                                     $("#removedpoints").remove();
-
-                                }
-                                
-                                });
-
-                      
                         
-                        $("#stereotable").on("change", ".row-select", function() {
-
-                            const id = $(this).closest("tr").data("id");
-
-                            const circle = d3.select(`circle[data-id='${id}']`);
-                            const el = circle.node();
-                            var circleid = el.dataset.id;
-                
-                                if(id in selectedcircles){
-
-                                    circle.style("stroke", "none");
-                                    delete selectedcircles[id];
-
-                                    console.log(selectedcircles);
-
-                                } else{
-
-                                    circle.style("stroke", "red")
-                                    .style("stroke-width", 2)
-
-                                     var row;
-
-                                    for(var i =0;i<stats_data.length;i++){
-                                        row = stats_data[i];
-                                        if (row.RESULTNO === id){
-                                            break;
-                                        }
-                                    }
-
-                                    selectedcircles[id] = row;
-
-                                    console.log(selectedcircles);
-                                }
-
-
-
-                        });
-                    
-
-
-                        $("#download-selected").on("click", function () {
-
-                            console.log("download")
-                            /*
-                            const selectedRows = [];
-
-                            $("#stereotable .row-select:checked").each(function () {
-                                const row = $(this).closest("tr");
-                                const id = row.data("id");
-
-                                const lat = row.find("td:nth-child(2)").text();
-                                const lon = row.find("td:nth-child(3)").text();
-
-                                selectedRows.push({ id, lat, lon });
-                            });
-
-                            console.log(selectedRows);
-                            */
-
-
-                            let csvContent = "data:text/csv;charset=utf-8," 
-
-                            let headersWritten = false;
-
-                            Object.entries(selectedcircles).forEach(([key, value])=> {
-                                console.log(key)
-                                console.log(value)  
-                                Object.entries(value).forEach(([key, value2])=> {
-
-                                    if (!headersWritten){
-                                        csvContent = csvContent + Object.keys(value).join(",") + "\n";
-                                        headersWritten = true;
-                                    }
-
-                                     if (typeof value2 === 'string' || value2 instanceof String){
-                                            value2=value2.replace("\"", "\"\"");
-                                            if(value2.includes(",")){
-                                                value2 = "\"" +value2+"\"";
-                                            }
-                                        }
-                                    csvContent = csvContent + value2 + ","      
-                            })
-                                    csvContent = csvContent + '\n';
-                            })
-
-                            var downloadLink = document.createElement("a");
-                            downloadLink.href = csvContent;
-                            downloadLink.download = "gpmdb-selected-data.csv";
-
-                            document.body.appendChild(downloadLink);
-                            downloadLink.click();
-                            document.body.removeChild(downloadLink);
-
-                        });
-
-
-
                         $("#plot-custom-point").on("click", function () {
 
-                            let lat = $('#latitudeinput').val();
-                            let lon = $('#longitudeinput').val();
-
-                             const new_long = (lon > 180) ? lon - 360 : lon;
-                            let newlat = []
-
-                            if(lat <= 0){
-                                console.log(lat)
-                                newlat = projection([new_long, lat])
-                                colour = "none"
-                            }else{
-                                newlat = projection([new_long, -lat])
-                                colour = "red"
-                            }
-
-                        
-                            const circle = svg.append("circle")
-                            .attr("cx", newlat[0])
-                            .attr("cy", newlat[1])  
-                            .attr("r", 4)
-                            .attr("data-id", `${lat} ` + `${lon}`)
-                            .attr("data-lat", lat)
-                            .attr("data-lon", lon)
-                            .attr("fill", colour)
-                            .attr("stroke", "red")     // outline color
-                            .attr("stroke-width", 1.5);
+                            //circle and custom point mean cirlce
 
 
                              circle.on("mouseover", function(event, d) {
@@ -2342,7 +1728,7 @@
 
                                         delete customselection[id]
 
-                                        $(`#stereotable tr[data-id='${id}']`).remove();
+                                        $(`#stereonetdatatable tr[data-id='${id}']`).remove();
 
                                     } else{
 
@@ -2353,7 +1739,7 @@
                                             "PLONG": d3.select(this).attr("data-lon")
                                         };
 
-                                        $("#stereotable").append(`
+                                        $("#stereonetdatatable").append(`
                                             <tr data-id="${id}" style="display:none;">
                                                 <td><input type="checkbox" class="row-select"></td>
                                                 <td>NA</td>
@@ -2363,7 +1749,7 @@
                                             </tr>
                                         `);
 
-                                        $(`#stereotable tr[data-id='${id}'] .row-select`).prop("checked", true);
+                                        $(`#stereonetdatatable tr[data-id='${id}'] .row-select`).prop("checked", true);
                                         
                                         d3.select(this)
                                         .style("stroke", "black")
@@ -2404,10 +1790,8 @@
 
                         })
 
-                        changemap("EPSG4326", "#worldmap", mapdata)
 
-
-
+*/
 
                     },
                     error: function(xhr, status, error) {
@@ -2421,6 +1805,7 @@
 		    }
 
         function save_csv(){
+
             let csvContent = "data:text/csv;charset=utf-8," 
                 + search_data.columns.join(",") + ("\n")
                 + search_data.data.map(row => {
@@ -2506,12 +1891,13 @@
             
 
             });
+
         let map = null;
         let geojsonLayer =null;
+        var mapdata = null;
         
         $("#projection-select2").on("change", function(){
-            whichmap()
-            
+            whichmap()   
         })
 
         function whichmap(){
@@ -2519,16 +1905,16 @@
             selected = $("#projection-select2").val();
 
             if(selected != "Leaflet"){
-                console.log()
-                changemap(selected, "#map", mapdata);
+                console.log("tesitng")
+                loadd3(selected);
             } else{
-                loadLeaflet(mapdata);
+                loadLeaflet();
             }
         }
 
 
 
-        function loadLeaflet(mapdata){
+        function loadLeaflet(){
 
             $("#map").empty();
 
@@ -2576,16 +1962,17 @@
                     },
                     edit: false
                 });
+
                 map.addControl(drawControl);
                 
 
-                    addDataToMap(mapdata);
-                    map.setView([0,0],1);
+                addDataToMap(gpmdb_map.mapdata);
+                map.setView([0,0],1);
     
 
 
                     // Handle polygon drawing events
-                 map.on('draw:created', function (e) {
+                map.on('draw:created', function (e) {
                      const layer = e.layer; // The drawn layer (polygon)
                      const polygon = layer.toGeoJSON(); // Convert the polygon to GeoJSON
                      const coordinates = polygon.geometry.coordinates[0]; // Get the polygon coordinates
@@ -2619,14 +2006,17 @@
                             console.log("Data fetched successfully:", data);
                             search_data = data.table_data;
                             stats_data=data.stats_data;
+
                             console.log("Search_data after polyselection", search_data);
                             var table_headers;
                             $.each(data.table_data.columns.slice(0,-1), function(i, val){
                                 table_headers += "<th>" + val + "</th>";
                             });
                             $("#table-div").empty();
+                            $("#controls").empty();
                             $("#table-div").append('<table id="db-table" class="display" cellspacing="0" width="100%"><thead><tr></tr></thead></table>');
                             $("#table-div").find("table thead tr").append(table_headers);
+                            $("#controls").append('<button type="button" id="search-again" class="btn btn-primary" data-dismiss="modal">Search Again</button> <button type="button" id="stats" class="btn btn-primary">Stats</button><button type="button" class="btn btn-default" data-dismiss="modal">Close</button><button type="button" id="save-csv" class="btn btn-info pull-left">Save as CSV file</button>');
                             
                             var filtered_data = data.table_data.data.map(function(row) {
                                 return row.slice(0, -1);
@@ -2638,13 +2028,12 @@
                                 
                             });
                             $('#progress-bar').modal('hide');
-                            $('#query-result').modal();
-                        
+                            
                             clearMap();
                             //const m_data = data.geojson_data;
                             //console.log("m_data:",m_data);
                             $.getJSON('/get_map_within_polygon/', {polygon: polygonString}, function(data) {
-                                mapdata = data
+                                gpmdb_map.mapdata = data
                                 whichmap();
                             });
                         },
@@ -2704,12 +2093,12 @@
             }
             }
 
-        let mapdata;
+       
 
         $(function () {
             $.getJSON('/get_data/', function (data) {
-                mapdata = data
-                loadLeaflet(mapdata); 
+                gpmdb_map.mapdata = data
+                loadLeaflet(); 
             });
         });
         
@@ -2732,138 +2121,139 @@
                     </select>
 				`);
            
-            changemap('EPSG3857', "#worldmap")
+            loadd3('EPSG3857')
 
             $("#projection-select").on("change", function(){
 
                 const selected = $(this).val();
-                changemap(selected, "#worldmap")
+                loadd3(selected)
                 
             })
         
         })
 
 
-         function changemap(selection, place, mapdata){
+         function loadd3(selection){
 
-                const width = 960;
-                const height = 500;
+            mapdata = gpmdb_map.mapdata
+            console.log(mapdata)
 
-                $(place).empty();
+            const width = 960;
+            const height = 500;
 
-                let projection = d3.geoMercator()
-                .scale(100)
-                .translate([width / 2, height / 2]);
+            $("#map").empty();
 
-
-                switch (selection){
-                    case 'EPSG4326':
-                        projection = d3.geoEquirectangular()
-                            .scale(150)
-                            .translate([width / 2, height / 2]);
-                        break;
-                    case 'EPSG3031':
-                        projection = d3.geoAzimuthalEquidistant()
-                            .rotate([0, 90])          // center on South Pole
-                            .scale(250)
-                            .translate([width / 2, height / 2]);
-                        break;
-                    case 'EPSG3857':
-                        projection = d3.geoMercator()
-                            .scale(100)
-                            .translate([width / 2, height / 2]);
-                        break;
-                }
-
-                const svg = d3.select(place)
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height);
-
-                    const g = svg.append("g");
-
-                    let path = d3.geoPath().projection(projection);
+            let projection = d3.geoMercator()
+            .scale(100)
+            .translate([width / 2, height / 2]);
 
 
-                    const zoom = d3.zoom()
-                        .scaleExtent([0.5, 20])             // adjust zoom limits
-                        .on("zoom", (event) => {
-                            g.attr("transform", event.transform);
-                        });
+            switch (selection){
+                case 'EPSG4326':
+                    projection = d3.geoEquirectangular()
+                        .scale(150)
+                        .translate([width / 2, height / 2]);
+                    break;
+                case 'EPSG3031':
+                    projection = d3.geoAzimuthalEquidistant()
+                        .rotate([0, 90])          // center on South Pole
+                        .scale(250)
+                        .translate([width / 2, height / 2]);
+                    break;
+                case 'EPSG3857':
+                    projection = d3.geoMercator()
+                        .scale(100)
+                        .translate([width / 2, height / 2]);
+                    break;
+            }
 
-                    // Attach zoom to SVG
-                    svg.call(zoom);
+            const svg = d3.select("#map")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
 
-                    const tooltip = d3.select(place)
-                    .append("div")
-                    .style("opacity", 0)
-                    .attr("class", "tooltip")
-                    .style("background-color", "white")
-                    .style("border", "solid")
-                    .style("border-width", "2px")
-                    .style("border-radius", "5px")
-                    .style("padding", "5px")
+            const g = svg.append("g");
 
-
-                    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
-                    .then(world => {
-                        const countries = topojson.feature(world, world.objects.countries);
-
-                        g.selectAll("path")
-                            .data(countries.features)
-                            .enter()
-                            .append("path")
-                            .attr("d", path)
-                            .attr("fill", "#ccc")
-                            .attr("stroke", "#000");
-
-                        for(var i =0;i<mapdata.length;i++){
-                            let row = mapdata[i];
-                            
-                                latlong = projection([row.geometry.coordinates[0], row.geometry.coordinates[1]])
-                                
-
-                                    //latlong = projectPoint(row['PLAT'], row['PLONG'])
-
-                                g.append("circle")
-                                    .attr("cx", latlong[0])
-                                    .attr("cy", latlong[1])  
-                                    .attr("r", 4)
-                                    .attr("fill", "red")
-                                    .on("mousemove", function(event, d) {
+            let path = d3.geoPath().projection(projection);
 
 
-                                    const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
-                                        tooltip
-                                        .style("opacity", 1)     
-                                        .html(`Lat: ${row.geometry.coordinates[0]} <br> Long: ${row.geometry.coordinates[1]}`)
-                                        .style("left", (x + 10) + "px")
-                                        .style("top", (y + 10) + "px");
-                                        
-                                    })
-                                    .on("mouseout", function(event, d) {
-                                        tooltip
-                                            .style("opacity", 0)
-                                        
-                                    })
-                                    .on("click", function(event, d) {
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 20])             // adjust zoom limits
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
 
-                                        console.log('testing')
+            // Attach zoom to SVG
+            svg.call(zoom);
+
+            const tooltip = d3.select(place)
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px")
 
 
-                                    });;
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+            .then(world => {
+                const countries = topojson.feature(world, world.objects.countries);
 
-                        }
+                g.selectAll("path")
+                    .data(countries.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("fill", "#ccc")
+                    .attr("stroke", "#000");
+
+                for(var i =0;i<mapdata.length;i++){
+                    let row = mapdata[i];
+
+                    latlong = projection([row.geometry.coordinates[0], row.geometry.coordinates[1]])
+                    console.log(row)
+
+                                        //latlong = projectPoint(row['PLAT'], row['PLONG'])
+
+                    g.append("circle")
+                        .attr("cx", latlong[0])
+                        .attr("cy", latlong[1])
+                        .attr("data-id", row.properties.PMAGRESULTCOUNT[0])  
+                        .attr("r", 4)
+                        .attr("fill", "red")
+                        .on("mousemove", function(event, d) {
+
+
+                    const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                        tooltip
+                        .style("opacity", 1)     
+                        .html(`Lat: ${row.geometry.coordinates[0]} <br> Long: ${row.geometry.coordinates[1]}`)
+                        .style("left", (x + 10) + "px")
+                        .style("top", (y + 10) + "px");
 
                     })
-                    .catch(err => {
-                        console.error("Map loading error:", err);
-                    });
+                    .on("mouseout", function(event, d) {
+                        tooltip
+                            .style("opacity", 0)
+
+                    })
+                    .on("click", function(event, d) {
+
+                });;
+
+                }
+
+                gpmdb_map.d3map = svg;
+
+            })
+            .catch(err => {
+                console.error("Map loading error:", err);
+            });
             }
 
         $('#download-data').click(function(){
-
-            console.log(download_data)
             let csvContent = "data:text/csv;charset=utf-8," 
             for (const[key, value] of Object.entries(download_data)){
                 csvContent = csvContent + key + ',' + value.join(",")
@@ -2884,7 +2274,7 @@
             submit_data();
         });
 
-        $('#save-csv').click(function(){
+        $("#controls").on("click", "#save-csv", function(){
             save_csv();
         });
 
@@ -2892,11 +2282,11 @@
             save_pdf();
         });
 
-        $('#search-again').click(function(){
+        $("#controls").on("click", "#search-again", function(){
             $('#search-form').modal('show');
         });
 		
-		$('#stats').click(function(){
+		$("#controls").on("click", "#stats", function(){
             show_stats()
         });
 		
@@ -2946,9 +2336,9 @@
         });
 		
 
-             function clearMap(){
-                map.removeLayer(geojsonLayer);
-            }
+        function clearMap(){
+            map.removeLayer(geojsonLayer);
+        }
 
             var geojsonMarkerOptions = {
                         radius: 3,
@@ -2961,12 +2351,15 @@
 	   
 
              function addDataToMap(data){
-            
+                gpmdb_map.leafletIndex = new Map();
             //    const reprojected = reprojectGeoJSON(data, 'EPSG:4326', '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +datum=ETRS89 +units=m +no_defs');
                 geojsonLayer = L.geoJSON(
                     data,
                     { 
                         onEachFeature: function(feature, layer) {
+                            let id = feature.properties.PMAGRESULTCOUNT[0]
+                            gpmdb_map.leafletIndex.set(id, layer);
+
                             if (feature.properties && 
                                 feature.properties.ROCKNAME && 
                                 feature.properties.ROCKUNITNO && 
@@ -3001,13 +2394,797 @@
                 } else {
                     console.warn("No valid bounds to center map.");
                 }
+
+                
             }
 
-              function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
+
+            function getPopupText(ROCKUNITNO, ROCKNAME, PMAGRESULTCOUNT){
                 return "ROCKUNITNO: " +ROCKUNITNO+"<br>"+
                     "ROCKNAME: "+ROCKNAME+"<br>"+
                     "<a href=\"\\PMAGRESULT\\?ROCKUNITNO="+ROCKUNITNO+"\" target=_blank>PMAGRESULT: "+PMAGRESULTCOUNT+"</a>";
             }
+
+        function drawStereonet(){
+            // Draw center +
+            const crossSize = 10;
+
+            //d3 dimensions
+
+            const width = 500, height = 500, radius = 240;
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            //d3 setup
+
+            const projection = d3.geoAzimuthalEqualArea()
+                .scale(170)  // e.g
+                .translate([width/2, height/2])
+                .rotate([0, 90,0])   // <-- force lower hemisphere
+                .clipAngle(180);  
+
+
+            const path = d3.geoPath().projection(projection);
+
+            const svg = d3.select("#stereonetgraph")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height + 40);
+
+            const angles = d3.range(0, 360, 15); // every 30 degrees
+
+                    //Stereonet graph lines creation
+            svg.selectAll("line.ticks")
+                .data(angles)
+                .enter()
+                .append("line")
+                .attr("class", "ticks")
+                .attr("x1", d => width / 2 + (radius - 10) * Math.cos(d * Math.PI / 180))
+                .attr("y1", d => height / 2 + (radius - 10) * Math.sin(d * Math.PI / 180))
+                .attr("x2", d => width / 2 + radius * Math.cos(d * Math.PI / 180))
+                .attr("y2", d => height / 2 + radius * Math.sin(d * Math.PI / 180))
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+
+            svg.append("line")
+                .attr("x1", cx - crossSize)
+                .attr("y1", cy)
+                .attr("x2", cx + crossSize)
+                .attr("y2", cy)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+            svg.append("line")
+                .attr("x1", cx)
+                .attr("y1", cy - crossSize)
+                .attr("x2", cx)
+                .attr("y2", cy + crossSize)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+
+            const xDashes = d3.range(-radius, radius, 20); // every 20px
+
+            xDashes.forEach(x => {
+                if (x === 0) return; // skip center
+                svg.append("line")
+                    .attr("x1", cx + x)
+                    .attr("y1", cy - 5)
+                    .attr("x2", cx + x)
+                    .attr("y2", cy + 5)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 1);
+            });
+
+                    const yDashes = d3.range(-radius, radius, 20);
+
+            yDashes.forEach(y => {
+                if (y === 0) return; // skip center
+                svg.append("line")
+                    .attr("x1", cx - 5)
+                    .attr("y1", cy + y)
+                    .attr("x2", cx + 5)
+                    .attr("y2", cy + y)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 1);
+            });
+
+            svg.append("circle")
+                .attr("cx", width/2)
+                .attr("cy", height/2)
+                .attr("r", radius)
+                .attr("fill", "none")
+                .attr("stroke", "black");
+            
+            svg.node().__projection__ = projection;
+
+            $("#custom-stereonet-point").append(`
+                Plot a point: 
+                Latitude: <input id="latitudeinput" type="number">
+                Longitude: <input id="longitudeinput" type="number">
+                a95: <input id="a95input" type="number">
+                <button id="plot-custom-point" class="btn btn-primary">Plot Point</button>
+
+			`);
+
+
+            return svg;
+
+        }
+
+        function initialisetooltip(){
+            // Tooltip div
+            const tooltip = d3.select("#stereonetgraph")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px")
+
+            return tooltip;
+        }
+
+        function initialisestats(mean, svg){
+            $("#stats-container").append(`
+                <div>Dec: ${mean.dec}</div>
+                <div>Inc: ${mean.inc}</div>
+                <div>Number: ${mean.n}</div>
+                <div>R: ${mean.r}</div>
+                <div>95: ${mean.alpha95}</div>
+                <div>CSD: ${mean.csd}</div>
+                <button id="mean-circle" class="btn btn-primary">Show Mean Circle</button>
+			`);
+
+            const height = +svg.attr("height");
+            const width = +svg.attr("height");
+
+            const label = svg.append("text")
+                .attr("x", width - 10)
+                .attr("y", 20)
+                .attr("text-anchor", "end")
+                .style("font-size", "14px");
+
+            label.append("tspan")
+                .attr("x", width - 40)
+                .attr("dy", 0)
+                .text("Mean Dec: " + mean.dec.toFixed(2));
+
+            label.append("tspan")
+                .attr("x", width - 40)
+                .attr("dy", 18)
+                .text("Mean Inc: " + mean.inc.toFixed(2));
+
+            label.append("tspan")
+                .attr("x", width - 40)
+                .attr("dy", 18)
+                .text("95%: " + mean.alpha95.toFixed(2));
+        }
+
+        function initializecolourcode(){
+        //colour coding graditent
+
+            const ages = Object.values(stats_data).map(d => d.LOMAGAGE);
+
+            //colour coding flag 
+
+            const ageColor = d3.scaleSequential()
+            .domain(d3.extent(ages))
+            .interpolator(d3.interpolateViridis);
+
+            return ageColor;
+        }
+
+        function plotallpoints(points, svg, tooltip, selectedcircles, colourByAge, agecolour){
+
+            Object.values(points).forEach(row => {
+
+                const projection = svg.node().__projection__;
+
+                const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
+
+                let newlat = []
+
+                if(row['PLAT'] <= 0){
+                    newlat = projection([new_long, row['PLAT']])
+                    colour = "white"
+                    outline = "black"
+                }else{
+                    newlat = projection([new_long, -row['PLAT']])
+                    colour = "black"
+                    outline = "black"
+                }
+
+                    
+                const circle = svg.append("circle")
+                .attr("cx", newlat[0])
+                .attr("cy", newlat[1])  
+                .attr("r", 4)
+                .attr("data-id", row.RESULTNO)
+                .attr("data-age", row.LOMAGAGE)
+                .attr("data-lat", row.PLAT)
+                .attr("class", "data-point")
+                .attr("fill", colour)
+                .attr("stroke", outline)     // outline color
+                .attr("stroke-width", 1.5);
+
+                circleactions(circle, tooltip, svg, selectedcircles, colourByAge, agecolour)
+
+
+            });
+          
+            
+        }
+
+        function circleactions(circle, tooltip, svg, selectedcircles, colourByAge, ageColour){
+
+            circle.on("mouseover", function(event, d) {
+                    
+            tooltip.style("opacity", 1)
+    
+                        
+            })
+            .on("mousemove", function(event, d) {
+                const [x, y] = d3.pointer(event, svg.node()); // coords relative to SVG
+                tooltip
+                .html(`Lat: ${row.PLAT}<br>Lon: ${row.PLONG}<br>`)
+                .style("left", (x + 10) + "px")
+                .style("top", (y + 10) + "px");
+                            
+            })
+            .on("mouseout", function(event, d) {
+                tooltip
+                    .style("opacity", 0)
+                            
+            })
+            .on("click", function(event, d) {
+                /*
+                if (d3.select(this).attr("data-id") in selectedcircles){
+                    d3.select(this)
+                    .style("stroke", function () {
+                        return colourByAge
+                            ? ageColor(this.dataset.age)
+                            : "black";
+                })
+
+                    id = d3.select(this).attr("data-id");
+
+                    $(`#stereonetdatatable tr[data-id='${id}'] .row-select`).prop("checked", false);
+
+                    delete selectedcircles[id];
+
+                } else{
+
+                    id = d3.select(this).attr("data-id");
+    
+
+                    selectedcircles[id] = row;
+                                
+                    d3.select(this)
+                    .style("stroke", "red")
+                    .style("stroke-width", 2);
+
+                    $(`#stereonetdatatable tr[data-id='${id}'] .row-select`).prop("checked", true);
+                }
+                */ 
+                    
+            });
+
+        }
+
+        function plotmean(mean, svg){
+            
+            const projection = svg.node().__projection__;
+             //mean cirlce long and lat
+            let longitude = mean.dec.toFixed(2)
+            let latitude =  mean.inc.toFixed(2)
+
+            const new_long = (longitude > 180) ? longitude - 360 : longitude;
+            let newlat = []
+
+            if(latitude <= 0){
+                newlat = projection([new_long, latitude])
+            }else{
+                newlat = projection([new_long, -latitude])
+            }
+
+                    //mean circle
+            const circle = svg.append("circle")
+                .attr("cx", newlat[0])
+                .attr("cy", newlat[1])  
+                .attr("r", 4)
+                .attr("data-id", "meanpoint") 
+                .attr("class", "mean-point")
+                .attr("fill", "red")
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+        }
+
+        function initializemeancircle(svg, meancircle){
+            const projection = svg.node().__projection__;
+            const meanCircleLayer = svg.append("g")
+                .attr("id", "mean-circle-layer")
+                .style("display", "none");   // visible by default
+
+                //mean circle creation around the mean
+                meancircle.coordinates.forEach((coord, i) => {
+                    row = {'PLONG': coord[0], 
+                            'PLAT': coord[1]
+                    }
+
+                    const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
+                        
+                    let newlat = []
+
+                    if(coord[1] <= 0){
+                        newlat = projection([new_long, coord[1]])
+                        colour = "none"
+                    }else{
+                        newlat = projection([new_long, -coord[1]])
+                        colour = "black"
+                    }
+
+                    meanCircleLayer.append("circle")
+                        .attr("cx", newlat[0])
+                        .attr("cy", newlat[1])  
+                        .attr("r", 1)
+                        .attr("fill", "black")
+                        .attr("stroke", "black");
+
+            })
+
+            return meanCircleLayer;
+            
+        }
+
+        function createtable(indexed_stats){
+
+            $("#stereonettable").append(`
+                        <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                        <table id ="stereonetdatatable" border="1">
+                        <tr>
+                            <th>Select</th>
+                            <th>Rockname</th>
+                            <th>Lomagage</th>
+                            <th>Himagage</th>
+                            <th>Remove</th>
+                        </tr>
+                        </table>
+                        </div>
+                        <button id="remove-selected" class="btn btn-primary">Remove Selected</button>
+                        <button id="point-circle" class="btn btn-primary">Selected Point Circle Means</button>
+                        <button id="download-selected" class="btn btn-primary">Download Selected CSV</button>
+                        <button id="colour-code" class="btn btn-primary">Colour Code By Age</button>
+                        <button id="selected-means" class="btn btn-primary">Mean of Selected Circles</button>
+                        <button id="clear-selected" class="btn btn-primary">Clear Selected Circles</button>
+            `);
+
+            Object.values(indexed_stats).forEach(row => {
+
+                $("#stereonetdatatable").append(`
+                              <tr data-id="${row.RESULTNO}">
+                                  <td><input type="checkbox" class="row-select"></td>
+                                  <td>${row.ROCKNAME}</td>
+                                  <td>${row.LOMAGAGE}</td>
+                                  <td>${row.HIMAGAGE}</td>
+                                  <td><button class="remove-btn" data-id="${row.RESULTNO}">Remove</button></td>
+                              </tr>
+                `);
+
+
+            })
+        }
+
+        function createremovedtable(){
+             $("#stereonettable").append(`
+                <div id = "removedpoints">
+                <div> Removed Points:  </div>
+                <div style="max-height:300px; overflow-y:auto; width:fit-content;">
+                <table id ="removedstereotable" border="1">
+                <tr>
+                    <th>Rockname</th>
+                    <th>Lomagage</th>
+                    <th>Himagage</th>
+                </tr>
+                </table>
+                </div>
+                </div>
+            `);
+
+        }
+
+        function addtoremovedtable(row){
+            $("#removedstereotable").append(`
+                <tr data-id="${row.RESULTNO}">
+                    <td>${row.ROCKNAME}</td>
+                    <td>${row.LOMAGAGE}</td>
+                    <td>${row.HIMAGAGE}</td>
+                    <td><button class="add-btn" data-id="${row.RESULTNO}">Add Back</button></td>
+                </tr>
+            `);
+
+        }
+
+        function bindtablebuttons(indexed_stats, svg, selectedcircles){
+            $("#stereonetdatatable").on("click", ".remove-btn", function() {
+
+                var id = $(this).data("id");
+                row = indexed_stats[id]
+                         
+                if ($('#removedstereotable tr').length ===0) {
+                      createremovedtable()
+                }
+
+                addtoremovedtable(row)
+
+                $(`#stereonetdatatable tr[data-id='${id}']`).remove();
+
+                svg.select(`circle[data-id='${id}']`).remove();
+
+
+                removefrommap(id);
+
+            });
+
+            $("#stereonettable").on("click", "#removedstereotable .add-btn", function() {
+
+                var id = $(this).data("id");
+                row = indexed_stats[id]
+                                
+                $(`#removedstereotable tr[data-id='${id}']`).remove();
+
+                $("#stereonetdatatable").append(`
+                    <tr data-id="${row.RESULTNO}">
+                        <td><input type="checkbox" class="row-select"></td>
+                        <td>${row.ROCKNAME}</td>
+                        <td>${row.LOMAGAGE}</td>
+                        <td>${row.HIMAGAGE}</td>
+                        <td><button class="remove-btn" data-id="${row.RESULTNO}">Remove</button></td>
+                        </tr>
+                `);
+                                
+                const projection = svg.node().__projection__;
+
+                const new_long = (row['PLONG'] > 180) ? row['PLONG'] - 360 : row['PLONG'];
+
+                let newlat = []
+
+                if(row['PLAT'] <= 0){
+                    newlat = projection([new_long, row['PLAT']])
+                    colour = "white"
+                    outline = "black"
+                }else{
+                    newlat = projection([new_long, -row['PLAT']])
+                    colour = "black"
+                    outline = "black"
+                }
+
+                    
+                const circle = svg.append("circle")
+                .attr("cx", newlat[0])
+                .attr("cy", newlat[1])  
+                .attr("r", 4)
+                .attr("data-id", row.RESULTNO)
+                .attr("data-age", row.LOMAGAGE)
+                .attr("data-lat", row.PLAT)
+                .attr("class", "data-point")
+                .attr("fill", colour)
+                .attr("stroke", outline)     // outline color
+                .attr("stroke-width", 1.5);
+
+                if($('#removedstereotable tr').length ===1) {
+                    $("#removedpoints").remove();
+                }
+                
+                addtomap(id)
+            });
+
+            $("#stereonetdatatable").on("change", ".row-select", function() {
+
+                const id = $(this).closest("tr").data("id");
+
+                const circle = d3.select(`circle[data-id='${id}']`);
+                const el = circle.node();
+                var circleid = el.dataset.id;
+                
+                if(id in selectedcircles){
+
+                    circle.style("stroke", "none");
+                    delete selectedcircles[id];
+
+                } else{
+
+                    circle.style("stroke", "red")
+                    .style("stroke-width", 2)
+
+                    var row;
+
+                    row = indexed_stats[id]
+
+                    selectedcircles[id] = row;
+                
+                
+                }
+
+                console.log(selectedcircles)
+
+
+
+            });
+        }
+        
+
+        function bindstereonetbuttons(svg, meancirclelayer, ageColor, pointcircle, selectedcircles, colourByAge){
+            let visible = false;
+           
+            const projection = svg.node().__projection__;
+
+            d3.select("#mean-circle").on("click", () => {
+                        visible = !visible;
+                        meancirclelayer.style("display", visible ? "block" : "none");
+            });
+
+            $("#colour-code").on("click", function () {
+                colourByAge = !colourByAge;
+                            
+                svg.selectAll("circle.data-point")
+                .transition()
+                .duration(300)
+                .attr("fill", function () {
+                    var lat  = this.dataset.lat;
+                    if (lat >= 0){
+                    return colourByAge
+                        ? ageColor(this.dataset.age)
+                        : "black";
+                    }else{
+                        return "white"
+                    }
+                })
+                .attr("stroke", function () {
+                    return colourByAge
+                        ? ageColor(this.dataset.age)
+                        : "black";
+                    });
+
+                svg.selectAll("circle.mean-point")
+                .transition()
+                .duration(300)
+                .attr("fill", function () {
+                    return colourByAge
+                        ? "black"
+                        : "red";
+                })
+                .attr("stroke", function () {
+                    return colourByAge
+                        ? "black"
+                        : "black";
+                });
+            });
+
+            $("#point-circle").on("click", function () {
+                            
+                $("#stereonetdatatable .row-select:checked").each(function () {
+                    let id = $(this).closest("tr").data("id");
+                    var points = pointcircle[id];
+                    key = "mean" + id
+
+                    var sel = svg.selectAll(`circle.mean-point[data-id='mean${id}']`);
+                        //sel.remove();
+                    if (!sel.empty()) {
+                        sel.remove();
+                    }else{
+                        points.coordinates.forEach(coord => {
+                        row = {'PLONG': coord[0], 
+                                'PLAT': coord[1]
+                        }
+
+                                                
+
+                        const new_long = (coord[0] > 180) ? coord[0] - 360 : coord[0];
+                                                
+                        let newlat = []
+
+                        if(coord[1] <= 0){
+                            newlat = projection([new_long, coord[1]])
+                            colour = "none"
+                        }else{
+                        newlat = projection([new_long, -coord[1]])
+                            colour = "black"
+                        }
+
+
+
+                        const circle = svg.append("circle")
+                            .attr("data-id", "mean" + id)
+                            .attr("class", "mean-point")
+                            .attr("cx", newlat[0])
+                            .attr("cy", newlat[1])  
+                            .attr("r", 1)
+                            .attr("fill", "black")
+                            .attr("stroke", "black");
+                        })
+                    }
+                                
+                });
+
+            });	
+
+            $("#selected-means").on("click", function () {
+
+                $.ajax({
+                    type: "POST",
+                    url:'/selected_means/',
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        data: selectedcircles
+                    }),
+                    dataType: "json",
+                    headers: {
+                        "X-CSRFToken": csrftoken
+                    },
+                                            
+                    success: function(response) {
+
+
+                        let selected_mean = response.calculations
+                        const height = +svg.attr("height");
+
+                        svg.selectAll(".selected-mean-label").remove();
+
+                        //Mean Stats Labels
+                        const label2 = svg.append("text")
+                            .attr("class", "selected-mean-label")
+                            .attr("x", 175)
+                            .attr("y", height - 30)
+                            .attr("text-anchor", "end")
+                            .style("font-size", "14px");
+
+                        label2.append("tspan")
+                            .attr("x", 170)
+                            .attr("dy", 0)
+                            .text("Selected Mean Dec: " + selected_mean.dec.toFixed(2));
+
+                        label2.append("tspan")
+                            .attr("x", 170)
+                            .attr("dy", 12)
+                            .text("Selected Mean Inc: " + selected_mean.inc.toFixed(2));
+
+                        label2.append("tspan")
+                            .attr("x", 170)
+                            .attr("dy", 12)
+                            .text("Selected 95%: " + selected_mean.alpha95.toFixed(2));
+                                    }
+                                })
+                        
+                        });
+            
+            $("#clear-selected").on("click", function () {
+                    selectedcircles = {};
+           
+                    $("#stereonetdatatable .row-select").prop("checked", false);
+
+                    svg.selectAll("circle.data-point")
+                        .style("stroke", function () {
+                            return colourByAge
+                                ? ageColor(this.dataset.age)
+                                : "black";
+
+                });
+
+
+            });
+
+            $("#download-selected").on("click", function () {
+
+                let csvContent = "data:text/csv;charset=utf-8," 
+
+                let headersWritten = false;
+
+                Object.entries(selectedcircles).forEach(([key, value])=> { 
+                    Object.entries(value).forEach(([key, value2])=> {
+
+                        if (!headersWritten){
+                            csvContent = csvContent + Object.keys(value).join(",") + "\n";
+                            headersWritten = true;
+                        }
+
+                         if (typeof value2 === 'string' || value2 instanceof String){
+                                value2=value2.replace("\"", "\"\"");
+                                if(value2.includes(",")){
+                                    value2 = "\"" +value2+"\"";
+                                }
+                            }
+                        csvContent = csvContent + value2 + ","      
+                })
+                        csvContent = csvContent + '\n';
+                })
+
+                var downloadLink = document.createElement("a");
+                downloadLink.href = csvContent;
+                downloadLink.download = "gpmdb-selected-data.csv";
+
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+            });
+
+            $("#plot-custom-point").on("click", function () {
+
+                let lat = $('#latitudeinput').val();
+                let lon = $('#longitudeinput').val();
+
+                const new_long = (lon > 180) ? lon - 360 : lon;
+                let newlat = []
+
+                if(lat <= 0){
+                    console.log(lat)
+                    newlat = projection([new_long, lat])
+                    colour = "none"
+                }else{
+                    newlat = projection([new_long, -lat])
+                    colour = "red"
+                }
+
+                        
+                const circle = svg.append("circle")
+                .attr("cx", newlat[0])
+                .attr("cy", newlat[1])  
+                .attr("r", 4)
+                .attr("data-id", `${lat} ` + `${lon}`)
+                .attr("data-lat", lat)
+                .attr("data-lon", lon)
+                .attr("fill", colour)
+                .attr("stroke", "red")     // outline color
+                .attr("stroke-width", 1.5);
+            })
+        }
+
+        function removefrommap(id){
+            selected = $("#projection-select2").val();
+
+            if(selected != "Leaflet"){
+                removed3mappoint(id)
+            } else{
+                removeleafletpoint(id)
+            }
+        }
+
+        function removeleafletpoint(id){
+            let layer = gpmdb_map.leafletIndex.get(id);
+            geojsonLayer.removeLayer(layer);
+        }
+        
+        function removed3mappoint(id){
+            svg = gpmdb_map.d3map;
+            svg.select(`circle[data-id='${id}']`)
+                .style("display", "none");
+        }
+
+        function addtomap(id){
+            selected = $("#projection-select2").val();
+
+            if(selected != "Leaflet"){
+                addd3mappoint(id)
+            } else{
+                addleafletpoint(id)
+            }
+        }
+
+        function addleafletpoint(id){
+            let layer = gpmdb_map.leafletIndex.get(id)
+            geojsonLayer.addLayer(layer);
+        }
+
+        function addd3mappoint(id){
+            svg = gpmdb_map.d3map;
+            svg.select(`circle[data-id='${id}']`)
+                .style("display", null);
+        }
 
 
 	</script>
