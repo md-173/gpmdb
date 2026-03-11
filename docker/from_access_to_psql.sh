@@ -75,4 +75,3 @@ psql -U postgres -d GD2021 -c "UPDATE \"ROCKUNIT\" SET geom = ST_SetSRID(ST_Make
 #psql -U postgres -c "CREATE USER root;"
 #psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE \"GD2021\" TO root;"
 #psql -U postgres -d GD2021 -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO root;"
-
