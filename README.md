@@ -97,13 +97,13 @@ http://127.0.0.1:7777/api/v1/metadata/
 
 ## 2) Install the Python client (editable)
 
-From C:\Dev\gpmd\merged\gpmdb_client:
+From .\gpmdb_client:
 
 python -m pip install -e .
 
 ## 3) Create a test file (test.py)
 
-Create C:\Dev\gpmd\merged\gpmdb_client\test.py with following or custom tests using query parameters below:
+Create .\gpmdb_client\test.py with following or custom tests using query parameters below:
 
 import gpmdb
 
@@ -126,4 +126,4 @@ print(f"Got {len(df)} results")
 
 ### Run it:
 
-python C:\Dev\gpmd\merged\gpmdb_client\test.py
+python .\gpmdb_client\test.py
